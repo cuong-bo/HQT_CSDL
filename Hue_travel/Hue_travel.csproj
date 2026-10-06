@@ -140,6 +140,12 @@
     <Compile Include="Panels\PoiIdentify\PoiIdentifyCard.Designer.cs">
       <DependentUpon>PoiIdentifyCard.cs</DependentUpon>
     </Compile>
+    <Compile Include="Auth\AuthModal.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Auth\AuthModal.Designer.cs">
+      <DependentUpon>AuthModal.cs</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
