@@ -72,6 +72,12 @@
     <Compile Include="Models\TourSuggestion.cs" />
     <Compile Include="SampleData\SamplePois.cs" />
     <Compile Include="SampleData\SampleTours.cs" />
+    <Compile Include="MapEngine\MapHost.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="MapEngine\MapHost.Designer.cs">
+      <DependentUpon>MapHost.cs</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
