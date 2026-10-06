@@ -40,6 +40,8 @@ namespace Hue_travel.Panels.LayerControl
             this.SuspendLayout();
 
             this.BackColor = ThemeColors.SurfaceContainerLowest;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            this.ShowInTaskbar = false;
 
             this.panelHeader.FillColor = ThemeColors.SurfaceContainer;
             this.panelHeader.Dock = System.Windows.Forms.DockStyle.Top;

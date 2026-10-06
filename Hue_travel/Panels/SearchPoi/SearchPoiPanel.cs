@@ -5,7 +5,7 @@ using Hue_travel.SampleData;
 
 namespace Hue_travel.Panels.SearchPoi
 {
-    public partial class SearchPoiPanel : UserControl
+    public partial class SearchPoiPanel : Form
     {
         public event EventHandler<Poi> PoiSelected;
 

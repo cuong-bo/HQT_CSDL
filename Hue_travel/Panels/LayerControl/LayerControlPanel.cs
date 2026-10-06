@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace Hue_travel.Panels.LayerControl
 {
-    public partial class LayerControlPanel : UserControl
+    public partial class LayerControlPanel : Form
     {
         public event EventHandler CloseRequested;
 

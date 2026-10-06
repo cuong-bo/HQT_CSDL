@@ -69,38 +69,57 @@ namespace Hue_travel.Shell
 
             this.mapHost.Dock = System.Windows.Forms.DockStyle.Fill;
 
+            this.Controls.Add(this.mapHost);
+
+            // Each floating panel is a real Form (not a UserControl) per the user's request —
+            // TopLevel must be set false before it can be embedded as a child control, and it
+            // must be Show()'n once to force handle creation before Visible can be toggled later.
+            this.layerControlPanel.TopLevel = false;
             this.layerControlPanel.Location = new System.Drawing.Point(64, 88);
+            this.Controls.Add(this.layerControlPanel);
+            this.layerControlPanel.Show();
             this.layerControlPanel.Visible = false;
 
+            this.routeOptimizerPanel.TopLevel = false;
             this.routeOptimizerPanel.Location = new System.Drawing.Point(888, 88);
+            this.Controls.Add(this.routeOptimizerPanel);
+            this.routeOptimizerPanel.Show();
             this.routeOptimizerPanel.Visible = false;
 
+            this.searchPoiPanel.TopLevel = false;
             this.searchPoiPanel.Location = new System.Drawing.Point(372, 88);
+            this.Controls.Add(this.searchPoiPanel);
+            this.searchPoiPanel.Show();
             this.searchPoiPanel.Visible = false;
 
+            this.travelGuidePanel.TopLevel = false;
             this.travelGuidePanel.Location = new System.Drawing.Point(888, 400);
+            this.Controls.Add(this.travelGuidePanel);
+            this.travelGuidePanel.Show();
             this.travelGuidePanel.Visible = false;
 
+            this.poiIdentifyCard.TopLevel = false;
             this.poiIdentifyCard.Location = new System.Drawing.Point(370, 560);
+            this.Controls.Add(this.poiIdentifyCard);
+            this.poiIdentifyCard.Show();
             this.poiIdentifyCard.Visible = false;
 
+            this.baseMapSwitcherPopup.TopLevel = false;
             this.baseMapSwitcherPopup.Location = new System.Drawing.Point(1060, 84);
+            this.Controls.Add(this.baseMapSwitcherPopup);
+            this.baseMapSwitcherPopup.Show();
             this.baseMapSwitcherPopup.Visible = false;
 
-            this.authModal.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.authModal.Visible = false;
-
-            this.Controls.Add(this.mapHost);
-            this.Controls.Add(this.layerControlPanel);
-            this.Controls.Add(this.routeOptimizerPanel);
-            this.Controls.Add(this.searchPoiPanel);
-            this.Controls.Add(this.travelGuidePanel);
-            this.Controls.Add(this.poiIdentifyCard);
-            this.Controls.Add(this.baseMapSwitcherPopup);
             this.Controls.Add(this.categoryRail);
             this.Controls.Add(this.ribbonBar);
             this.Controls.Add(this.titleBar);
+
+            this.authModal.TopLevel = false;
+            this.authModal.Dock = System.Windows.Forms.DockStyle.Fill;
             this.Controls.Add(this.authModal);
+            this.authModal.Show();
+            this.authModal.Visible = false;
+
             this.Controls.Add(this.statusBar);
 
             this.ResumeLayout(false);

@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace Hue_travel.Panels.BaseMapSwitcher
 {
-    public partial class BaseMapSwitcherPopup : UserControl
+    public partial class BaseMapSwitcherPopup : Form
     {
         public event EventHandler<string> BaseMapSelected;
 

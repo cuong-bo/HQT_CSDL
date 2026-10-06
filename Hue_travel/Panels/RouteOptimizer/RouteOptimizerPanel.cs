@@ -5,7 +5,7 @@ using Hue_travel.SampleData;
 
 namespace Hue_travel.Panels.RouteOptimizer
 {
-    public partial class RouteOptimizerPanel : UserControl
+    public partial class RouteOptimizerPanel : Form
     {
         public RouteOptimizerPanel()
         {

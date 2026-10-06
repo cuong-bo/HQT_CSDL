@@ -24,6 +24,8 @@ namespace Hue_travel.Panels.BaseMapSwitcher
             this.SuspendLayout();
 
             this.BackColor = ThemeColors.SurfaceContainerLowest;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            this.ShowInTaskbar = false;
 
             this.btnStandard.Text = "Chuẩn sáng";
             this.btnStandard.Location = new System.Drawing.Point(8, 8);

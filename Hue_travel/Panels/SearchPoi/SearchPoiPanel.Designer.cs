@@ -30,6 +30,8 @@ namespace Hue_travel.Panels.SearchPoi
             this.SuspendLayout();
 
             this.BackColor = ThemeColors.SurfaceContainerLowest;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            this.ShowInTaskbar = false;
 
             this.panelHeader.Dock = System.Windows.Forms.DockStyle.Top;
             this.panelHeader.Height = 32;

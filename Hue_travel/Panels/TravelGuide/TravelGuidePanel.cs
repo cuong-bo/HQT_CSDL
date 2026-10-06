@@ -5,7 +5,7 @@ using Hue_travel.Theme;
 
 namespace Hue_travel.Panels.TravelGuide
 {
-    public partial class TravelGuidePanel : UserControl
+    public partial class TravelGuidePanel : Form
     {
         public event EventHandler CloseRequested;
 

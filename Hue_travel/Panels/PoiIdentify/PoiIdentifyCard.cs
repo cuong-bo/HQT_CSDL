@@ -4,7 +4,7 @@ using Hue_travel.Models;
 
 namespace Hue_travel.Panels.PoiIdentify
 {
-    public partial class PoiIdentifyCard : UserControl
+    public partial class PoiIdentifyCard : Form
     {
         public PoiIdentifyCard()
         {

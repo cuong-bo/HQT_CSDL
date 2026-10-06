@@ -35,6 +35,9 @@ namespace Hue_travel.Auth
             this.lnkForgotPassword = new System.Windows.Forms.LinkLabel();
             this.SuspendLayout();
 
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            this.ShowInTaskbar = false;
+
             this.panelBackdrop.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelBackdrop.FillColor = System.Drawing.Color.FromArgb(15, 23, 42);
             this.panelBackdrop.Click += new System.EventHandler(this.panelBackdrop_Click);

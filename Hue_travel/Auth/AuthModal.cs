@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace Hue_travel.Auth
 {
-    public partial class AuthModal : UserControl
+    public partial class AuthModal : Form
     {
         public event EventHandler CloseRequested;
 
