@@ -1,0 +1,6 @@
+bin/
+obj/
+*.user
+.vs/
+Hue_travel/lib/*.dll
+.superpowers/
