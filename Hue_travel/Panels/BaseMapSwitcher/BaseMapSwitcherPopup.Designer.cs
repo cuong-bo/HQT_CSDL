@@ -1,4 +1,4 @@
-using Guna.UI2.WinForms;
+﻿using Guna.UI2.WinForms;
 using Hue_travel.Theme;
 
 namespace Hue_travel.Panels.BaseMapSwitcher
@@ -30,21 +30,21 @@ namespace Hue_travel.Panels.BaseMapSwitcher
             this.btnStandard.Size = new System.Drawing.Size(80, 48);
             this.btnStandard.FillColor = ThemeColors.SurfaceContainer;
             this.btnStandard.ForeColor = ThemeColors.Primary;
-            this.btnStandard.Click += (s, e) => BaseMapSelected?.Invoke(this, "standard");
+            this.btnStandard.Click += new System.EventHandler(this.btnStandard_Click);
 
             this.btnSatellite.Text = "Vệ tinh";
             this.btnSatellite.Location = new System.Drawing.Point(96, 8);
             this.btnSatellite.Size = new System.Drawing.Size(80, 48);
             this.btnSatellite.FillColor = ThemeColors.SurfaceContainerLowest;
             this.btnSatellite.ForeColor = ThemeColors.OnSurfaceVariant;
-            this.btnSatellite.Click += (s, e) => BaseMapSelected?.Invoke(this, "satellite");
+            this.btnSatellite.Click += new System.EventHandler(this.btnSatellite_Click);
 
             this.btnNight.Text = "Ngắm đêm";
             this.btnNight.Location = new System.Drawing.Point(184, 8);
             this.btnNight.Size = new System.Drawing.Size(80, 48);
             this.btnNight.FillColor = ThemeColors.SurfaceContainerLowest;
             this.btnNight.ForeColor = ThemeColors.OnSurfaceVariant;
-            this.btnNight.Click += (s, e) => BaseMapSelected?.Invoke(this, "night");
+            this.btnNight.Click += new System.EventHandler(this.btnNight_Click);
 
             this.Controls.Add(this.btnStandard);
             this.Controls.Add(this.btnSatellite);

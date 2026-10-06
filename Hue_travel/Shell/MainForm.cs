@@ -1,4 +1,4 @@
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 using Hue_travel.Models;
 
 namespace Hue_travel.Shell
@@ -19,7 +19,7 @@ namespace Hue_travel.Shell
                     ? FormWindowState.Normal
                     : FormWindowState.Maximized;
             titleBar.CloseClicked += (s, e) => Close();
-            titleBar.AuthClicked += (s, e) => authModal.Visible = !authModal.Visible;
+            titleBar.AuthClicked += (s, e) => TogglePanel(authModal);
 
             ribbonBar.LayerControlToggled += (s, e) => TogglePanel(layerControlPanel);
             ribbonBar.RouteOptimizerToggled += (s, e) => TogglePanel(routeOptimizerPanel);

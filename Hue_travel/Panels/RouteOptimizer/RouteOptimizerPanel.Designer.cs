@@ -1,4 +1,4 @@
-using Guna.UI2.WinForms;
+﻿using Guna.UI2.WinForms;
 using Hue_travel.Theme;
 
 namespace Hue_travel.Panels.RouteOptimizer
@@ -48,7 +48,7 @@ namespace Hue_travel.Panels.RouteOptimizer
             this.btnClose.Location = new System.Drawing.Point(356, 6);
             this.btnClose.FillColor = ThemeColors.Primary;
             this.btnClose.ForeColor = ThemeColors.OnPrimary;
-            this.btnClose.Click += (s, e) => this.Hide();
+            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
 
             this.panelHeader.Controls.Add(this.lblTitle);
             this.panelHeader.Controls.Add(this.btnClose);
@@ -67,7 +67,7 @@ namespace Hue_travel.Panels.RouteOptimizer
             this.clbDestinations.Location = new System.Drawing.Point(8, 94);
             this.clbDestinations.Size = new System.Drawing.Size(368, 150);
             this.clbDestinations.CheckOnClick = true;
-            this.clbDestinations.ItemCheck += (s, e) => BeginInvoke((System.Action)RefreshSelectionSummary);
+            this.clbDestinations.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.clbDestinations_ItemCheck);
 
             this.btnFindRoute.Text = "Bắt Đầu Tìm Đường Ngắn Nhất";
             this.btnFindRoute.Location = new System.Drawing.Point(8, 252);

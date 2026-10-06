@@ -1,4 +1,4 @@
-namespace Hue_travel.Models
+﻿namespace Hue_travel.Models
 {
     public sealed class TourSuggestion
     {

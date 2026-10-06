@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Hue_travel.Models;
 
@@ -9,6 +9,8 @@ namespace Hue_travel.Panels.RouteOptimizer
     {
         public static IReadOnlyList<(int Order, Poi Poi)> BuildOrderedSummary(IReadOnlyList<Poi> selectedInClickOrder)
         {
+            if (selectedInClickOrder == null) return new List<(int, Poi)>();
+
             return selectedInClickOrder
                 .Select((poi, index) => (Order: index + 1, Poi: poi))
                 .ToList();

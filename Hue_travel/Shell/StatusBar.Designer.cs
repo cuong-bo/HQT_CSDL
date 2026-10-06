@@ -1,9 +1,9 @@
-using Guna.UI2.WinForms;
+﻿using Guna.UI2.WinForms;
 using Hue_travel.Theme;
 
 namespace Hue_travel.Shell
 {
-    partial class StatusBar
+    partial class AppStatusBar
     {
         private System.ComponentModel.IContainer components = null;
         private Guna2Panel panelRoot;
@@ -38,12 +38,14 @@ namespace Hue_travel.Shell
             this.lblWeather.ForeColor = ThemeColors.OnSurfaceVariant;
             this.lblWeather.AutoSize = true;
             this.lblWeather.Location = new System.Drawing.Point(560, 7);
+            this.lblWeather.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             this.lblWeather.Text = "Thời tiết hôm nay: Nắng đẹp, 26°C";
 
             this.lblScale.Font = ThemeFonts.BodySm;
             this.lblScale.ForeColor = ThemeColors.OnSurfaceVariant;
             this.lblScale.AutoSize = true;
             this.lblScale.Location = new System.Drawing.Point(900, 7);
+            this.lblScale.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             this.lblScale.Text = "Tỉ lệ: 1:15,000";
 
             this.panelRoot.Controls.Add(this.lblCoordinates);
@@ -51,8 +53,8 @@ namespace Hue_travel.Shell
             this.panelRoot.Controls.Add(this.lblScale);
 
             this.Controls.Add(this.panelRoot);
-            this.Name = "StatusBar";
-            this.Size = new System.Drawing.Size(1000, 28);
+            this.Name = "AppStatusBar";
+            this.Size = new System.Drawing.Size(1280, 28);
             this.ResumeLayout(false);
         }
     }

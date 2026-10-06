@@ -1,4 +1,4 @@
-namespace Hue_travel.Theme
+﻿namespace Hue_travel.Theme
 {
     public static class ThemeMetrics
     {

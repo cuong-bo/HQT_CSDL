@@ -1,4 +1,4 @@
-using Guna.UI2.WinForms;
+﻿using Guna.UI2.WinForms;
 using Hue_travel.Theme;
 
 namespace Hue_travel.Auth
@@ -37,7 +37,7 @@ namespace Hue_travel.Auth
 
             this.panelBackdrop.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelBackdrop.FillColor = System.Drawing.Color.FromArgb(15, 23, 42);
-            this.panelBackdrop.Click += (s, e) => CloseRequested?.Invoke(this, System.EventArgs.Empty);
+            this.panelBackdrop.Click += new System.EventHandler(this.panelBackdrop_Click);
 
             this.panelCard.Size = new System.Drawing.Size(420, 360);
             this.panelCard.FillColor = ThemeColors.SurfaceContainerLowest;
@@ -59,7 +59,7 @@ namespace Hue_travel.Auth
             this.btnClose.Location = new System.Drawing.Point(384, 6);
             this.btnClose.FillColor = ThemeColors.Primary;
             this.btnClose.ForeColor = ThemeColors.OnPrimary;
-            this.btnClose.Click += (s, e) => CloseRequested?.Invoke(this, System.EventArgs.Empty);
+            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
 
             this.panelHeader.Controls.Add(this.lblTitle);
             this.panelHeader.Controls.Add(this.btnClose);

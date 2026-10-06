@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Windows.Forms;
 
 namespace Hue_travel.Shell
@@ -17,5 +17,19 @@ namespace Hue_travel.Shell
         {
             InitializeComponent();
         }
+
+        private void btnLayerControl_Click(object sender, EventArgs e) => LayerControlToggled?.Invoke(this, EventArgs.Empty);
+
+        private void btnRouteOptimizer_Click(object sender, EventArgs e) => RouteOptimizerToggled?.Invoke(this, EventArgs.Empty);
+
+        private void btnSearchPoi_Click(object sender, EventArgs e) => SearchPoiToggled?.Invoke(this, EventArgs.Empty);
+
+        private void btnTravelGuide_Click(object sender, EventArgs e) => TravelGuideToggled?.Invoke(this, EventArgs.Empty);
+
+        private void btnZoomIn_Click(object sender, EventArgs e) => ZoomInClicked?.Invoke(this, EventArgs.Empty);
+
+        private void btnZoomOut_Click(object sender, EventArgs e) => ZoomOutClicked?.Invoke(this, EventArgs.Empty);
+
+        private void btnBaseMap_Click(object sender, EventArgs e) => BaseMapSwitcherToggled?.Invoke(this, EventArgs.Empty);
     }
 }

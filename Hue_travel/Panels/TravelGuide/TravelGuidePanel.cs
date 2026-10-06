@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Windows.Forms;
 using Hue_travel.SampleData;
 using Hue_travel.Theme;
@@ -14,6 +14,8 @@ namespace Hue_travel.Panels.TravelGuide
             InitializeComponent();
             PopulateTours();
         }
+
+        private void btnClose_Click(object sender, EventArgs e) => CloseRequested?.Invoke(this, EventArgs.Empty);
 
         private void PopulateTours()
         {

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Windows.Forms;
 
 namespace Hue_travel.Panels.BaseMapSwitcher
@@ -11,5 +11,11 @@ namespace Hue_travel.Panels.BaseMapSwitcher
         {
             InitializeComponent();
         }
+
+        private void btnStandard_Click(object sender, EventArgs e) => BaseMapSelected?.Invoke(this, "standard");
+
+        private void btnSatellite_Click(object sender, EventArgs e) => BaseMapSelected?.Invoke(this, "satellite");
+
+        private void btnNight_Click(object sender, EventArgs e) => BaseMapSelected?.Invoke(this, "night");
     }
 }

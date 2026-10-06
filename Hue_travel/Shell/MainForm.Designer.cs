@@ -1,4 +1,4 @@
-using Hue_travel.MapEngine;
+﻿using Hue_travel.MapEngine;
 using Hue_travel.Panels.BaseMapSwitcher;
 using Hue_travel.Panels.LayerControl;
 using Hue_travel.Panels.PoiIdentify;
@@ -16,7 +16,7 @@ namespace Hue_travel.Shell
         private TitleBar titleBar;
         private RibbonBar ribbonBar;
         private CategoryRail categoryRail;
-        private StatusBar statusBar;
+        private AppStatusBar statusBar;
         private MapHost mapHost;
 
         private LayerControlPanel layerControlPanel;
@@ -38,7 +38,7 @@ namespace Hue_travel.Shell
             this.titleBar = new TitleBar();
             this.ribbonBar = new RibbonBar();
             this.categoryRail = new CategoryRail();
-            this.statusBar = new StatusBar();
+            this.statusBar = new AppStatusBar();
             this.mapHost = new MapHost();
             this.layerControlPanel = new LayerControlPanel();
             this.routeOptimizerPanel = new RouteOptimizerPanel();

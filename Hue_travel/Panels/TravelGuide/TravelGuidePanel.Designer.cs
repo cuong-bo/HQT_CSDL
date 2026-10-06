@@ -1,4 +1,4 @@
-using Guna.UI2.WinForms;
+﻿using Guna.UI2.WinForms;
 using Hue_travel.Theme;
 
 namespace Hue_travel.Panels.TravelGuide
@@ -42,7 +42,7 @@ namespace Hue_travel.Panels.TravelGuide
             this.btnClose.Location = new System.Drawing.Point(356, 6);
             this.btnClose.FillColor = ThemeColors.Primary;
             this.btnClose.ForeColor = ThemeColors.OnPrimary;
-            this.btnClose.Click += (s, e) => CloseRequested?.Invoke(this, System.EventArgs.Empty);
+            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
 
             this.panelHeader.Controls.Add(this.lblTitle);
             this.panelHeader.Controls.Add(this.btnClose);

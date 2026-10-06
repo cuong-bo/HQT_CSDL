@@ -1,10 +1,10 @@
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 
 namespace Hue_travel.Shell
 {
-    public partial class StatusBar : UserControl
+    public partial class AppStatusBar : UserControl
     {
-        public StatusBar()
+        public AppStatusBar()
         {
             InitializeComponent();
         }

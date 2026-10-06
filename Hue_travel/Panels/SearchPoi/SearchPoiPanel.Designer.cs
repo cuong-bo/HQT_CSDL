@@ -1,4 +1,4 @@
-using Guna.UI2.WinForms;
+﻿using Guna.UI2.WinForms;
 using Hue_travel.Theme;
 
 namespace Hue_travel.Panels.SearchPoi
@@ -46,7 +46,7 @@ namespace Hue_travel.Panels.SearchPoi
             this.btnClose.Location = new System.Drawing.Point(356, 6);
             this.btnClose.FillColor = ThemeColors.Primary;
             this.btnClose.ForeColor = ThemeColors.OnPrimary;
-            this.btnClose.Click += (s, e) => this.Hide();
+            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
 
             this.panelHeader.Controls.Add(this.lblTitle);
             this.panelHeader.Controls.Add(this.btnClose);
@@ -55,7 +55,7 @@ namespace Hue_travel.Panels.SearchPoi
             this.txtKeyword.Location = new System.Drawing.Point(8, 40);
             this.txtKeyword.Size = new System.Drawing.Size(368, 32);
             this.txtKeyword.Font = ThemeFonts.BodySm;
-            this.txtKeyword.TextChanged += (s, e) => RefreshResults();
+            this.txtKeyword.TextChanged += new System.EventHandler(this.txtKeyword_TextChanged);
 
             this.lblResultCount.Font = ThemeFonts.BodySm;
             this.lblResultCount.ForeColor = ThemeColors.OnSurfaceVariant;
@@ -66,7 +66,7 @@ namespace Hue_travel.Panels.SearchPoi
             this.lstResults.Location = new System.Drawing.Point(8, 100);
             this.lstResults.Size = new System.Drawing.Size(368, 220);
             this.lstResults.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lstResults.SelectedIndexChanged += (s, e) => OnResultSelected();
+            this.lstResults.SelectedIndexChanged += new System.EventHandler(this.lstResults_SelectedIndexChanged);
 
             this.Controls.Add(this.lstResults);
             this.Controls.Add(this.lblResultCount);

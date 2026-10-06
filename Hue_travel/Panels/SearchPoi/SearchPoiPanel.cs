@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Windows.Forms;
 using Hue_travel.Models;
 using Hue_travel.SampleData;
@@ -30,7 +30,11 @@ namespace Hue_travel.Panels.SearchPoi
             lblResultCount.Text = $"Kết quả tìm kiếm: {currentResults.Count} địa điểm";
         }
 
-        private void OnResultSelected()
+        private void btnClose_Click(object sender, EventArgs e) => Hide();
+
+        private void txtKeyword_TextChanged(object sender, EventArgs e) => RefreshResults();
+
+        private void lstResults_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (lstResults.SelectedIndex < 0 || currentResults == null) return;
             PoiSelected?.Invoke(this, currentResults[lstResults.SelectedIndex]);

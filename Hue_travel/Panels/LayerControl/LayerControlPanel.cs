@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Windows.Forms;
 
 namespace Hue_travel.Panels.LayerControl
@@ -11,5 +11,7 @@ namespace Hue_travel.Panels.LayerControl
         {
             InitializeComponent();
         }
+
+        private void btnClose_Click(object sender, EventArgs e) => CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 }
