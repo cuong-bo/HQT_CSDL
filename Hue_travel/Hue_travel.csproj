@@ -90,6 +90,18 @@
     <Compile Include="Shell\RibbonBar.Designer.cs">
       <DependentUpon>RibbonBar.cs</DependentUpon>
     </Compile>
+    <Compile Include="Shell\CategoryRail.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Shell\CategoryRail.Designer.cs">
+      <DependentUpon>CategoryRail.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Shell\StatusBar.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Shell\StatusBar.Designer.cs">
+      <DependentUpon>StatusBar.cs</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
