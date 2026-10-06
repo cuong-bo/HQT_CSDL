@@ -78,6 +78,18 @@
     <Compile Include="MapEngine\MapHost.Designer.cs">
       <DependentUpon>MapHost.cs</DependentUpon>
     </Compile>
+    <Compile Include="Shell\TitleBar.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Shell\TitleBar.Designer.cs">
+      <DependentUpon>TitleBar.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Shell\RibbonBar.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Shell\RibbonBar.Designer.cs">
+      <DependentUpon>RibbonBar.cs</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
