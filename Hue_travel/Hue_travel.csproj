@@ -66,6 +66,10 @@
     <Compile Include="Theme\ThemeColors.cs" />
     <Compile Include="Theme\ThemeFonts.cs" />
     <Compile Include="Theme\ThemeMetrics.cs" />
+    <Compile Include="Models\PoiCategory.cs" />
+    <Compile Include="Models\Poi.cs" />
+    <Compile Include="Models\RouteStep.cs" />
+    <Compile Include="Models\TourSuggestion.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
