@@ -102,6 +102,18 @@
     <Compile Include="Shell\StatusBar.Designer.cs">
       <DependentUpon>StatusBar.cs</DependentUpon>
     </Compile>
+    <Compile Include="Panels\LayerControl\LayerControlPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Panels\LayerControl\LayerControlPanel.Designer.cs">
+      <DependentUpon>LayerControlPanel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Panels\BaseMapSwitcher\BaseMapSwitcherPopup.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Panels\BaseMapSwitcher\BaseMapSwitcherPopup.Designer.cs">
+      <DependentUpon>BaseMapSwitcherPopup.cs</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
