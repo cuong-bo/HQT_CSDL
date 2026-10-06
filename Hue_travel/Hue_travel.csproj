@@ -128,6 +128,18 @@
     <Compile Include="Panels\RouteOptimizer\RouteOptimizerPanel.Designer.cs">
       <DependentUpon>RouteOptimizerPanel.cs</DependentUpon>
     </Compile>
+    <Compile Include="Panels\TravelGuide\TravelGuidePanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Panels\TravelGuide\TravelGuidePanel.Designer.cs">
+      <DependentUpon>TravelGuidePanel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Panels\PoiIdentify\PoiIdentifyCard.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Panels\PoiIdentify\PoiIdentifyCard.Designer.cs">
+      <DependentUpon>PoiIdentifyCard.cs</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
