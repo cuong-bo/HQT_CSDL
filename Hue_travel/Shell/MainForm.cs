@@ -31,15 +31,10 @@ namespace Hue_travel.Shell
         private bool showDegrees;
         private MapCursorEventArgs lastCursor;
 
-        // The default layout opens once the window is on screen (the panels are owned by it).
+        // Only the main window opens at start-up; the panels appear when the user asks for them (ribbon, rail, search).
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
-            layerControlPanel.Visible = true;
-            searchPoiPanel.Visible = true;
-            routeOptimizerPanel.Visible = true;
-            travelGuidePanel.Visible = true;
-            poiIdentifyCard.Visible = true;
             weatherUpdater.Start();
         }
 
