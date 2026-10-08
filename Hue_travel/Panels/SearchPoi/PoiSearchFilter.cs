@@ -8,13 +8,17 @@ namespace Hue_travel.Panels.SearchPoi
     /// <summary>Pure filtering logic, deliberately separated from the UserControl.</summary>
     public static class PoiSearchFilter
     {
-        public static IReadOnlyList<Poi> Apply(IEnumerable<Poi> source, string keyword, PoiCategory? category)
+        /// <summary>
+        /// Keeps the POIs whose category is in <paramref name="categories"/> (null or empty = every category)
+        /// and whose name contains <paramref name="keyword"/>.
+        /// </summary>
+        public static IReadOnlyList<Poi> Apply(IEnumerable<Poi> source, string keyword, IReadOnlyCollection<PoiCategory> categories)
         {
             var query = source ?? Enumerable.Empty<Poi>();
 
-            if (category.HasValue)
+            if (categories != null && categories.Count > 0)
             {
-                query = query.Where(p => p.Category == category.Value);
+                query = query.Where(p => categories.Contains(p.Category));
             }
 
             if (!string.IsNullOrWhiteSpace(keyword))
