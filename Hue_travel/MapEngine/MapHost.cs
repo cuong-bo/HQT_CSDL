@@ -16,9 +16,9 @@ namespace Hue_travel.MapEngine
         private const int StackGap = 6;       // gap-1.5
         private const int InfoTop = 12;       // top-3
 
-        private static readonly string[] BaseMapIds = { "standard", "satellite", "night" };
+        private static readonly string[] BaseMapIds = { "roadmap", "satellite", "hybrid", "terrain" };
 
-        private string baseMapId = "standard";
+        private string baseMapId = BaseMapCatalog.DefaultId;
         private SceneIndex scene = new SceneIndex();
         private readonly Dictionary<string, bool> groupVisibility = new Dictionary<string, bool>();
         private int mouseDownX = int.MinValue, mouseDownY = int.MinValue;
@@ -28,7 +28,7 @@ namespace Hue_travel.MapEngine
         private double lastXMin, lastXMax, lastYMin, lastYMax;
         private int lastPixelWidth = -1;
 
-        /// <summary>Raised when the on-map quick switch picks a base map ("standard", "satellite" or "night").</summary>
+        /// <summary>Raised when the on-map quick switch picks a base map ("roadmap", "satellite", "hybrid" or "terrain").</summary>
         public event EventHandler<string> BaseMapRequested;
 
         /// <summary>Raised when a pin is clicked; the argument is the pin key (the sample POI id, e.g. "dai-noi").</summary>
@@ -82,7 +82,7 @@ namespace Hue_travel.MapEngine
 
         public void ZoomOut() => axMap.ZoomOut(0.5);
 
-        public void ZoomToFull() => axMap.ZoomToMaxExtents();
+        public void ZoomToFull() => axMap.Extents = MapScene.FullExtents();
 
         public void PanMode(bool enabled)
         {
@@ -116,26 +116,12 @@ namespace Hue_travel.MapEngine
             if (info == null) return;
             baseMapId = mapId;
             stackBaseMaps.ActiveIndex = Array.IndexOf(BaseMapIds, mapId);
-
-            // Rebuild the layers for the new base map but keep the user's current view.
-            Extents view = axMap.Extents;
-            BuildScene(zoomToFull: false);
             ApplyTiles(info);
-            axMap.Extents = view;
         }
 
-        // Tile maps stream real imagery behind the points of interest; drawn maps switch the tiles off.
+        // The base map is a web tile layer behind the points of interest; MapWinGIS still does zoom, pan, measuring and hit-testing.
         private void ApplyTiles(BaseMapInfo info)
         {
-            attribution.Visible = info.IsTile;
-            if (!info.IsTile)
-            {
-                axMap.TileProvider = tkTileProvider.ProviderNone;
-                return;
-            }
-
-            attribution.Text = info.Attribution;
-            LayoutOverlays();
             TileProviders providers = axMap.Tiles.Providers;
             if (providers.get_IndexByProviderId(info.ProviderId) < 0
                 && !providers.Add(info.ProviderId, info.Name, info.TileUrl, tkTileProjection.SphericalMercator, BaseMapCatalog.MinZoom, BaseMapCatalog.MaxZoom, string.Empty))
@@ -146,6 +132,9 @@ namespace Hue_travel.MapEngine
             }
             axMap.Tiles.ProviderId = info.ProviderId;
             axMap.Tiles.Visible = true;
+            attribution.Text = info.Attribution;
+            attribution.Visible = true;
+            LayoutOverlays();
         }
 
         /// <summary>Shows or hides one toggle group of map layers ("heritage", "food", "stay", "roads", "river", "piers").</summary>
@@ -192,7 +181,7 @@ namespace Hue_travel.MapEngine
 
         private void BuildScene(bool zoomToFull)
         {
-            scene = MapScene.Build(axMap, MapPalette.For(baseMapId), zoomToFull, includeDecor: !BaseMapCatalog.Find(baseMapId).IsTile);
+            scene = MapScene.Build(axMap, zoomToFull);
             foreach (string group in groupVisibility.Keys) ApplyGroupVisibility(group);
         }
 
@@ -251,6 +240,7 @@ namespace Hue_travel.MapEngine
             axMap.MouseUpEvent += (s, e) => axMap_MouseUp(e.x, e.y);
             axMap.MouseMoveEvent += (s, e) => PublishCursor(e.x, e.y);
             BuildScene(zoomToFull: true);
+            ApplyTiles(BaseMapCatalog.Find(baseMapId));
         }
 
         // Anchors the overlays like the mockup: info pill centred at the top, controls in the top-right column.

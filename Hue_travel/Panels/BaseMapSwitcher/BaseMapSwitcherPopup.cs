@@ -12,11 +12,7 @@ namespace Hue_travel.Panels.BaseMapSwitcher
             InitializeComponent();
         }
 
-        private void btnStandard_Click(object sender, EventArgs e) => Select("standard");
-
         private void btnSatellite_Click(object sender, EventArgs e) => Select("satellite");
-
-        private void btnNight_Click(object sender, EventArgs e) => Select("night");
 
         private void btnRoadmap_Click(object sender, EventArgs e) => Select("roadmap");
 
@@ -32,9 +28,7 @@ namespace Hue_travel.Panels.BaseMapSwitcher
         /// <summary>Marks a tile as the current base map without raising <see cref="BaseMapSelected"/>.</summary>
         public void MarkSelected(string mapId)
         {
-            tileStandard.Selected = mapId == "standard";
             tileSatellite.Selected = mapId == "satellite";
-            tileNight.Selected = mapId == "night";
             tileRoadmap.Selected = mapId == "roadmap";
             tileHybrid.Selected = mapId == "hybrid";
             tileTerrain.Selected = mapId == "terrain";

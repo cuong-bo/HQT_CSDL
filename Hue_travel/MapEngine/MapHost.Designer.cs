@@ -82,8 +82,8 @@ namespace Hue_travel.MapEngine
             this.boxInfo.Controls.Add(this.tagInfo);
 
             // Right column (top-16 right-4): base map switch, compass, zoom/pan.
-            this.stackBaseMaps.IconList = "map,satellite_alt,dark_mode";
-            this.stackBaseMaps.ToolTipList = "Bản đồ chuẩn sáng|Bản đồ ảnh vệ tinh|Bản đồ ngắm đêm Cố Đô";
+            this.stackBaseMaps.IconList = "map,satellite_alt,layers,explore";
+            this.stackBaseMaps.ToolTipList = "Bản đồ đường phố|Bản đồ ảnh vệ tinh|Bản đồ lai (vệ tinh và tên đường)|Bản đồ địa hình";
             this.stackBaseMaps.ActiveIndex = 0;
             this.stackBaseMaps.Location = new Point(1020, 64);
             this.stackBaseMaps.ItemClicked += new System.EventHandler<int>(this.stackBaseMaps_ItemClicked);
