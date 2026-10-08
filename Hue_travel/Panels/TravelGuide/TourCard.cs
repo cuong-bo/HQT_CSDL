@@ -44,7 +44,7 @@ namespace Hue_travel.Panels.TravelGuide
         {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            using (GraphicsPath card = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), 4))
+            using (GraphicsPath card = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), Ui.S(4)))
             using (var fill = new SolidBrush(isHovered ? ThemeColors.Sky50 : ThemeColors.Slate50))
             using (var pen = new Pen(ThemeColors.Slate200, 1f))
             {
@@ -53,11 +53,11 @@ namespace Hue_travel.Panels.TravelGuide
             }
 
             Font badgeFont = ThemeFonts.SemiBold(10);
-            int badgeWidth = string.IsNullOrEmpty(Badge) ? 0 : TextRenderer.MeasureText(Badge, badgeFont, Size.Empty, MeasureFlags).Width + 12;
+            int badgeWidth = string.IsNullOrEmpty(Badge) ? 0 : TextRenderer.MeasureText(Badge, badgeFont, Size.Empty, MeasureFlags).Width + Ui.S(12);
             if (badgeWidth > 0)
             {
-                var badge = new Rectangle(Width - 8 - badgeWidth, 8, badgeWidth, 18);
-                using (GraphicsPath path = Ui.RoundedRect(badge, 4))
+                var badge = new Rectangle(Width - Ui.S(8) - badgeWidth, Ui.S(8), badgeWidth, Ui.S(18));
+                using (GraphicsPath path = Ui.RoundedRect(badge, Ui.S(4)))
                 using (var brush = new SolidBrush(BadgeFillColor))
                 {
                     g.FillPath(brush, path);
@@ -66,8 +66,8 @@ namespace Hue_travel.Panels.TravelGuide
                     TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter | TextFormatFlags.SingleLine);
             }
 
-            TextRenderer.DrawText(g, Text, ThemeFonts.Bold(12), new Rectangle(8, 6, Math.Max(0, Width - 24 - badgeWidth), 20), ThemeColors.Slate800, LeftFlags);
-            TextRenderer.DrawText(g, Description, ThemeFonts.Regular(11), new Rectangle(8, 28, Width - 16, 18), ThemeColors.Slate600, LeftFlags);
+            TextRenderer.DrawText(g, Text, ThemeFonts.Bold(12), new Rectangle(Ui.S(8), Ui.S(6), Math.Max(0, Width - Ui.S(24) - badgeWidth), Ui.S(20)), ThemeColors.Slate800, LeftFlags);
+            TextRenderer.DrawText(g, Description, ThemeFonts.Regular(11), new Rectangle(Ui.S(8), Ui.S(28), Width - Ui.S(16), Ui.S(18)), ThemeColors.Slate600, LeftFlags);
         }
     }
 }

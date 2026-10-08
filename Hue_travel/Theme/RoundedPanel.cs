@@ -31,7 +31,7 @@ namespace Hue_travel.Theme
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             var bounds = new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f);
-            using (GraphicsPath path = Ui.RoundedRect(bounds, Radius))
+            using (GraphicsPath path = Ui.RoundedRect(bounds, Ui.S(Radius)))
             {
                 if (!FillColor2.IsEmpty && Width > 0 && Height > 0)
                 {

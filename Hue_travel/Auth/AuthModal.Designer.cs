@@ -52,6 +52,7 @@ namespace Hue_travel.Auth
             this.header.IconName = "lock";
             this.header.Text = "Form Đăng Nhập & Đăng Ký Tài Khoản";
             this.header.Prominent = true;
+            this.header.ShowMinimize = false;
             this.header.CloseClicked += new System.EventHandler(this.header_CloseClicked);
 
             this.tabs.ActiveTab = 0;

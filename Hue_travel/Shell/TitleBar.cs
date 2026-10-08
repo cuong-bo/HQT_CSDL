@@ -21,12 +21,12 @@ namespace Hue_travel.Shell
         public event EventHandler CloseClicked;
 
         private const int EdgePadding = 0;       // window buttons touch the edge
-        private const int WindowButtonWidth = 48; // enlarged for readability
 
         public TitleBar()
         {
             InitializeComponent();
             LayoutRightGroup();
+            Resize += (s, e) => LayoutRightGroup(); // widths change once the window is scaled to the screen DPI
 
             // Double-clicking the bar maximises / restores, like a normal window caption.
             EventHandler toggleMaximize = (s, e) => MaximizeClicked?.Invoke(this, EventArgs.Empty);
@@ -49,11 +49,11 @@ namespace Hue_travel.Shell
         private void LayoutRightGroup()
         {
             int right = Width - EdgePadding;
-            btnClose.Left = right - WindowButtonWidth;
-            btnMaximize.Left = btnClose.Left - WindowButtonWidth;
-            btnMinimize.Left = btnMaximize.Left - WindowButtonWidth;
+            btnClose.Left = right - btnClose.Width;
+            btnMaximize.Left = btnClose.Left - btnMaximize.Width;
+            btnMinimize.Left = btnMaximize.Left - btnMinimize.Width;
 
-            btnAuth.Left = btnMinimize.Left - 10 - btnAuth.Width;
+            btnAuth.Left = btnMinimize.Left - Hue_travel.Theme.Ui.S(10) - btnAuth.Width;
         }
 
         /// <summary>Lets the user drag the borderless MainForm by its title bar (FormBorderStyle.None has no built-in move handle).</summary>

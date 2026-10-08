@@ -56,10 +56,28 @@ namespace Hue_travel.Theme
             }
         }
 
+        // The usual window "minimise" mark: a short horizontal bar centred in the icon box.
+        private static void DrawDash(Bitmap bmp, int px, Color color)
+        {
+            int width = Math.Max(4, (int)Math.Round(px * 0.6));
+            int thickness = Math.Max(1, (int)Math.Round(px / 10.0));
+            using (Graphics g = Graphics.FromImage(bmp))
+            using (var brush = new SolidBrush(color))
+            {
+                g.FillRectangle(brush, (px - width) / 2, (px - thickness) / 2, width, thickness);
+            }
+        }
+
         private static Bitmap Render(string name, int px, Color color)
         {
             if (px <= 0) px = 1;
             var bmp = new Bitmap(px, px, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            if (name == "minimize")
+            {
+                DrawDash(bmp, px, color);
+                return bmp;
+            }
+
             string glyph;
             FontFamily family = FontLoader.IconFamily;
             if (family == null || !Glyphs.TryGetValue(name, out glyph)) return bmp;

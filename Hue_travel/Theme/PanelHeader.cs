@@ -39,6 +39,7 @@ namespace Hue_travel.Theme
             Cursor = Cursors.SizeAll; // the mockup's cursor-move title strip
             closeButton.Click += (s, e) => CloseClicked?.Invoke(this, EventArgs.Empty);
             Controls.Add(minimizeButton);
+            minimizeButton.Visible = false; // only the main window keeps a minimise mark
             Controls.Add(closeButton);
             ApplyStyle();
             LayoutButtons();
@@ -50,6 +51,14 @@ namespace Hue_travel.Theme
         /// <summary>True: solid primary bar with white text. False: sky-50 bar with dark text.</summary>
         [Category("Appearance")]
         public bool Prominent { get { return prominent; } set { prominent = value; ApplyStyle(); Invalidate(); } }
+
+        /// <summary>False for dialog-like cards (login, register, ...) that make no sense collapsed.</summary>
+        [Category("Behavior"), DefaultValue(false)]
+        public bool ShowMinimize
+        {
+            get { return minimizeButton.Visible; }
+            set { minimizeButton.Visible = value; Invalidate(); }
+        }
 
         [Browsable(true), EditorBrowsable(EditorBrowsableState.Always)]
         public override string Text { get { return base.Text; } set { base.Text = value; Invalidate(); } }
@@ -76,8 +85,8 @@ namespace Hue_travel.Theme
         private void LayoutButtons()
         {
             int top = (Height - closeButton.Height) / 2;
-            closeButton.Location = new Point(Width - 12 - closeButton.Width, top);
-            minimizeButton.Location = new Point(closeButton.Left - 4 - minimizeButton.Width, top);
+            closeButton.Location = new Point(Width - Ui.S(12) - closeButton.Width, top);
+            minimizeButton.Location = new Point(closeButton.Left - Ui.S(4) - minimizeButton.Width, top);
         }
 
         private Point dragCursorStart;
@@ -108,7 +117,7 @@ namespace Hue_travel.Theme
             {
                 // Keep part of the header reachable inside the host window.
                 var area = new Rectangle(host.PointToScreen(Point.Empty), host.ClientSize);
-                left = Math.Max(area.Left - form.Width + 80, Math.Min(area.Right - 80, left));
+                left = Math.Max(area.Left - form.Width + Ui.S(80), Math.Min(area.Right - Ui.S(80), left));
                 top = Math.Max(area.Top, Math.Min(area.Bottom - Height, top));
             }
             form.Location = new Point(left, top);
@@ -122,6 +131,9 @@ namespace Hue_travel.Theme
             Capture = false;
             (FindForm() as FloatingPanelForm)?.RememberPosition();
         }
+
+        // Control.Scale grows children after OnResize ran, so lay out again once scaling is done.
+        protected override void OnLayout(LayoutEventArgs e) { base.OnLayout(e); LayoutButtons(); }
 
         protected override void OnResize(EventArgs e)
         {
@@ -145,14 +157,15 @@ namespace Hue_travel.Theme
                 }
             }
 
-            int x = 12;
+            int x = Ui.S(12);
             if (iconName.Length > 0)
             {
                 Color iconColor = prominent ? Color.White : ThemeColors.Primary;
-                e.Graphics.DrawImage(IconFont.Get(iconName, 16, iconColor), x, (Height - 16) / 2, 16, 16);
-                x += 16 + 6;
+                int iconPx = Ui.S(16);
+                e.Graphics.DrawImage(IconFont.Get(iconName, iconPx, iconColor), x, (Height - iconPx) / 2, iconPx, iconPx);
+                x += iconPx + Ui.S(6);
             }
-            TextRenderer.DrawText(e.Graphics, Text, Font, new Rectangle(x, 0, Math.Max(0, minimizeButton.Left - x), Height), fore,
+            TextRenderer.DrawText(e.Graphics, Text, Font, new Rectangle(x, 0, Math.Max(0, (minimizeButton.Visible ? minimizeButton.Left : closeButton.Left) - x), Height), fore,
                 TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine);
         }
     }

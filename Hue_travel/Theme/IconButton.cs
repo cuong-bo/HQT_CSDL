@@ -102,16 +102,24 @@ namespace Hue_travel.Theme
 
         public override Font Font { get { return base.Font; } set { base.Font = value; Relayout(); } }
 
+        // Design-pixel settings converted to device pixels (the app is DPI aware).
+        private int IconPx => Ui.S(iconSize);
+        private int TrailingPx => Ui.S(trailingIconSize);
+        private int PadPx => Ui.S(horizontalPadding);
+        private int GapPx => Ui.S(gap);
+        private int DotPx => Ui.S(DotSizeLogical);
+        private int RadiusPx => Ui.S(Radius);
+
         public int ContentWidth
         {
             get
             {
-                int width = horizontalPadding * 2;
+                int width = PadPx * 2;
                 bool hasText = !string.IsNullOrEmpty(Text);
-                if (iconName.Length > 0) width += iconSize + (hasText ? gap : 0);
-                else if (HasDot) width += DotSize + (hasText ? gap : 0);
+                if (iconName.Length > 0) width += IconPx + (hasText ? GapPx : 0);
+                else if (HasDot) width += DotPx + (hasText ? GapPx : 0);
                 if (hasText) width += TextRenderer.MeasureText(Text, Font, Size.Empty, MeasureFlags).Width;
-                if (trailingIconName.Length > 0) width += trailingIconSize + (hasText || iconName.Length > 0 ? gap : 0);
+                if (trailingIconName.Length > 0) width += TrailingPx + (hasText || iconName.Length > 0 ? GapPx : 0);
                 return width;
             }
         }
@@ -126,17 +134,17 @@ namespace Hue_travel.Theme
             const TextFormatFlags flags = TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.WordBreak | TextFormatFlags.HorizontalCenter | TextFormatFlags.Top;
 
             int textHeight = string.IsNullOrEmpty(Text) ? 0 : TextRenderer.MeasureText(Text, Font, new Size(Width, int.MaxValue), flags).Height;
-            int blockHeight = iconSize + (textHeight > 0 ? gap : 0) + textHeight;
+            int blockHeight = IconPx + (textHeight > 0 ? GapPx : 0) + textHeight;
             int y = System.Math.Max(0, (Height - blockHeight) / 2);
 
-            g.DrawImage(IconFont.Get(iconName, iconSize, icon), (Width - iconSize) / 2, y, iconSize, iconSize);
+            g.DrawImage(IconFont.Get(iconName, IconPx, icon), (Width - IconPx) / 2, y, IconPx, IconPx);
             if (textHeight > 0)
             {
-                TextRenderer.DrawText(g, Text, Font, new Rectangle(0, y + iconSize + gap, Width, textHeight + 2), text, flags);
+                TextRenderer.DrawText(g, Text, Font, new Rectangle(0, y + IconPx + GapPx, Width, textHeight + 2), text, flags);
             }
         }
 
-        private const int DotSize = 8;
+        private const int DotSizeLogical = 8;
 
         private bool HasDot => iconName.Length == 0 && !DotColor.IsEmpty && DotColor.A > 0;
 
@@ -171,7 +179,7 @@ namespace Hue_travel.Theme
             if (isPressed) fill = ControlPaint.Dark(fill, 0.03f);
             if (fill.A > 0)
             {
-                using (var path = Ui.RoundedRect(bounds, Radius))
+                using (var path = Ui.RoundedRect(bounds, RadiusPx))
                 using (var brush = new SolidBrush(fill))
                 {
                     g.FillPath(brush, path);
@@ -179,7 +187,7 @@ namespace Hue_travel.Theme
             }
             if (BorderColor.A > 0 && !BorderColor.IsEmpty)
             {
-                using (var path = Ui.RoundedRect(bounds, Radius))
+                using (var path = Ui.RoundedRect(bounds, RadiusPx))
                 using (var pen = new Pen(BorderColor, 1f))
                 {
                     g.DrawPath(pen, path);
@@ -195,9 +203,9 @@ namespace Hue_travel.Theme
             bool hasText = !string.IsNullOrEmpty(Text);
             int textWidth = hasText ? TextRenderer.MeasureText(Text, Font, Size.Empty, MeasureFlags).Width : 0;
             int total = textWidth;
-            if (iconName.Length > 0) total += iconSize + (hasText ? gap : 0);
-            else if (HasDot) total += DotSize + (hasText ? gap : 0);
-            if (trailingIconName.Length > 0) total += trailingIconSize + (hasText || iconName.Length > 0 ? gap : 0);
+            if (iconName.Length > 0) total += IconPx + (hasText ? GapPx : 0);
+            else if (HasDot) total += DotPx + (hasText ? GapPx : 0);
+            if (trailingIconName.Length > 0) total += TrailingPx + (hasText || iconName.Length > 0 ? GapPx : 0);
 
             Color icon = Ui.Lerp(IconColor, HoverIconColor.IsEmpty ? IconColor : HoverIconColor, hoverBlend);
             Color text = Ui.Lerp(ForeColor, HoverTextColor.IsEmpty ? ForeColor : HoverTextColor, hoverBlend);
@@ -205,27 +213,27 @@ namespace Hue_travel.Theme
             int x = (Width - total) / 2;
             if (iconName.Length > 0)
             {
-                g.DrawImage(IconFont.Get(iconName, iconSize, icon), x, (Height - iconSize) / 2, iconSize, iconSize);
-                x += iconSize + (hasText ? gap : 0);
+                g.DrawImage(IconFont.Get(iconName, IconPx, icon), x, (Height - IconPx) / 2, IconPx, IconPx);
+                x += IconPx + (hasText ? GapPx : 0);
             }
             else if (HasDot)
             {
                 using (var brush = new SolidBrush(DotColor))
                 {
-                    g.FillEllipse(brush, x, (Height - DotSize) / 2f, DotSize, DotSize);
+                    g.FillEllipse(brush, x, (Height - DotPx) / 2f, DotPx, DotPx);
                 }
-                x += DotSize + (hasText ? gap : 0);
+                x += DotPx + (hasText ? GapPx : 0);
             }
             if (hasText)
             {
                 var textBounds = new Rectangle(x, 0, textWidth + 2, Height);
                 TextRenderer.DrawText(g, Text, Font, textBounds, text,
                     TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.SingleLine);
-                x += textWidth + gap;
+                x += textWidth + GapPx;
             }
             if (trailingIconName.Length > 0)
             {
-                g.DrawImage(IconFont.Get(trailingIconName, trailingIconSize, TrailingIconColor), x, (Height - trailingIconSize) / 2, trailingIconSize, trailingIconSize);
+                g.DrawImage(IconFont.Get(trailingIconName, TrailingPx, TrailingIconColor), x, (Height - TrailingPx) / 2, TrailingPx, TrailingPx);
             }
         }
     }

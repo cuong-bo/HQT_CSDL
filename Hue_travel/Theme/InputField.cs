@@ -99,16 +99,19 @@ namespace Hue_travel.Theme
         [Browsable(false)]
         public bool HasError { get { return hasError; } set { hasError = value; Invalidate(); } }
 
+        // Control.Scale grows children after OnResize ran, so lay out again once scaling is done.
+        protected override void OnLayout(LayoutEventArgs e) { base.OnLayout(e); LayoutChildren(); }
+
         protected override void OnResize(EventArgs e) { base.OnResize(e); LayoutChildren(); }
 
         private void LayoutChildren()
         {
             bool hasIcon = !string.IsNullOrEmpty(leadingIcon.IconName);
-            int left = hasIcon ? 32 : 10;
-            int right = isRevealable ? 32 : 10;
+            int left = hasIcon ? Ui.S(32) : Ui.S(10);
+            int right = isRevealable ? Ui.S(32) : Ui.S(10);
             leadingIcon.Visible = hasIcon;
-            leadingIcon.Location = new Point(10, (Height - leadingIcon.Height) / 2);
-            revealButton.Location = new Point(Width - 10 - revealButton.Width, (Height - revealButton.Height) / 2);
+            leadingIcon.Location = new Point(Ui.S(10), (Height - leadingIcon.Height) / 2);
+            revealButton.Location = new Point(Width - Ui.S(10) - revealButton.Width, (Height - revealButton.Height) / 2);
             textBox.Location = new Point(left, (Height - textBox.Height) / 2);
             textBox.Width = Math.Max(10, Width - left - right);
         }
@@ -117,7 +120,7 @@ namespace Hue_travel.Theme
         {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), 6))
+            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), Ui.S(6)))
             using (var fill = new SolidBrush(ThemeColors.Slate50))
             using (var pen = new Pen(hasError ? ThemeColors.Red500 : isFocused ? ThemeColors.Primary : ThemeColors.Slate200, 1f))
             {

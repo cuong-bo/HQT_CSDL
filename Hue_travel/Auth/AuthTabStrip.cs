@@ -40,19 +40,19 @@ namespace Hue_travel.Auth
         protected override void OnPaint(PaintEventArgs e)
         {
             Graphics g = e.Graphics;
-            using (var baseline = new SolidBrush(ThemeColors.Slate200)) g.FillRectangle(baseline, 0, Height - 1, Width, 1);
+            using (var baseline = new SolidBrush(ThemeColors.Slate200)) g.FillRectangle(baseline, 0, Height - Ui.S(1), Width, Ui.S(1));
 
             int half = Width / 2;
             string[] labels = { "Đăng Nhập", "Đăng Ký Du Khách" };
             for (int i = 0; i < 2; i++)
             {
                 bool active = i == activeTab;
-                var bounds = new Rectangle(i * half, 0, half, Height - 2);
+                var bounds = new Rectangle(i * half, 0, half, Height - Ui.S(2));
                 TextRenderer.DrawText(g, labels[i], active ? ThemeFonts.Bold(12) : ThemeFonts.Medium(12), bounds,
                     active ? ThemeColors.Primary : ThemeColors.Slate500, Flags);
                 if (active)
                 {
-                    using (var underline = new SolidBrush(ThemeColors.Primary)) g.FillRectangle(underline, bounds.X, Height - 2, half, 2);
+                    using (var underline = new SolidBrush(ThemeColors.Primary)) g.FillRectangle(underline, bounds.X, Height - Ui.S(2), half, Ui.S(2));
                 }
             }
         }

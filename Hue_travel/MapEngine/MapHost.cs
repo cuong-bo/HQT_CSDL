@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
 using AxInterop.MapWinGIS;
+using Hue_travel.Theme;
 using Interop.MapWinGIS;
 
 namespace Hue_travel.MapEngine
@@ -134,8 +135,8 @@ namespace Hue_travel.MapEngine
                 double px = 0, py = 0;
                 axMap.ProjToPixel(pin.X, pin.Y, ref px, ref py);
                 // The pin picture sits above its anchor point: ~110 px wide, ~80 px tall.
-                if (Math.Abs(x - px) > 55 || y < py - 80 || y > py + 8) continue;
-                double distance = Math.Abs(x - px) + Math.Abs(y - py + 30);
+                if (Math.Abs(x - px) > Ui.S(55) || y < py - Ui.S(80) || y > py + Ui.S(8)) continue;
+                double distance = Math.Abs(x - px) + Math.Abs(y - py + Ui.S(30));
                 if (distance < best) { best = distance; hit = pin.Key; }
             }
             if (hit != null) PinClicked?.Invoke(this, hit);
@@ -169,17 +170,23 @@ namespace Hue_travel.MapEngine
         }
 
         // Anchors the overlays like the mockup: info pill centred at the top, controls in the top-right column.
+        protected override void OnLayout(LayoutEventArgs e)
+        {
+            base.OnLayout(e);
+            LayoutOverlays(); // Control.Scale grows children after the Resize handler ran
+        }
+
         private void LayoutOverlays()
         {
-            boxInfo.Width = Math.Min(680, Math.Max(200, Width - 2 * (RightMargin + 48)));
-            tagInfo.Left = boxInfo.Width - tagInfo.Width - 12;
-            captionInfo.Width = Math.Max(0, tagInfo.Left - captionInfo.Left - 8);
-            boxInfo.Location = new System.Drawing.Point((Width - boxInfo.Width) / 2, InfoTop);
+            boxInfo.Width = Math.Min(Ui.S(680), Math.Max(Ui.S(200), Width - 2 * Ui.S(RightMargin + 48)));
+            tagInfo.Left = boxInfo.Width - tagInfo.Width - Ui.S(12);
+            captionInfo.Width = Math.Max(0, tagInfo.Left - captionInfo.Left - Ui.S(8));
+            boxInfo.Location = new System.Drawing.Point((Width - boxInfo.Width) / 2, Ui.S(InfoTop));
 
-            int x = Width - RightMargin - stackBaseMaps.Width;
-            stackBaseMaps.Location = new System.Drawing.Point(x, ColumnTop);
-            compass.Location = new System.Drawing.Point(x + (stackBaseMaps.Width - compass.Width) / 2, stackBaseMaps.Bottom + StackGap + 4);
-            stackZoom.Location = new System.Drawing.Point(x, compass.Bottom + StackGap);
+            int x = Width - Ui.S(RightMargin) - stackBaseMaps.Width;
+            stackBaseMaps.Location = new System.Drawing.Point(x, Ui.S(ColumnTop));
+            compass.Location = new System.Drawing.Point(x + (stackBaseMaps.Width - compass.Width) / 2, stackBaseMaps.Bottom + Ui.S(StackGap + 4));
+            stackZoom.Location = new System.Drawing.Point(x, compass.Bottom + Ui.S(StackGap));
         }
 
         private void stackBaseMaps_ItemClicked(object sender, int index)

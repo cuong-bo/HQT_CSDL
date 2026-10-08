@@ -45,6 +45,7 @@ namespace Hue_travel.Theme
         private bool hasSystemCorners;
         private int expandedHeight;
         private bool isCollapsed;
+        private bool isScaled;
 
         public FloatingPanelForm()
         {
@@ -77,6 +78,15 @@ namespace Hue_travel.Theme
             centerYOffset = clientLocation.Y + Height / 2 - client.Height / 2;
             host.LocationChanged += (s, e) => Reposition();
             host.SizeChanged += (s, e) => Reposition();
+            ScaleToScreen();
+        }
+
+        /// <summary>Panels are laid out in 96-DPI design pixels; grow the form and its children once to the screen DPI.</summary>
+        private void ScaleToScreen()
+        {
+            if (isScaled || Ui.Scale <= 1.001f) return;
+            isScaled = true;
+            Scale(new SizeF(Ui.Scale, Ui.Scale));
         }
 
         /// <summary>Call after the panel was moved or resized by the user so it keeps that spot when the host moves.</summary>
@@ -86,13 +96,16 @@ namespace Hue_travel.Theme
             Point origin = host.PointToScreen(Point.Empty);
             Size client = host.ClientSize;
             int x = Left - origin.X, y = Top - origin.Y;
-            leftOffset = x;
-            topOffset = y;
-            rightOffset = client.Width - (x + Width);
-            bottomOffset = client.Height - (y + Height);
-            centerXOffset = x + Width / 2 - client.Width / 2;
-            centerYOffset = y + Height / 2 - client.Height / 2;
+            // Offsets are kept in design pixels so they survive a DPI change of the layout.
+            leftOffset = Design(x);
+            topOffset = Design(y);
+            rightOffset = Design(client.Width - (x + Width));
+            bottomOffset = Design(client.Height - (y + Height));
+            centerXOffset = Design(x + Width / 2 - client.Width / 2);
+            centerYOffset = Design(y + Height / 2 - client.Height / 2);
         }
+
+        private static int Design(int devicePixels) => (int)Math.Round(devicePixels / Ui.Scale);
 
         private void Reposition()
         {
@@ -102,12 +115,12 @@ namespace Hue_travel.Theme
             bool left = (anchor & AnchorStyles.Left) != 0, right = (anchor & AnchorStyles.Right) != 0;
             bool top = (anchor & AnchorStyles.Top) != 0, bottom = (anchor & AnchorStyles.Bottom) != 0;
 
-            int x = left ? origin.X + leftOffset
-                  : right ? origin.X + client.Width - rightOffset - Width
-                  : origin.X + client.Width / 2 + centerXOffset - Width / 2;
-            int y = top ? origin.Y + topOffset
-                  : bottom ? origin.Y + client.Height - bottomOffset - Height
-                  : origin.Y + client.Height / 2 + centerYOffset - Height / 2;
+            int x = left ? origin.X + Ui.S(leftOffset)
+                  : right ? origin.X + client.Width - Ui.S(rightOffset) - Width
+                  : origin.X + client.Width / 2 + Ui.S(centerXOffset) - Width / 2;
+            int y = top ? origin.Y + Ui.S(topOffset)
+                  : bottom ? origin.Y + client.Height - Ui.S(bottomOffset) - Height
+                  : origin.Y + client.Height / 2 + Ui.S(centerYOffset) - Height / 2;
             Location = new Point(x, y);
         }
 
@@ -202,7 +215,7 @@ namespace Hue_travel.Theme
                 return;
             }
             if (Width <= 0 || Height <= 0) return;
-            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0, 0, Width, Height), CornerRadius))
+            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0, 0, Width, Height), Ui.S(CornerRadius)))
             {
                 Region = new Region(path);
             }
@@ -218,7 +231,7 @@ namespace Hue_travel.Theme
         {
             base.OnPaint(e);
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), CornerRadius))
+            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), Ui.S(CornerRadius)))
             using (var pen = new Pen(ThemeColors.Slate200, 1f))
             {
                 e.Graphics.DrawPath(pen, path);

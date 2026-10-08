@@ -78,16 +78,17 @@ namespace Hue_travel.Theme
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             var bounds = new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f);
-            using (GraphicsPath path = Ui.RoundedRect(bounds, 6))
+            using (GraphicsPath path = Ui.RoundedRect(bounds, Ui.S(6)))
             using (var fill = new SolidBrush(isHovered ? Color.White : ThemeColors.Slate50))
             using (var pen = new Pen(isHovered ? ThemeColors.Sky200 : ThemeColors.Slate200, 1f))
             {
                 g.FillPath(fill, path);
                 g.DrawPath(pen, path);
             }
-            TextRenderer.DrawText(g, Text, Font, new Rectangle(10, 0, Width - 40, Height), ForeColor,
+            TextRenderer.DrawText(g, Text, Font, new Rectangle(Ui.S(10), 0, Width - Ui.S(40), Height), ForeColor,
                 TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine);
-            g.DrawImage(IconFont.Get("expand_more", 18, ThemeColors.Slate500), Width - 26, (Height - 18) / 2, 18, 18);
+            int chevron = Ui.S(18);
+            g.DrawImage(IconFont.Get("expand_more", chevron, ThemeColors.Slate500), Width - Ui.S(26), (Height - chevron) / 2, chevron, chevron);
         }
     }
 }

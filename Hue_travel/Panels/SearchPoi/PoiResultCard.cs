@@ -80,15 +80,18 @@ namespace Hue_travel.Panels.SearchPoi
         [Browsable(true), EditorBrowsable(EditorBrowsableState.Always)]
         public override string Text { get { return base.Text; } set { base.Text = value; Invalidate(); } }
 
+        // Control.Scale grows children after OnResize ran, so lay out again once scaling is done.
+        protected override void OnLayout(LayoutEventArgs e) { base.OnLayout(e); LayoutButtons(); }
+
         protected override void OnResize(EventArgs e) { base.OnResize(e); LayoutButtons(); }
         protected override void OnMouseEnter(EventArgs e) { isHovered = true; Invalidate(); base.OnMouseEnter(e); }
         protected override void OnMouseLeave(EventArgs e) { isHovered = false; Invalidate(); base.OnMouseLeave(e); }
 
         private void LayoutButtons()
         {
-            int top = Height - 8 - 20;
-            routeButton.Location = new Point(Width - 8 - routeButton.Width, top);
-            mapButton.Location = new Point(routeButton.Left - 4 - mapButton.Width, top);
+            int top = Height - Ui.S(8) - routeButton.Height;
+            routeButton.Location = new Point(Width - Ui.S(8) - routeButton.Width, top);
+            mapButton.Location = new Point(routeButton.Left - Ui.S(4) - mapButton.Width, top);
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -97,7 +100,7 @@ namespace Hue_travel.Panels.SearchPoi
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
             Color fill = isHovered ? Color.FromArgb(0xF3, 0xF9, 0xFE) : (isTinted ? ThemeColors.Slate50 : Color.White);
-            using (GraphicsPath card = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), 8))
+            using (GraphicsPath card = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), Ui.S(8)))
             using (var brush = new SolidBrush(fill))
             using (var pen = new Pen(isHovered ? ThemeColors.Sky200 : ThemeColors.Slate200, 1f))
             {
@@ -106,29 +109,29 @@ namespace Hue_travel.Panels.SearchPoi
             }
 
             // 48px thumbnail (object-cover, rounded, 1px border)
-            var thumb = new Rectangle(9, 9, 48, 48);
+            var thumb = new Rectangle(Ui.S(9), Ui.S(9), Ui.S(48), Ui.S(48));
             var state = g.Save();
-            using (GraphicsPath clip = Ui.RoundedRect(thumb, 4))
+            using (GraphicsPath clip = Ui.RoundedRect(thumb, Ui.S(4)))
             {
                 g.SetClip(clip, CombineMode.Intersect);
-                if (cachedPhoto == null) cachedPhoto = AppImages.PoiPhoto(48, 48, 0);
+                if (cachedPhoto == null) cachedPhoto = AppImages.PoiPhoto(thumb.Width, thumb.Height, 0);
                 g.DrawImage(cachedPhoto, thumb);
             }
             g.Restore(state);
-            using (GraphicsPath outline = Ui.RoundedRect(new RectangleF(thumb.X - 0.5f, thumb.Y - 0.5f, thumb.Width, thumb.Height), 4))
+            using (GraphicsPath outline = Ui.RoundedRect(new RectangleF(thumb.X - 0.5f, thumb.Y - 0.5f, thumb.Width, thumb.Height), Ui.S(4)))
             using (var pen = new Pen(ThemeColors.Slate200, 1f))
             {
                 g.DrawPath(pen, outline);
             }
 
             // rating badge (amber)
-            int right = Width - 10;
+            int right = Width - Ui.S(10);
             int badgeWidth = 0;
             if (!string.IsNullOrEmpty(Rating))
             {
-                badgeWidth = TextRenderer.MeasureText(Rating, ThemeFonts.Bold(10), Size.Empty, MeasureFlags).Width + 8;
-                var badge = new Rectangle(right - badgeWidth, 9, badgeWidth, 16);
-                using (GraphicsPath path = Ui.RoundedRect(badge, 3))
+                badgeWidth = TextRenderer.MeasureText(Rating, ThemeFonts.Bold(10), Size.Empty, MeasureFlags).Width + Ui.S(8);
+                var badge = new Rectangle(right - badgeWidth, Ui.S(9), badgeWidth, Ui.S(16));
+                using (GraphicsPath path = Ui.RoundedRect(badge, Ui.S(3)))
                 using (var brush = new SolidBrush(ThemeColors.Amber50))
                 {
                     g.FillPath(brush, path);
@@ -137,10 +140,10 @@ namespace Hue_travel.Panels.SearchPoi
                     TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter | TextFormatFlags.SingleLine);
             }
 
-            int textLeft = 66;
-            TextRenderer.DrawText(g, Text, ThemeFonts.Bold(12), new Rectangle(textLeft, 8, Math.Max(0, right - badgeWidth - 6 - textLeft), 18), ThemeColors.Slate800, LeftFlags);
-            TextRenderer.DrawText(g, Address, ThemeFonts.Regular(11), new Rectangle(textLeft, 26, right - textLeft, 16), ThemeColors.Slate500, LeftFlags);
-            TextRenderer.DrawText(g, Distance, ThemeFonts.SemiBold(10), new Rectangle(textLeft, Height - 8 - 20, Math.Max(0, mapButton.Left - textLeft - 4), 20), ThemeColors.Emerald700, LeftFlags);
+            int textLeft = Ui.S(66);
+            TextRenderer.DrawText(g, Text, ThemeFonts.Bold(12), new Rectangle(textLeft, Ui.S(8), Math.Max(0, right - badgeWidth - Ui.S(6) - textLeft), Ui.S(18)), ThemeColors.Slate800, LeftFlags);
+            TextRenderer.DrawText(g, Address, ThemeFonts.Regular(11), new Rectangle(textLeft, Ui.S(26), right - textLeft, Ui.S(16)), ThemeColors.Slate500, LeftFlags);
+            TextRenderer.DrawText(g, Distance, ThemeFonts.SemiBold(10), new Rectangle(textLeft, Height - Ui.S(8) - mapButton.Height, Math.Max(0, mapButton.Left - textLeft - Ui.S(4)), mapButton.Height), ThemeColors.Emerald700, LeftFlags);
         }
     }
 }

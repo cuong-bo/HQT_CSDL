@@ -97,7 +97,7 @@ namespace Hue_travel.Panels.PoiIdentify
             this.panelHeader.Controls.Add(this.btnClose);
 
             // 144 x 112 photo, rounded.
-            this.picPhoto.Image = AppImages.PoiPhoto(144, 112, 6);
+            this.picPhoto.Image = AppImages.PoiPhoto(Ui.S(144), Ui.S(112), Ui.S(6));
             this.picPhoto.Size = new Size(144, 112);
             this.picPhoto.Location = new Point(14, 52);
 

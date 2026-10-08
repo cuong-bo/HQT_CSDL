@@ -63,6 +63,7 @@ namespace Hue_travel.Auth
             this.header.IconName = "lock_reset";
             this.header.Text = "Khôi Phục Mật Khẩu - Cố Đô GIS";
             this.header.Prominent = true;
+            this.header.ShowMinimize = false;
             this.header.CloseClicked += new System.EventHandler(this.header_CloseClicked);
 
             // Info box: sky-50 / sky-100 with verified_user icon.

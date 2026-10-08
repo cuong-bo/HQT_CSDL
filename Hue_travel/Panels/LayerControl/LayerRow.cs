@@ -68,7 +68,7 @@ namespace Hue_travel.Panels.LayerControl
             g.SmoothingMode = SmoothingMode.AntiAlias;
             if (isHovered)
             {
-                using (GraphicsPath hover = Ui.RoundedRect(new RectangleF(0, 0, Width, Height), 6))
+                using (GraphicsPath hover = Ui.RoundedRect(new RectangleF(0, 0, Width, Height), Ui.S(6)))
                 using (var brush = new SolidBrush(ThemeColors.Slate50))
                 {
                     g.FillPath(brush, hover);
@@ -76,13 +76,15 @@ namespace Hue_travel.Panels.LayerControl
             }
 
             // checkbox
-            var box = new RectangleF(6.5f, (Height - 16) / 2f + 0.5f, 15f, 15f);
-            using (GraphicsPath path = Ui.RoundedRect(box, 3))
+            int boxSize = Ui.S(16);
+            var box = new RectangleF(Ui.S(6) + 0.5f, (Height - boxSize) / 2f + 0.5f, boxSize - 1f, boxSize - 1f);
+            using (GraphicsPath path = Ui.RoundedRect(box, Ui.S(3)))
             {
                 if (isChecked)
                 {
                     using (var brush = new SolidBrush(ThemeColors.Primary)) g.FillPath(brush, path);
-                    g.DrawImage(IconFont.Get("check", 14, Color.White), 7, (Height - 14) / 2, 14, 14);
+                    int tick = Ui.S(14);
+                    g.DrawImage(IconFont.Get("check", tick, Color.White), Ui.S(7), (Height - tick) / 2, tick, tick);
                 }
                 else
                 {
@@ -96,26 +98,26 @@ namespace Hue_travel.Panels.LayerControl
             {
                 if (SwatchShape == SwatchShape.Line)
                 {
-                    g.FillRectangle(brush, 30, Height / 2 - 1, 12, 2);
+                    g.FillRectangle(brush, Ui.S(30), Height / 2 - 1, Ui.S(12), Math.Max(2, Ui.S(2)));
                 }
                 else if (SwatchShape == SwatchShape.RoundedSquare)
                 {
-                    using (GraphicsPath sw = Ui.RoundedRect(new RectangleF(30, (Height - 10) / 2f, 10, 10), 3)) g.FillPath(brush, sw);
+                    using (GraphicsPath sw = Ui.RoundedRect(new RectangleF(Ui.S(30), (Height - Ui.S(10)) / 2f, Ui.S(10), Ui.S(10)), Ui.S(3))) g.FillPath(brush, sw);
                 }
                 else
                 {
-                    g.FillEllipse(brush, 30, (Height - 10) / 2f, 10, 10);
+                    g.FillEllipse(brush, Ui.S(30), (Height - Ui.S(10)) / 2f, Ui.S(10), Ui.S(10));
                 }
             }
 
             Color nameColor = isChecked ? ThemeColors.Slate800 : ThemeColors.Slate700;
             Color countColor = isChecked ? ThemeColors.Slate500 : ThemeColors.Slate400;
             int countWidth = string.IsNullOrEmpty(CountText) ? 0 : TextRenderer.MeasureText(CountText, ThemeFonts.Regular(11), Size.Empty, RightFlags).Width;
-            int nameLeft = 48;
-            TextRenderer.DrawText(g, Text, Font, new Rectangle(nameLeft, 0, Math.Max(0, Width - nameLeft - countWidth - 14), Height), nameColor, LeftFlags);
+            int nameLeft = Ui.S(48);
+            TextRenderer.DrawText(g, Text, Font, new Rectangle(nameLeft, 0, Math.Max(0, Width - nameLeft - countWidth - Ui.S(14)), Height), nameColor, LeftFlags);
             if (countWidth > 0)
             {
-                TextRenderer.DrawText(g, CountText, ThemeFonts.Regular(11), new Rectangle(Width - countWidth - 6, 0, countWidth, Height), countColor, RightFlags);
+                TextRenderer.DrawText(g, CountText, ThemeFonts.Regular(11), new Rectangle(Width - countWidth - Ui.S(6), 0, countWidth, Height), countColor, RightFlags);
             }
         }
     }

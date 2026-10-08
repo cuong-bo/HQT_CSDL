@@ -34,16 +34,16 @@ namespace Hue_travel.Shell
         {
             int top = (Height - lblAreaValue.Height) / 2;
 
-            captionArea.Left = EdgePadding;
+            captionArea.Left = Hue_travel.Theme.Ui.S(EdgePadding);
             lblAreaValue.Left = captionArea.Right;
             lblAreaValue.Top = top;
             captionArea.Top = (Height - captionArea.Height) / 2;
 
-            pillReady.Left = Width - EdgePadding - pillReady.Width;
+            pillReady.Left = Width - Hue_travel.Theme.Ui.S(EdgePadding) - pillReady.Width;
             pillReady.Top = (Height - pillReady.Height) / 2;
-            dividerScale.Left = pillReady.Left - GroupGap - dividerScale.Width;
+            dividerScale.Left = pillReady.Left - Hue_travel.Theme.Ui.S(GroupGap) - dividerScale.Width;
             dividerScale.Top = (Height - dividerScale.Height) / 2;
-            lblScale.Left = dividerScale.Left - GroupGap - lblScale.Width;
+            lblScale.Left = dividerScale.Left - Hue_travel.Theme.Ui.S(GroupGap) - lblScale.Width;
             lblScale.Top = top;
 
             int leftEnd = lblAreaValue.Right;

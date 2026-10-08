@@ -6,6 +6,29 @@ namespace Hue_travel.Theme
     /// <summary>Small GDI+ helpers shared by owner-drawn controls and map overlays.</summary>
     public static class Ui
     {
+        /// <summary>Screen DPI / 96. The app is system-DPI aware, so this is fixed for the process lifetime.</summary>
+        public static float Scale { get; } = ComputeScale();
+
+        private static float ComputeScale()
+        {
+            try
+            {
+                using (Graphics g = Graphics.FromHwnd(System.IntPtr.Zero))
+                {
+                    return System.Math.Max(1f, g.DpiX / 96f);
+                }
+            }
+            catch (System.Exception)
+            {
+                return 1f;
+            }
+        }
+
+        /// <summary>Scales a 96-DPI design pixel value to device pixels (use for sizes drawn or laid out in code).</summary>
+        public static int S(int designPixels) => (int)System.Math.Round(designPixels * Scale);
+
+        public static float S(float designPixels) => designPixels * Scale;
+
         /// <summary>A rounded-rectangle path. Radius is clamped to half the shorter side (pill shape).</summary>
         public static GraphicsPath RoundedRect(RectangleF bounds, float radius)
         {

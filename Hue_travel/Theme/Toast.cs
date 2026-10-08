@@ -57,9 +57,10 @@ namespace Hue_travel.Theme
             kind = messageKind;
             Text = text;
             int textWidth = TextRenderer.MeasureText(text, Font, Size.Empty, TextFormatFlags.NoPadding | TextFormatFlags.SingleLine).Width;
-            Width = textWidth + 52;
+            Width = textWidth + Ui.S(52);
+            Height = Ui.S(PillHeight);
             if (Parent != null) Left = (Parent.ClientSize.Width - Width) / 2;
-            Top = TopOffset;
+            Top = Ui.S(TopOffset);
             Visible = true;
             BringToFront();
             hideTimer.Stop();
@@ -83,8 +84,8 @@ namespace Hue_travel.Theme
             }
 
             Color dot = kind == ToastKind.Success ? ThemeColors.Emerald500 : kind == ToastKind.Error ? ThemeColors.Red500 : ThemeColors.Sky400;
-            using (var brush = new SolidBrush(dot)) g.FillEllipse(brush, 16, (Height - 9) / 2f, 9, 9);
-            TextRenderer.DrawText(g, Text, Font, new Rectangle(34, 0, Width - 44, Height), Color.White,
+            using (var brush = new SolidBrush(dot)) g.FillEllipse(brush, Ui.S(16), (Height - Ui.S(9)) / 2f, Ui.S(9), Ui.S(9));
+            TextRenderer.DrawText(g, Text, Font, new Rectangle(Ui.S(34), 0, Width - Ui.S(44), Height), Color.White,
                 TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.SingleLine);
         }
     }

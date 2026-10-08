@@ -62,7 +62,7 @@ namespace Hue_travel.Panels.RouteOptimizer
 
             if (isChecked)
             {
-                using (GraphicsPath card = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), 4))
+                using (GraphicsPath card = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), Ui.S(4)))
                 using (var fill = new SolidBrush(Color.White))
                 using (var pen = new Pen(ThemeColors.Slate200, 1f))
                 {
@@ -71,13 +71,15 @@ namespace Hue_travel.Panels.RouteOptimizer
                 }
             }
 
-            var box = new RectangleF(8.5f, (Height - 16) / 2f + 0.5f, 15f, 15f);
-            using (GraphicsPath path = Ui.RoundedRect(box, 3))
+            int boxSize = Ui.S(16);
+            var box = new RectangleF(Ui.S(8) + 0.5f, (Height - boxSize) / 2f + 0.5f, boxSize - 1f, boxSize - 1f);
+            using (GraphicsPath path = Ui.RoundedRect(box, Ui.S(3)))
             {
                 if (isChecked)
                 {
                     using (var brush = new SolidBrush(ThemeColors.Primary)) g.FillPath(brush, path);
-                    g.DrawImage(IconFont.Get("check", 14, Color.White), 9, (Height - 14) / 2, 14, 14);
+                    int tick = Ui.S(14);
+                    g.DrawImage(IconFont.Get("check", tick, Color.White), Ui.S(9), (Height - tick) / 2, tick, tick);
                 }
                 else
                 {
@@ -90,11 +92,11 @@ namespace Hue_travel.Panels.RouteOptimizer
             string badgeText = isChecked ? "Thứ tự: " + order : "Chưa chọn";
             Font badgeFont = isChecked ? ThemeFonts.Bold(11) : ThemeFonts.Regular(11);
             int badgeTextWidth = TextRenderer.MeasureText(badgeText, badgeFont, Size.Empty, MeasureFlags).Width;
-            int right = Width - 8;
+            int right = Width - Ui.S(8);
             if (isChecked)
             {
-                var badge = new RectangleF(right - badgeTextWidth - 16, (Height - 20) / 2f, badgeTextWidth + 16, 20);
-                using (GraphicsPath path = Ui.RoundedRect(badge, 4))
+                var badge = new RectangleF(right - badgeTextWidth - Ui.S(16), (Height - Ui.S(20)) / 2f, badgeTextWidth + Ui.S(16), Ui.S(20));
+                using (GraphicsPath path = Ui.RoundedRect(badge, Ui.S(4)))
                 using (var fill = new SolidBrush(ThemeColors.Sky50))
                 using (var pen = new Pen(ThemeColors.Sky200, 1f))
                 {
@@ -109,11 +111,11 @@ namespace Hue_travel.Panels.RouteOptimizer
                 TextRenderer.DrawText(g, badgeText, badgeFont, new Rectangle(right - badgeTextWidth, 0, badgeTextWidth, Height), ThemeColors.Slate400, LeftFlags);
             }
 
-            int textRight = right - badgeTextWidth - (isChecked ? 24 : 8);
+            int textRight = right - badgeTextWidth - Ui.S(isChecked ? 24 : 8);
             Font titleFont = isChecked ? ThemeFonts.SemiBold(12) : ThemeFonts.Medium(12);
             Color titleColor = isChecked ? ThemeColors.Slate800 : ThemeColors.Slate700;
-            TextRenderer.DrawText(g, Text, titleFont, new Rectangle(34, 5, Math.Max(0, textRight - 34), 17), titleColor, LeftFlags);
-            TextRenderer.DrawText(g, Subtitle, ThemeFonts.Regular(11), new Rectangle(34, 22, Math.Max(0, textRight - 34), 16), ThemeColors.Slate500, LeftFlags);
+            TextRenderer.DrawText(g, Text, titleFont, new Rectangle(Ui.S(34), Ui.S(5), Math.Max(0, textRight - Ui.S(34)), Ui.S(17)), titleColor, LeftFlags);
+            TextRenderer.DrawText(g, Subtitle, ThemeFonts.Regular(11), new Rectangle(Ui.S(34), Ui.S(22), Math.Max(0, textRight - Ui.S(34)), Ui.S(16)), ThemeColors.Slate500, LeftFlags);
         }
     }
 }

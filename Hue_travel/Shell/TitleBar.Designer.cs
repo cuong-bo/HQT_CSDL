@@ -45,7 +45,7 @@ namespace Hue_travel.Shell
             // Logo (h-7 w-7) + "Cố Đô GIS" (text-xs font-bold).
             this.picLogo.Location = new System.Drawing.Point(14, 8);
             this.picLogo.Size = new System.Drawing.Size(40, 40);
-            this.picLogo.Image = AppImages.Logo(40);
+            this.picLogo.Image = AppImages.Logo(Ui.S(40));
             this.picLogo.BackColor = System.Drawing.Color.Transparent;
             this.picLogo.MouseDown += new System.Windows.Forms.MouseEventHandler(this.panelRoot_MouseDown);
 
