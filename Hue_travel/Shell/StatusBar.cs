@@ -20,6 +20,12 @@ namespace Hue_travel.Shell
             LayoutItems();
         }
 
+        public void SetWeather(string text)
+        {
+            lblWeatherValue.Text = text;
+            LayoutItems();
+        }
+
         public void SetScale(string text)
         {
             lblScale.Text = $"Tỉ lệ: {text}";

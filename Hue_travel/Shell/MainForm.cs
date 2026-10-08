@@ -3,6 +3,9 @@ using System.Linq;
 using System.Windows.Forms;
 using Hue_travel.Models;
 using Hue_travel.SampleData;
+using Hue_travel.Services;
+using Hue_travel.Services.Area;
+using Hue_travel.Services.Weather;
 using Hue_travel.Theme;
 
 namespace Hue_travel.Shell
@@ -22,6 +25,8 @@ namespace Hue_travel.Shell
         }
 
         private readonly FloatingPanelForm[] panels;
+        private readonly WeatherUpdater weatherUpdater = new WeatherUpdater(new OpenMeteoWeatherService());
+        private readonly IAreaLocator areaLocator = new DemoAreaLocator();
 
         // The default layout opens once the window is on screen (the panels are owned by it).
         protected override void OnShown(EventArgs e)
@@ -32,6 +37,13 @@ namespace Hue_travel.Shell
             routeOptimizerPanel.Visible = true;
             travelGuidePanel.Visible = true;
             poiIdentifyCard.Visible = true;
+            weatherUpdater.Start();
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            weatherUpdater.Dispose();
+            base.OnFormClosed(e);
         }
 
         private void WireEvents()
@@ -88,6 +100,15 @@ namespace Hue_travel.Shell
             {
                 Poi poi = SamplePois.All.FirstOrDefault(p => p.Id == key);
                 if (poi != null) ShowPoiCard(poi);
+            };
+
+            // Status bar: live scale and area from the map view, weather from Open-Meteo (no fixed placeholder text).
+            statusBar.SetWeather(weatherUpdater.Text);
+            weatherUpdater.TextChanged += (s, text) => statusBar.SetWeather(text);
+            mapHost.ViewChanged += (s, view) =>
+            {
+                statusBar.SetScale(MapScale.Format(view.ScaleDenominator));
+                statusBar.SetArea(areaLocator.Locate(view.CenterX, view.CenterY));
             };
 
             baseMapSwitcherPopup.BaseMapSelected += (s, mapId) =>

@@ -47,6 +47,7 @@
     <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Net.Http" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Interop.MapWinGIS">
@@ -121,6 +122,16 @@
     <Compile Include="SampleData\SamplePois.cs" />
     <Compile Include="SampleData\SampleTours.cs" />
     <Compile Include="MapEngine\MapScene.cs" />
+    <Compile Include="MapEngine\MapViewChangedEventArgs.cs" />
+    <Compile Include="Services\MapScale.cs" />
+    <Compile Include="Services\Area\DemoAreaLocator.cs" />
+    <Compile Include="Services\Area\IAreaLocator.cs" />
+    <Compile Include="Services\Weather\IWeatherService.cs" />
+    <Compile Include="Services\Weather\OpenMeteoParser.cs" />
+    <Compile Include="Services\Weather\OpenMeteoWeatherService.cs" />
+    <Compile Include="Services\Weather\WeatherDescriber.cs" />
+    <Compile Include="Services\Weather\WeatherSnapshot.cs" />
+    <Compile Include="Services\Weather\WeatherUpdater.cs" />
     <Compile Include="MapEngine\PinRenderer.cs" />
     <Compile Include="MapEngine\Overlays\MapToolStack.cs">
       <SubType>Component</SubType>

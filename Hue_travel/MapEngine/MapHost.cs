@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
 using AxInterop.MapWinGIS;
+using Hue_travel.Services;
 using Hue_travel.Theme;
 using Interop.MapWinGIS;
 
@@ -22,12 +23,18 @@ namespace Hue_travel.MapEngine
         private int mouseDownX = int.MinValue, mouseDownY = int.MinValue;
         private bool wasButtonDown;
         private readonly Timer pressTracker = new Timer { Interval = 10 };
+        private readonly Timer viewTracker = new Timer { Interval = 150 };
+        private double lastXMin, lastXMax, lastYMin, lastYMax;
+        private int lastPixelWidth = -1;
 
         /// <summary>Raised when the on-map quick switch picks a base map ("standard", "satellite" or "night").</summary>
         public event EventHandler<string> BaseMapRequested;
 
         /// <summary>Raised when a pin is clicked; the argument is the pin key (the sample POI id, e.g. "dai-noi").</summary>
         public event EventHandler<string> PinClicked;
+
+        /// <summary>Raised after the visible extent (or the control width) changed: new centre and scale.</summary>
+        public event EventHandler<MapViewChangedEventArgs> ViewChanged;
 
         public MapHost()
         {
@@ -41,7 +48,7 @@ namespace Hue_travel.MapEngine
             LayoutOverlays();
             Resize += (s, e) => LayoutOverlays();
             new ToolTip().SetToolTip(compass, "Khôi phục hướng Bắc");
-            Disposed += (s, e) => pressTracker.Dispose();
+            Disposed += (s, e) => { pressTracker.Dispose(); viewTracker.Dispose(); };
 
         }
 
@@ -110,6 +117,20 @@ namespace Hue_travel.MapEngine
             return true;
         }
 
+        // The ActiveX map has no throttled "view changed" notification, so poll the extent (also catches inertia and resize).
+        private void PublishViewIfChanged()
+        {
+            Extents view = axMap.Extents;
+            if (view == null || axMap.Width <= 0) return;
+            double xMin = view.xMin, xMax = view.xMax, yMin = view.yMin, yMax = view.yMax;
+            if (xMin == lastXMin && xMax == lastXMax && yMin == lastYMin && yMax == lastYMax && axMap.Width == lastPixelWidth) return;
+            lastXMin = xMin; lastXMax = xMax; lastYMin = yMin; lastYMax = yMax; lastPixelWidth = axMap.Width;
+
+            // Map units are metres (the target CRS, VN-2000 UTM zone 48N, is metric); 96 DPI scaled to the screen.
+            double denominator = MapScale.Denominator(xMax - xMin, axMap.Width, 96.0 * Ui.Scale);
+            ViewChanged?.Invoke(this, new MapViewChangedEventArgs((xMin + xMax) / 2, (yMin + yMax) / 2, denominator));
+        }
+
         private void BuildScene(bool zoomToFull)
         {
             scene = MapScene.Build(axMap, MapPalette.For(baseMapId), zoomToFull);
@@ -165,6 +186,8 @@ namespace Hue_travel.MapEngine
                 wasButtonDown = isDown;
             };
             pressTracker.Start();
+            viewTracker.Tick += (s, e) => PublishViewIfChanged();
+            viewTracker.Start();
             axMap.MouseUpEvent += (s, e) => axMap_MouseUp(e.x, e.y);
             BuildScene(zoomToFull: true);
         }
