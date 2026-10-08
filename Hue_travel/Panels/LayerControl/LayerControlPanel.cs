@@ -37,10 +37,5 @@ namespace Hue_travel.Panels.LayerControl
             LayerToggled?.Invoke(this, new KeyValuePair<string, bool>(group, visible));
 
         private void header_CloseClicked(object sender, EventArgs e) => RaiseCloseRequested();
-
-        private void sliderBrightness_ValueChanged(object sender, EventArgs e)
-        {
-            lblBrightnessValue.Text = sliderBrightness.Value + "%";
-        }
     }
 }

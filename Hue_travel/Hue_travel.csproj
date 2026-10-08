@@ -103,9 +103,6 @@
     <Compile Include="Panels\TravelGuide\TourCard.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Panels\BaseMapSwitcher\BaseMapTile.cs">
-      <SubType>Component</SubType>
-    </Compile>
     <Compile Include="Theme\NoAutoScrollPanel.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -121,13 +118,13 @@
     <Compile Include="Models\TourSuggestion.cs" />
     <Compile Include="SampleData\SamplePois.cs" />
     <Compile Include="SampleData\SampleTours.cs" />
-    <Compile Include="MapEngine\MapScene.cs" />
     <Compile Include="MapEngine\MapViewChangedEventArgs.cs" />
     <Compile Include="Services\MapScale.cs" />
     <Compile Include="Services\CoordinateFormatter.cs" />
     <Compile Include="MapEngine\MeasureKind.cs" />
     <Compile Include="MapEngine\MapCursorEventArgs.cs" />
     <Compile Include="Services\Area\SceneGeoreference.cs" />
+    <Compile Include="Services\Area\DemoPoiLocations.cs" />
     <Compile Include="MapEngine\MapCrs.cs" />
     <Compile Include="MapEngine\BaseMapCatalog.cs" />
     <Compile Include="Services\Area\DemoAreaLocator.cs" />
@@ -138,7 +135,6 @@
     <Compile Include="Services\Weather\WeatherDescriber.cs" />
     <Compile Include="Services\Weather\WeatherSnapshot.cs" />
     <Compile Include="Services\Weather\WeatherUpdater.cs" />
-    <Compile Include="MapEngine\PinRenderer.cs" />
     <Compile Include="MapEngine\Overlays\MapToolStack.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -183,12 +179,6 @@
     </Compile>
     <Compile Include="Panels\LayerControl\LayerControlPanel.Designer.cs">
       <DependentUpon>LayerControlPanel.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Panels\BaseMapSwitcher\BaseMapSwitcherPopup.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Panels\BaseMapSwitcher\BaseMapSwitcherPopup.Designer.cs">
-      <DependentUpon>BaseMapSwitcherPopup.cs</DependentUpon>
     </Compile>
     <Compile Include="Panels\SearchPoi\PoiSearchFilter.cs" />
     <Compile Include="Panels\SearchPoi\SearchPoiPanel.cs">

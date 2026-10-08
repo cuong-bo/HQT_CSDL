@@ -20,7 +20,7 @@ namespace Hue_travel.Shell
             panels = new FloatingPanelForm[]
             {
                 layerControlPanel, searchPoiPanel, routeOptimizerPanel, travelGuidePanel, poiIdentifyCard,
-                baseMapSwitcherPopup, authModal, registerPanel, forgotPasswordPanel,
+                authModal, registerPanel, forgotPasswordPanel,
             };
             foreach (FloatingPanelForm panel in panels) panel.MessageRaised += (s, e) => toast.ShowMessage(e.Text, e.Kind);
         }
@@ -75,7 +75,6 @@ namespace Hue_travel.Shell
             ribbonBar.ZoomFullClicked += (s, e) => mapHost.ZoomToFull();
             ribbonBar.MeasureToggled += (s, e) => mapHost.ToggleMeasure(MeasureKind.Distance);
             ribbonBar.MeasureAreaToggled += (s, e) => mapHost.ToggleMeasure(MeasureKind.Area);
-            ribbonBar.BaseMapSwitcherToggled += (s, e) => TogglePanel(baseMapSwitcherPopup);
 
             categoryRail.CategorySelected += (s, category) =>
             {
@@ -88,7 +87,6 @@ namespace Hue_travel.Shell
             routeOptimizerPanel.CloseRequested += (s, e) => routeOptimizerPanel.Visible = false;
             searchPoiPanel.CloseRequested += (s, e) => searchPoiPanel.Visible = false;
             travelGuidePanel.CloseRequested += (s, e) => travelGuidePanel.Visible = false;
-            baseMapSwitcherPopup.CloseRequested += (s, e) => baseMapSwitcherPopup.Visible = false;
             authModal.CloseRequested += (s, e) => authModal.Visible = false;
             registerPanel.CloseRequested += (s, e) => registerPanel.Visible = false;
             forgotPasswordPanel.CloseRequested += (s, e) => forgotPasswordPanel.Visible = false;
@@ -98,12 +96,10 @@ namespace Hue_travel.Shell
             forgotPasswordPanel.BackToLoginRequested += (s, e) => ShowAuthCard(authModal);
 
             searchPoiPanel.PoiSelected += (s, poi) => ShowPoiCard(poi);
-            searchPoiPanel.ShowOnMapRequested += (s, poi) => mapHost.ZoomToPin(poi.Id);
-            layerControlPanel.LayerToggled += (s, e) => mapHost.SetGroupVisible(e.Key, e.Value);
-            mapHost.PinClicked += (s, key) =>
+            searchPoiPanel.ShowOnMapRequested += (s, poi) =>
             {
-                Poi poi = SamplePois.All.FirstOrDefault(p => p.Id == key);
-                if (poi != null) ShowPoiCard(poi);
+                double easting, northing;
+                if (DemoPoiLocations.TryGet(poi.Id, out easting, out northing)) mapHost.ZoomTo(easting, northing);
             };
 
             // Status bar: live scale and area from the map view, weather from Open-Meteo (no fixed placeholder text).
@@ -125,12 +121,6 @@ namespace Hue_travel.Shell
                 statusBar.SetArea(areaLocator.Locate(view.CenterX, view.CenterY));
             };
 
-            baseMapSwitcherPopup.BaseMapSelected += (s, mapId) =>
-            {
-                mapHost.SetBaseMap(mapId);
-                baseMapSwitcherPopup.Visible = false;
-            };
-            mapHost.BaseMapRequested += (s, mapId) => baseMapSwitcherPopup.MarkSelected(mapId);
         }
 
         protected override void OnResize(EventArgs e)

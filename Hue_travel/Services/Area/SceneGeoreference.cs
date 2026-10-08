@@ -9,6 +9,11 @@
         /// <summary>The Imperial City is about 600 m wide and spans roughly 300 canvas units.</summary>
         public const double MetresPerCanvasUnit = 2.0;
 
+        /// <summary>Size of the mockup canvas the demo positions are given on.</summary>
+        public const double CanvasWidth = 1600;
+
+        public const double CanvasHeight = 900;
+
         private const double AnchorCanvasX = 620;
         private const double AnchorCanvasY = 320;
 

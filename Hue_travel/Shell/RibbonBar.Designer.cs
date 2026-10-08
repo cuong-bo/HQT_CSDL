@@ -18,8 +18,6 @@ namespace Hue_travel.Shell
         private IconButton btnZoomFull;
         private IconButton btnMeasure;
         private IconButton btnMeasureArea;
-        private Panel separatorBaseMap;
-        private IconButton btnBaseMap;
 
         protected override void Dispose(bool disposing)
         {
@@ -41,8 +39,6 @@ namespace Hue_travel.Shell
             this.btnZoomFull = new IconButton();
             this.btnMeasure = new IconButton();
             this.btnMeasureArea = new IconButton();
-            this.separatorBaseMap = new Panel();
-            this.btnBaseMap = new IconButton();
             this.SuspendLayout();
             this.flowItems.SuspendLayout();
 
@@ -201,29 +197,6 @@ namespace Hue_travel.Shell
             this.btnMeasureArea.Margin = new Padding(3, 6, 3, 6);
             this.btnMeasureArea.Click += new System.EventHandler(this.btnMeasureArea_Click);
 
-            this.separatorBaseMap.BackColor = ThemeColors.Slate200;
-            this.separatorBaseMap.Size = new Size(1, 16);
-            this.separatorBaseMap.Margin = new Padding(7, 12, 7, 12);
-
-            // --- "Bản đồ nền": white, slate-200 border, layers icon + chevron ---
-            this.btnBaseMap.Text = "Bản đồ nền";
-            this.btnBaseMap.IconName = "layers";
-            this.btnBaseMap.IconSize = 16;
-            this.btnBaseMap.TrailingIconName = "expand_more";
-            this.btnBaseMap.TrailingIconSize = 14;
-            this.btnBaseMap.TrailingIconColor = ThemeColors.Slate400;
-            this.btnBaseMap.Font = ThemeFonts.SemiBold(12);
-            this.btnBaseMap.ForeColor = ThemeColors.Slate700;
-            this.btnBaseMap.IconColor = ThemeColors.Primary;
-            this.btnBaseMap.FillColor = Color.White;
-            this.btnBaseMap.HoverFillColor = ThemeColors.Sky50;
-            this.btnBaseMap.BorderColor = ThemeColors.Slate200;
-            this.btnBaseMap.Radius = 6;
-            this.btnBaseMap.HorizontalPadding = 10;
-            this.btnBaseMap.Gap = 6;
-            this.btnBaseMap.Size = new Size(130, 28);
-            this.btnBaseMap.Margin = new Padding(3, 6, 3, 6);
-            this.btnBaseMap.Click += new System.EventHandler(this.btnBaseMap_Click);
 
             this.flowItems.Controls.Add(this.btnLayerControl);
             this.flowItems.Controls.Add(this.btnRouteOptimizer);
@@ -235,8 +208,6 @@ namespace Hue_travel.Shell
             this.flowItems.Controls.Add(this.btnZoomFull);
             this.flowItems.Controls.Add(this.btnMeasure);
             this.flowItems.Controls.Add(this.btnMeasureArea);
-            this.flowItems.Controls.Add(this.separatorBaseMap);
-            this.flowItems.Controls.Add(this.btnBaseMap);
 
             this.Controls.Add(this.flowItems);
             this.Name = "RibbonBar";

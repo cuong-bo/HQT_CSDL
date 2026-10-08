@@ -11,7 +11,6 @@ namespace Hue_travel.Shell
         public event EventHandler TravelGuideToggled;
         public event EventHandler ZoomInClicked;
         public event EventHandler ZoomOutClicked;
-        public event EventHandler BaseMapSwitcherToggled;
         public event EventHandler ZoomFullClicked;
         public event EventHandler MeasureToggled;
         public event EventHandler MeasureAreaToggled;
@@ -39,6 +38,5 @@ namespace Hue_travel.Shell
 
         private void btnZoomOut_Click(object sender, EventArgs e) => ZoomOutClicked?.Invoke(this, EventArgs.Empty);
 
-        private void btnBaseMap_Click(object sender, EventArgs e) => BaseMapSwitcherToggled?.Invoke(this, EventArgs.Empty);
     }
 }

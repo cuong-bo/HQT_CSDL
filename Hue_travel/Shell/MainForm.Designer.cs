@@ -1,5 +1,4 @@
 ﻿using Hue_travel.MapEngine;
-using Hue_travel.Panels.BaseMapSwitcher;
 using Hue_travel.Panels.LayerControl;
 using Hue_travel.Panels.PoiIdentify;
 using Hue_travel.Panels.RouteOptimizer;
@@ -25,7 +24,6 @@ namespace Hue_travel.Shell
         private SearchPoiPanel searchPoiPanel;
         private TravelGuidePanel travelGuidePanel;
         private PoiIdentifyCard poiIdentifyCard;
-        private BaseMapSwitcherPopup baseMapSwitcherPopup;
         private AuthModal authModal;
         private Toast toast;
         private RegisterPanel registerPanel;
@@ -49,7 +47,6 @@ namespace Hue_travel.Shell
             this.searchPoiPanel = new SearchPoiPanel();
             this.travelGuidePanel = new TravelGuidePanel();
             this.poiIdentifyCard = new PoiIdentifyCard();
-            this.baseMapSwitcherPopup = new BaseMapSwitcherPopup();
             this.authModal = new AuthModal();
             this.toast = new Toast();
             this.registerPanel = new RegisterPanel();
@@ -91,7 +88,6 @@ namespace Hue_travel.Shell
             this.routeOptimizerPanel.AttachTo(this, new System.Drawing.Point(1136, 144), System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right);
             this.travelGuidePanel.AttachTo(this, new System.Drawing.Point(1136, 272), System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right);
             this.poiIdentifyCard.AttachTo(this, new System.Drawing.Point(522, 618), System.Windows.Forms.AnchorStyles.Bottom);
-            this.baseMapSwitcherPopup.AttachTo(this, new System.Drawing.Point(1264, 98), System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right);
 
             // Auth cards share one spot (top-16, centred over the map); only one is visible at a time.
             this.authModal.AttachTo(this, new System.Drawing.Point(582, 160), System.Windows.Forms.AnchorStyles.Top);
