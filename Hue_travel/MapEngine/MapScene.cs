@@ -28,15 +28,6 @@ namespace Hue_travel.MapEngine
         {
             switch (baseMapId)
             {
-                case "satellite":
-                    return new MapPalette
-                    {
-                        Background = ColorTranslator.FromHtml("#3F6212"), River = ColorTranslator.FromHtml("#0E7490"), RiverEdge = ColorTranslator.FromHtml("#155E75"),
-                        Island = ColorTranslator.FromHtml("#15803D"), IslandEdge = ColorTranslator.FromHtml("#166534"),
-                        Citadel = ColorTranslator.FromHtml("#A16207"), CitadelEdge = ColorTranslator.FromHtml("#FACC15"),
-                        RoadCasing = ColorTranslator.FromHtml("#E2E8F0"), Road = ColorTranslator.FromHtml("#94A3B8"),
-                        RiverLabel = Color.White, PlaceLabel = Color.White,
-                    };
                 case "night":
                     return new MapPalette
                     {
@@ -94,13 +85,31 @@ namespace Hue_travel.MapEngine
         private static readonly PointF[] RiverOutline = BuildRiverOutline();
 
         /// <summary>Replaces every layer of <paramref name="map"/> with the scene drawn in <paramref name="palette"/>.</summary>
-        public static SceneIndex Build(AxMap map, MapPalette palette, bool zoomToFull = true)
+        public static SceneIndex Build(AxMap map, MapPalette palette, bool zoomToFull = true, bool includeDecor = true)
         {
             map.RemoveAllLayers();
             MapCrs.Apply(map);
             map.BackColor = palette.Background;
             var index = new SceneIndex();
 
+            if (includeDecor) AddDecor(map, palette, index);
+
+            Color bg = palette.Background;
+            Color sky = ColorTranslator.FromHtml("#0284C7");
+            Color slate = ColorTranslator.FromHtml("#1E293B");
+
+            AddPin(map, index, null, "ga-hue", 430, 670, bg, new PinSpec { Caption = "Ga Huế (Điểm xuất phát)", Icon = "train", Marker = slate, MarkerSize = 32, IconSize = 18, LabelFill = slate, LabelText = Color.White, LabelRadius = 12, StatusDot = true, CaptionPx = 11 });
+            AddPin(map, index, "heritage", "dai-noi", 620, 320, bg, new PinSpec { Caption = "Đại Nội - Hoàng Thành Huế", Icon = "account_balance", Order = 1, Marker = sky, MarkerSize = 36, IconSize = 20, LabelFill = sky, LabelText = Color.White, BadgeFill = ThemeColors.Amber400, BadgeText = slate, LabelRadius = 8, CaptionPx = 12, CaptionBold = true });
+            AddPin(map, index, "heritage", "thien-mu", 300, 480, bg, new PinSpec { Caption = "Chùa Thiên Mụ", Icon = "temple_buddhist", Order = 2, Marker = sky, MarkerSize = 32, IconSize = 18, LabelFill = Color.White, LabelBorder = ThemeColors.Sky100, LabelText = slate, BadgeFill = sky, BadgeText = Color.White, LabelRadius = 4, CaptionPx = 12 });
+            AddPin(map, index, "food", "bun-bo-mu-roi", 890, 560, bg, new PinSpec { Caption = "Quán Bún Bò Mụ Rơi", Icon = "restaurant", Order = 3, Marker = ThemeColors.Amber600, MarkerSize = 32, IconSize = 18, LabelFill = Color.White, LabelBorder = ThemeColors.Amber100, LabelText = slate, BadgeFill = ThemeColors.Amber600, BadgeText = Color.White, LabelRadius = 4, CaptionPx = 12 });
+
+            if (zoomToFull) map.ZoomToMaxExtents();
+            return index;
+        }
+
+        // The drawn base map: river, citadel, streets, route and their labels (hidden on real tile maps).
+        private static void AddDecor(AxMap map, MapPalette palette, SceneIndex index)
+        {
             index.Add("river", AddPolygons(map, new[] { RiverOutline }, palette.River, palette.RiverEdge, 1.5f, false));
             index.Add("river", AddPolygons(map, new[] { Poly(1150, 420, 1220, 390, 1290, 392, 1340, 430, 1300, 452, 1230, 455) }, palette.Island, palette.IslandEdge, 1.5f, false));
             index.Add("heritage", AddPolygons(map, new[] { Poly(460, 210, 690, 160, 760, 380, 520, 430) }, palette.Citadel, palette.CitadelEdge, 2.5f, false));
@@ -136,16 +145,6 @@ namespace Hue_travel.MapEngine
                 Tuple.Create("Cầu Trường Tiền", 965.0, 505.0, 70.0),
             }));
 
-            Color bg = palette.Background;
-            Color sky = ColorTranslator.FromHtml("#0284C7");
-            Color slate = ColorTranslator.FromHtml("#1E293B");
-            AddPin(map, index, null, "ga-hue", 430, 670, bg, new PinSpec { Caption = "Ga Huế (Điểm xuất phát)", Icon = "train", Marker = slate, MarkerSize = 32, IconSize = 18, LabelFill = slate, LabelText = Color.White, LabelRadius = 12, StatusDot = true, CaptionPx = 11 });
-            AddPin(map, index, "heritage", "dai-noi", 620, 320, bg, new PinSpec { Caption = "Đại Nội - Hoàng Thành Huế", Icon = "account_balance", Order = 1, Marker = sky, MarkerSize = 36, IconSize = 20, LabelFill = sky, LabelText = Color.White, BadgeFill = ThemeColors.Amber400, BadgeText = slate, LabelRadius = 8, CaptionPx = 12, CaptionBold = true });
-            AddPin(map, index, "heritage", "thien-mu", 300, 480, bg, new PinSpec { Caption = "Chùa Thiên Mụ", Icon = "temple_buddhist", Order = 2, Marker = sky, MarkerSize = 32, IconSize = 18, LabelFill = Color.White, LabelBorder = ThemeColors.Sky100, LabelText = slate, BadgeFill = sky, BadgeText = Color.White, LabelRadius = 4, CaptionPx = 12 });
-            AddPin(map, index, "food", "bun-bo-mu-roi", 890, 560, bg, new PinSpec { Caption = "Quán Bún Bò Mụ Rơi", Icon = "restaurant", Order = 3, Marker = ThemeColors.Amber600, MarkerSize = 32, IconSize = 18, LabelFill = Color.White, LabelBorder = ThemeColors.Amber100, LabelText = slate, BadgeFill = ThemeColors.Amber600, BadgeText = Color.White, LabelRadius = 4, CaptionPx = 12 });
-
-            if (zoomToFull) map.ZoomToMaxExtents();
-            return index;
         }
 
         // Canvas points are Y-flipped (see Flip); layers are stored in VN-2000 / UTM metres.

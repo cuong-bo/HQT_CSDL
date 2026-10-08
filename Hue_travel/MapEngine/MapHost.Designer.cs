@@ -10,6 +10,7 @@ namespace Hue_travel.MapEngine
     {
         private System.ComponentModel.IContainer components = null;
         private AxMap axMap;
+        private Label attribution;
         private RoundedPanel boxInfo;
         private IconButton captionInfo;
         private IconButton tagInfo;
@@ -36,6 +37,7 @@ namespace Hue_travel.MapEngine
             this.stackBaseMaps = new MapToolStack();
             this.compass = new CompassButton();
             this.stackZoom = new MapToolStack();
+            this.attribution = new Label();
             ((System.ComponentModel.ISupportInitialize)(this.axMap)).BeginInit();
             this.SuspendLayout();
 
@@ -97,6 +99,16 @@ namespace Hue_travel.MapEngine
             this.stackZoom.Location = new Point(1020, 226);
             this.stackZoom.ItemClicked += new System.EventHandler<int>(this.stackZoom_ItemClicked);
 
+            // Credit line for tile base maps (bottom-right, positioned in LayoutOverlays).
+            this.attribution.AutoSize = true;
+            this.attribution.Visible = false;
+            this.attribution.UseMnemonic = false;
+            this.attribution.Font = ThemeFonts.Regular(10);
+            this.attribution.ForeColor = ThemeColors.Slate600;
+            this.attribution.BackColor = ThemeColors.Slate100;
+            this.attribution.Padding = new Padding(4, 1, 4, 1);
+
+            this.Controls.Add(this.attribution);
             this.Controls.Add(this.stackZoom);
             this.Controls.Add(this.compass);
             this.Controls.Add(this.stackBaseMaps);

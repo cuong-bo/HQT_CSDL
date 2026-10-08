@@ -49,6 +49,7 @@ namespace Hue_travel.MapEngine
             compass.BringToFront();
             stackBaseMaps.BringToFront();
             boxInfo.BringToFront();
+            attribution.BringToFront();
             LayoutOverlays();
             Resize += (s, e) => LayoutOverlays();
             new ToolTip().SetToolTip(compass, "Khôi phục hướng Bắc");
@@ -111,15 +112,40 @@ namespace Hue_travel.MapEngine
 
         public void SetBaseMap(string mapId)
         {
-            int index = Array.IndexOf(BaseMapIds, mapId);
-            if (index < 0) return;
+            BaseMapInfo info = BaseMapCatalog.Find(mapId);
+            if (info == null) return;
             baseMapId = mapId;
-            stackBaseMaps.ActiveIndex = index;
+            stackBaseMaps.ActiveIndex = Array.IndexOf(BaseMapIds, mapId);
 
-            // Rebuild the layers in the new palette but keep the user's current view.
+            // Rebuild the layers for the new base map but keep the user's current view.
             Extents view = axMap.Extents;
             BuildScene(zoomToFull: false);
+            ApplyTiles(info);
             axMap.Extents = view;
+        }
+
+        // Tile maps stream real imagery behind the points of interest; drawn maps switch the tiles off.
+        private void ApplyTiles(BaseMapInfo info)
+        {
+            attribution.Visible = info.IsTile;
+            if (!info.IsTile)
+            {
+                axMap.TileProvider = tkTileProvider.ProviderNone;
+                return;
+            }
+
+            attribution.Text = info.Attribution;
+            LayoutOverlays();
+            TileProviders providers = axMap.Tiles.Providers;
+            if (providers.get_IndexByProviderId(info.ProviderId) < 0
+                && !providers.Add(info.ProviderId, info.Name, info.TileUrl, tkTileProjection.SphericalMercator, BaseMapCatalog.MinZoom, BaseMapCatalog.MaxZoom, string.Empty))
+            {
+                System.Diagnostics.Debug.WriteLine("MapHost: tile provider rejected: " + providers.get_ErrorMsg(providers.LastErrorCode));
+                attribution.Visible = false;
+                return;
+            }
+            axMap.Tiles.ProviderId = info.ProviderId;
+            axMap.Tiles.Visible = true;
         }
 
         /// <summary>Shows or hides one toggle group of map layers ("heritage", "food", "stay", "roads", "river", "piers").</summary>
@@ -166,7 +192,7 @@ namespace Hue_travel.MapEngine
 
         private void BuildScene(bool zoomToFull)
         {
-            scene = MapScene.Build(axMap, MapPalette.For(baseMapId), zoomToFull);
+            scene = MapScene.Build(axMap, MapPalette.For(baseMapId), zoomToFull, includeDecor: !BaseMapCatalog.Find(baseMapId).IsTile);
             foreach (string group in groupVisibility.Keys) ApplyGroupVisibility(group);
         }
 
@@ -245,6 +271,7 @@ namespace Hue_travel.MapEngine
             stackBaseMaps.Location = new System.Drawing.Point(x, Ui.S(ColumnTop));
             compass.Location = new System.Drawing.Point(x + (stackBaseMaps.Width - compass.Width) / 2, stackBaseMaps.Bottom + Ui.S(StackGap + 4));
             stackZoom.Location = new System.Drawing.Point(x, compass.Bottom + Ui.S(StackGap));
+            attribution.Location = new System.Drawing.Point(Width - attribution.Width - Ui.S(8), Height - attribution.Height - Ui.S(8));
         }
 
         private void stackBaseMaps_ItemClicked(object sender, int index)

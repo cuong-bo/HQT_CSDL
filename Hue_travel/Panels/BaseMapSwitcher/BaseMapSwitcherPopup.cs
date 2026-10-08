@@ -18,6 +18,12 @@ namespace Hue_travel.Panels.BaseMapSwitcher
 
         private void btnNight_Click(object sender, EventArgs e) => Select("night");
 
+        private void btnRoadmap_Click(object sender, EventArgs e) => Select("roadmap");
+
+        private void btnHybrid_Click(object sender, EventArgs e) => Select("hybrid");
+
+        private void btnTerrain_Click(object sender, EventArgs e) => Select("terrain");
+
         private void sliderOpacity_ValueChanged(object sender, EventArgs e)
         {
             lblOpacityValue.Text = sliderOpacity.Value + "%";
@@ -29,6 +35,9 @@ namespace Hue_travel.Panels.BaseMapSwitcher
             tileStandard.Selected = mapId == "standard";
             tileSatellite.Selected = mapId == "satellite";
             tileNight.Selected = mapId == "night";
+            tileRoadmap.Selected = mapId == "roadmap";
+            tileHybrid.Selected = mapId == "hybrid";
+            tileTerrain.Selected = mapId == "terrain";
         }
 
         private void Select(string mapId)
