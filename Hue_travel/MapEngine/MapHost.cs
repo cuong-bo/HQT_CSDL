@@ -14,7 +14,6 @@ namespace Hue_travel.MapEngine
         private const int RightMargin = 16;   // right-4
         private const int ColumnTop = 64;     // top-16
         private const int StackGap = 6;       // gap-1.5
-        private const int InfoTop = 12;       // top-3
 
         // Order of the icons in the vertical base map switch.
         private static readonly string[] BaseMapIds = { "roadmap", "satellite", "hybrid", "terrain" };
@@ -38,7 +37,6 @@ namespace Hue_travel.MapEngine
             stackZoom.BringToFront();
             compass.BringToFront();
             stackBaseMaps.BringToFront();
-            boxInfo.BringToFront();
             attribution.BringToFront();
             LayoutOverlays();
             Resize += (s, e) => LayoutOverlays();
@@ -184,7 +182,7 @@ namespace Hue_travel.MapEngine
             ZoomToFull();
         }
 
-        // Anchors the overlays like the mockup: info pill centred at the top, controls in the top-right column.
+        // Anchors the overlays like the mockup: controls in the top-right column, credit line bottom-right.
         protected override void OnLayout(LayoutEventArgs e)
         {
             base.OnLayout(e);
@@ -193,11 +191,6 @@ namespace Hue_travel.MapEngine
 
         private void LayoutOverlays()
         {
-            boxInfo.Width = Math.Min(Ui.S(680), Math.Max(Ui.S(200), Width - 2 * Ui.S(RightMargin + 48)));
-            tagInfo.Left = boxInfo.Width - tagInfo.Width - Ui.S(12);
-            captionInfo.Width = Math.Max(0, tagInfo.Left - captionInfo.Left - Ui.S(8));
-            boxInfo.Location = new System.Drawing.Point((Width - boxInfo.Width) / 2, Ui.S(InfoTop));
-
             int x = Width - Ui.S(RightMargin) - stackBaseMaps.Width;
             stackBaseMaps.Location = new System.Drawing.Point(x, Ui.S(ColumnTop));
             compass.Location = new System.Drawing.Point(x + (stackBaseMaps.Width - compass.Width) / 2, stackBaseMaps.Bottom + Ui.S(StackGap + 4));
