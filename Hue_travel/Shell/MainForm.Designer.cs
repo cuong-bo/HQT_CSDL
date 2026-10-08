@@ -79,74 +79,24 @@ namespace Hue_travel.Shell
 
             this.Controls.Add(this.mapHost);
 
-            // Each floating panel is a real Form (not a UserControl) per the user's request —
-            // TopLevel must be set false before it can be embedded as a child control, and it
-            // must be Show()'n once to force handle creation before Visible can be toggled later.
-            this.layerControlPanel.TopLevel = false;
-            this.layerControlPanel.Location = new System.Drawing.Point(64, 144);
-            this.Controls.Add(this.layerControlPanel);
-            this.layerControlPanel.Show();
-            this.layerControlPanel.Visible = true;
-
-            this.routeOptimizerPanel.TopLevel = false;
-            this.routeOptimizerPanel.Location = new System.Drawing.Point(1136, 144);
-            this.routeOptimizerPanel.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            this.Controls.Add(this.routeOptimizerPanel);
-            this.routeOptimizerPanel.Show();
-            this.routeOptimizerPanel.Visible = true;
-
-            this.searchPoiPanel.TopLevel = false;
-            this.searchPoiPanel.Location = new System.Drawing.Point(348, 144);
-            this.Controls.Add(this.searchPoiPanel);
-            this.searchPoiPanel.Show();
-            this.searchPoiPanel.Visible = true;
-
-            this.travelGuidePanel.TopLevel = false;
-            this.travelGuidePanel.Location = new System.Drawing.Point(1136, 272);
-            this.travelGuidePanel.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
-            this.Controls.Add(this.travelGuidePanel);
-            this.travelGuidePanel.Show();
-            this.travelGuidePanel.Visible = true;
-
-            this.poiIdentifyCard.TopLevel = false;
-            this.poiIdentifyCard.Location = new System.Drawing.Point(522, 618);
-            this.poiIdentifyCard.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.Controls.Add(this.poiIdentifyCard);
-            this.poiIdentifyCard.Show();
-            this.poiIdentifyCard.Visible = true;
-
-            this.baseMapSwitcherPopup.TopLevel = false;
-            this.baseMapSwitcherPopup.Location = new System.Drawing.Point(1264, 98);
-            this.baseMapSwitcherPopup.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            this.Controls.Add(this.baseMapSwitcherPopup);
-            this.baseMapSwitcherPopup.Show();
-            this.baseMapSwitcherPopup.Visible = false;
-
             this.Controls.Add(this.categoryRail);
             this.Controls.Add(this.ribbonBar);
             this.Controls.Add(this.titleBar);
 
+            // Floating panels are real Forms owned by this window (not child controls): top-level windows
+            // can carry the system's soft shadow and anti-aliased corners over the MapWinGIS map.
+            // AttachTo records where each sits in this window and which edges it follows when resized.
+            this.layerControlPanel.AttachTo(this, new System.Drawing.Point(64, 144), System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left);
+            this.searchPoiPanel.AttachTo(this, new System.Drawing.Point(348, 144), System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left);
+            this.routeOptimizerPanel.AttachTo(this, new System.Drawing.Point(1136, 144), System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right);
+            this.travelGuidePanel.AttachTo(this, new System.Drawing.Point(1136, 272), System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right);
+            this.poiIdentifyCard.AttachTo(this, new System.Drawing.Point(522, 618), System.Windows.Forms.AnchorStyles.Bottom);
+            this.baseMapSwitcherPopup.AttachTo(this, new System.Drawing.Point(1264, 98), System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right);
+
             // Auth cards share one spot (top-16, centred over the map); only one is visible at a time.
-            this.authModal.TopLevel = false;
-            this.authModal.Location = new System.Drawing.Point(582, 160);
-            this.authModal.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.Controls.Add(this.authModal);
-            this.authModal.Show();
-            this.authModal.Visible = false;
-
-            this.registerPanel.TopLevel = false;
-            this.registerPanel.Location = new System.Drawing.Point(582, 160);
-            this.registerPanel.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.Controls.Add(this.registerPanel);
-            this.registerPanel.Show();
-            this.registerPanel.Visible = false;
-
-            this.forgotPasswordPanel.TopLevel = false;
-            this.forgotPasswordPanel.Location = new System.Drawing.Point(572, 144);
-            this.forgotPasswordPanel.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.Controls.Add(this.forgotPasswordPanel);
-            this.forgotPasswordPanel.Show();
-            this.forgotPasswordPanel.Visible = false;
+            this.authModal.AttachTo(this, new System.Drawing.Point(582, 160), System.Windows.Forms.AnchorStyles.Top);
+            this.registerPanel.AttachTo(this, new System.Drawing.Point(582, 160), System.Windows.Forms.AnchorStyles.Top);
+            this.forgotPasswordPanel.AttachTo(this, new System.Drawing.Point(572, 144), System.Windows.Forms.AnchorStyles.Top);
 
             this.Controls.Add(this.statusBar);
 

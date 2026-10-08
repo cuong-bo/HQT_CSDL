@@ -13,23 +13,25 @@ namespace Hue_travel.Shell
         {
             InitializeComponent();
             WireEvents();
-            foreach (Control child in Controls)
+            panels = new FloatingPanelForm[]
             {
-                var panel = child as FloatingPanelForm;
-                if (panel != null) panel.MessageRaised += (s, e) => toast.ShowMessage(e.Text, e.Kind);
-            }
-            RestoreFloatingOrder();
+                layerControlPanel, searchPoiPanel, routeOptimizerPanel, travelGuidePanel, poiIdentifyCard,
+                baseMapSwitcherPopup, authModal, registerPanel, forgotPasswordPanel,
+            };
+            foreach (FloatingPanelForm panel in panels) panel.MessageRaised += (s, e) => toast.ShowMessage(e.Text, e.Kind);
         }
 
-        // Floating panels are added before the docked bars; lift them above the map in a stable order.
-        private void RestoreFloatingOrder()
+        private readonly FloatingPanelForm[] panels;
+
+        // The default layout opens once the window is on screen (the panels are owned by it).
+        protected override void OnShown(EventArgs e)
         {
-            baseMapSwitcherPopup.BringToFront();
-            layerControlPanel.BringToFront();
-            searchPoiPanel.BringToFront();
-            routeOptimizerPanel.BringToFront();
-            travelGuidePanel.BringToFront();
-            poiIdentifyCard.BringToFront();
+            base.OnShown(e);
+            layerControlPanel.Visible = true;
+            searchPoiPanel.Visible = true;
+            routeOptimizerPanel.Visible = true;
+            travelGuidePanel.Visible = true;
+            poiIdentifyCard.Visible = true;
         }
 
         private void WireEvents()

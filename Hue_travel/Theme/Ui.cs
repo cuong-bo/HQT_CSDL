@@ -26,6 +26,14 @@ namespace Hue_travel.Theme
             return path;
         }
 
+        /// <summary>Linear blend of two colours (all four channels); t = 0 gives <paramref name="from"/>, 1 gives <paramref name="to"/>.</summary>
+        public static Color Lerp(Color from, Color to, float t)
+        {
+            t = System.Math.Max(0f, System.Math.Min(1f, t));
+            int Mix(int a, int b) => (int)System.Math.Round(a + (b - a) * t);
+            return Color.FromArgb(Mix(from.A, to.A), Mix(from.R, to.R), Mix(from.G, to.G), Mix(from.B, to.B));
+        }
+
         /// <summary>Blends <paramref name="color"/> over white by <paramref name="alpha"/> (0..1), giving an opaque colour.</summary>
         public static Color OverWhite(Color color, double alpha)
         {

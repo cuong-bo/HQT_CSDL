@@ -148,6 +148,7 @@ namespace Hue_travel.MapEngine
             axMap.ShowRedrawTime = false;
             axMap.ShowVersionNumber = false;
             axMap.CursorMode = tkCursorMode.cmPan;
+            axMap.InertiaOnPanning = tkCustomState.csTrue;   // the map glides after a drag
             axMap.SendMouseDown = true;
             axMap.SendMouseUp = true;
             // The ActiveX map does not raise MouseDown while panning, so note where the left button went down by polling.

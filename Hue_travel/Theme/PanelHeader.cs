@@ -80,15 +80,18 @@ namespace Hue_travel.Theme
             minimizeButton.Location = new Point(closeButton.Left - 4 - minimizeButton.Width, top);
         }
 
-        private Point dragStart;
+        private Point dragCursorStart;
+        private Point dragFormStart;
         private bool isDragging;
 
         protected override void OnMouseDown(MouseEventArgs e)
         {
             base.OnMouseDown(e);
-            if (e.Button != MouseButtons.Left) return;
+            Form form = FindForm();
+            if (e.Button != MouseButtons.Left || form == null) return;
             isDragging = true;
-            dragStart = e.Location;
+            dragCursorStart = Cursor.Position;
+            dragFormStart = form.Location;
             Capture = true;
         }
 
@@ -96,20 +99,28 @@ namespace Hue_travel.Theme
         {
             base.OnMouseMove(e);
             Form form = FindForm();
-            if (!isDragging || form == null || form.Parent == null) return;
+            if (!isDragging || form == null) return;
 
-            // Move the panel inside its host, keeping at least part of the header reachable.
-            Rectangle host = form.Parent.ClientRectangle;
-            int left = Math.Max(-form.Width + 80, Math.Min(host.Width - 80, form.Left + e.X - dragStart.X));
-            int top = Math.Max(0, Math.Min(host.Height - Height, form.Top + e.Y - dragStart.Y));
+            int left = dragFormStart.X + Cursor.Position.X - dragCursorStart.X;
+            int top = dragFormStart.Y + Cursor.Position.Y - dragCursorStart.Y;
+            Form host = form.Owner;
+            if (host != null)
+            {
+                // Keep part of the header reachable inside the host window.
+                var area = new Rectangle(host.PointToScreen(Point.Empty), host.ClientSize);
+                left = Math.Max(area.Left - form.Width + 80, Math.Min(area.Right - 80, left));
+                top = Math.Max(area.Top, Math.Min(area.Bottom - Height, top));
+            }
             form.Location = new Point(left, top);
         }
 
         protected override void OnMouseUp(MouseEventArgs e)
         {
             base.OnMouseUp(e);
+            if (!isDragging) return;
             isDragging = false;
             Capture = false;
+            (FindForm() as FloatingPanelForm)?.RememberPosition();
         }
 
         protected override void OnResize(EventArgs e)

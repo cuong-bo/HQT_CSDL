@@ -21,8 +21,12 @@ namespace Hue_travel.Theme
         private int gap = 6;
         private int horizontalPadding = 10;
         private bool autoWidth = true;
+        private const float HoverStep = 0.22f; // about 70 ms from rest to hover at 15 ms per tick
+
         private bool isHovered;
         private bool isPressed;
+        private float hoverBlend;
+        private readonly Timer hoverTimer = new Timer { Interval = 15 };
 
         public IconButton()
         {
@@ -38,6 +42,25 @@ namespace Hue_travel.Theme
             TrailingIconColor = ThemeColors.Slate400;
             Radius = 6;
             Size = new Size(100, 28);
+            hoverTimer.Tick += (s, e) => StepHover();
+        }
+
+        private void StepHover()
+        {
+            float target = isHovered ? 1f : 0f;
+            hoverBlend += hoverBlend < target ? HoverStep : -HoverStep;
+            if ((hoverBlend >= target && target == 1f) || (hoverBlend <= target && target == 0f))
+            {
+                hoverBlend = target;
+                hoverTimer.Stop();
+            }
+            Invalidate();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing) hoverTimer.Dispose();
+            base.Dispose(disposing);
         }
 
         [Category("Appearance")] public Color FillColor { get; set; }
@@ -98,8 +121,8 @@ namespace Hue_travel.Theme
 
         private void PaintStacked(Graphics g)
         {
-            Color icon = isHovered && !HoverIconColor.IsEmpty ? HoverIconColor : IconColor;
-            Color text = isHovered && !HoverTextColor.IsEmpty ? HoverTextColor : ForeColor;
+            Color icon = Ui.Lerp(IconColor, HoverIconColor.IsEmpty ? IconColor : HoverIconColor, hoverBlend);
+            Color text = Ui.Lerp(ForeColor, HoverTextColor.IsEmpty ? ForeColor : HoverTextColor, hoverBlend);
             const TextFormatFlags flags = TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.WordBreak | TextFormatFlags.HorizontalCenter | TextFormatFlags.Top;
 
             int textHeight = string.IsNullOrEmpty(Text) ? 0 : TextRenderer.MeasureText(Text, Font, new Size(Width, int.MaxValue), flags).Height;
@@ -133,8 +156,8 @@ namespace Hue_travel.Theme
             Invalidate();
         }
 
-        protected override void OnMouseEnter(System.EventArgs e) { isHovered = true; Invalidate(); base.OnMouseEnter(e); }
-        protected override void OnMouseLeave(System.EventArgs e) { isHovered = false; isPressed = false; Invalidate(); base.OnMouseLeave(e); }
+        protected override void OnMouseEnter(System.EventArgs e) { isHovered = true; hoverTimer.Start(); base.OnMouseEnter(e); }
+        protected override void OnMouseLeave(System.EventArgs e) { isHovered = false; isPressed = false; hoverTimer.Start(); base.OnMouseLeave(e); }
         protected override void OnMouseDown(MouseEventArgs e) { isPressed = true; Invalidate(); base.OnMouseDown(e); }
         protected override void OnMouseUp(MouseEventArgs e) { isPressed = false; Invalidate(); base.OnMouseUp(e); }
 
@@ -144,7 +167,7 @@ namespace Hue_travel.Theme
             g.SmoothingMode = SmoothingMode.AntiAlias;
             var bounds = new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f);
 
-            Color fill = isHovered ? HoverFillColor : FillColor;
+            Color fill = Ui.Lerp(FillColor, HoverFillColor, hoverBlend);
             if (isPressed) fill = ControlPaint.Dark(fill, 0.03f);
             if (fill.A > 0)
             {
@@ -176,8 +199,8 @@ namespace Hue_travel.Theme
             else if (HasDot) total += DotSize + (hasText ? gap : 0);
             if (trailingIconName.Length > 0) total += trailingIconSize + (hasText || iconName.Length > 0 ? gap : 0);
 
-            Color icon = isHovered && !HoverIconColor.IsEmpty ? HoverIconColor : IconColor;
-            Color text = isHovered && !HoverTextColor.IsEmpty ? HoverTextColor : ForeColor;
+            Color icon = Ui.Lerp(IconColor, HoverIconColor.IsEmpty ? IconColor : HoverIconColor, hoverBlend);
+            Color text = Ui.Lerp(ForeColor, HoverTextColor.IsEmpty ? ForeColor : HoverTextColor, hoverBlend);
 
             int x = (Width - total) / 2;
             if (iconName.Length > 0)
