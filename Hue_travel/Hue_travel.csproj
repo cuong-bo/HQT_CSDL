@@ -124,6 +124,9 @@
     <Compile Include="MapEngine\MapScene.cs" />
     <Compile Include="MapEngine\MapViewChangedEventArgs.cs" />
     <Compile Include="Services\MapScale.cs" />
+    <Compile Include="Services\CoordinateFormatter.cs" />
+    <Compile Include="MapEngine\MeasureKind.cs" />
+    <Compile Include="MapEngine\MapCursorEventArgs.cs" />
     <Compile Include="Services\Area\SceneGeoreference.cs" />
     <Compile Include="MapEngine\MapCrs.cs" />
     <Compile Include="Services\Area\DemoAreaLocator.cs" />

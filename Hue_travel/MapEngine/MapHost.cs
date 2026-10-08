@@ -37,6 +37,9 @@ namespace Hue_travel.MapEngine
         /// <summary>Raised after the visible extent (or the control width) changed: new centre and scale.</summary>
         public event EventHandler<MapViewChangedEventArgs> ViewChanged;
 
+        /// <summary>Raised while the pointer moves over the map, with its coordinates.</summary>
+        public event EventHandler<MapCursorEventArgs> CursorMoved;
+
         public MapHost()
         {
             InitializeComponent();
@@ -65,6 +68,15 @@ namespace Hue_travel.MapEngine
 
         public bool IsMeasuring => axMap.CursorMode == tkCursorMode.cmMeasure;
 
+        public MeasureKind ActiveMeasure
+        {
+            get
+            {
+                if (!IsMeasuring) return MeasureKind.None;
+                return axMap.Measuring.MeasuringType == tkMeasuringType.MeasureArea ? MeasureKind.Area : MeasureKind.Distance;
+            }
+        }
+
         public void ZoomIn() => axMap.ZoomIn(0.5);
 
         public void ZoomOut() => axMap.ZoomOut(0.5);
@@ -78,12 +90,23 @@ namespace Hue_travel.MapEngine
                 : tkCursorMode.cmNone;
         }
 
-        /// <summary>Switches between pan and the MapWinGIS measure tool; returns the resulting measuring state.</summary>
-        public bool SetMeasureMode(bool enabled)
+        /// <summary>
+        /// Starts the given MapWinGIS measure tool, or goes back to panning when that tool is already active.
+        /// Returns the tool that is active afterwards.
+        /// </summary>
+        public MeasureKind ToggleMeasure(MeasureKind kind)
         {
-            axMap.CursorMode = enabled ? tkCursorMode.cmMeasure : tkCursorMode.cmPan;
-            stackZoom.ActiveIndex = enabled ? -1 : 2;
-            return enabled;
+            bool stop = kind == MeasureKind.None || ActiveMeasure == kind;
+            axMap.Measuring.Clear();
+            if (!stop)
+            {
+                axMap.Measuring.MeasuringType = kind == MeasureKind.Area ? tkMeasuringType.MeasureArea : tkMeasuringType.MeasureDistance;
+                axMap.Measuring.LengthUnits = tkLengthDisplayMode.ldmMetric;
+                axMap.Measuring.AreaUnits = tkAreaDisplayMode.admMetric;
+            }
+            axMap.CursorMode = stop ? tkCursorMode.cmPan : tkCursorMode.cmMeasure;
+            stackZoom.ActiveIndex = stop ? 2 : -1;
+            return stop ? MeasureKind.None : kind;
         }
 
         public void SetBaseMap(string mapId)
@@ -117,6 +140,14 @@ namespace Hue_travel.MapEngine
             view.SetBounds(pin.X - halfWidth, pin.Y - halfHeight, 0, pin.X + halfWidth, pin.Y + halfHeight, 0);
             axMap.Extents = view;
             return true;
+        }
+
+        private void PublishCursor(int pixelX, int pixelY)
+        {
+            double easting = 0, northing = 0, longitude = 0, latitude = 0;
+            axMap.PixelToProj(pixelX, pixelY, ref easting, ref northing);
+            if (!axMap.ProjToDegrees(easting, northing, ref longitude, ref latitude)) return;
+            CursorMoved?.Invoke(this, new MapCursorEventArgs(easting, northing, longitude, latitude));
         }
 
         // The ActiveX map has no throttled "view changed" notification, so poll the extent (also catches inertia and resize).
@@ -175,6 +206,7 @@ namespace Hue_travel.MapEngine
             axMap.InertiaOnPanning = tkCustomState.csTrue;   // the map glides after a drag
             axMap.SendMouseDown = true;
             axMap.SendMouseUp = true;
+            axMap.SendMouseMove = true;
             // The ActiveX map does not raise MouseDown while panning, so note where the left button went down by polling.
             pressTracker.Tick += (s, e) =>
             {
@@ -191,6 +223,7 @@ namespace Hue_travel.MapEngine
             viewTracker.Tick += (s, e) => PublishViewIfChanged();
             viewTracker.Start();
             axMap.MouseUpEvent += (s, e) => axMap_MouseUp(e.x, e.y);
+            axMap.MouseMoveEvent += (s, e) => PublishCursor(e.x, e.y);
             BuildScene(zoomToFull: true);
         }
 

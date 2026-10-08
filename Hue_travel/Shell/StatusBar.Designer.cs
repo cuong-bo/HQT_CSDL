@@ -13,6 +13,8 @@ namespace Hue_travel.Shell
         private IconButton captionWeather;
         private Label lblWeatherValue;
         private Label lblScale;
+        private Label lblCoords;
+        private Panel dividerCoords;
         private Panel dividerScale;
         private IconButton pillReady;
 
@@ -32,6 +34,8 @@ namespace Hue_travel.Shell
             this.captionWeather = new IconButton();
             this.lblWeatherValue = new Label();
             this.lblScale = new Label();
+            this.lblCoords = new Label();
+            this.dividerCoords = new Panel();
             this.dividerScale = new Panel();
             this.pillReady = new IconButton();
             this.SuspendLayout();
@@ -95,6 +99,22 @@ namespace Hue_travel.Shell
             this.lblScale.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             this.lblScale.Location = new Point(1030, 5);
 
+            this.lblCoords.Text = "E -- · N --";
+            this.lblCoords.Font = ThemeFonts.Regular(12);
+            this.lblCoords.ForeColor = ThemeColors.Slate600;
+            this.lblCoords.BackColor = Color.Transparent;
+            this.lblCoords.AutoSize = false;
+            this.lblCoords.TextAlign = ContentAlignment.MiddleLeft;
+            this.lblCoords.UseMnemonic = false;
+            this.lblCoords.Cursor = Cursors.Hand;
+            this.lblCoords.Size = new Size(190, 18);
+            this.lblCoords.Location = new Point(840, 5);
+            this.lblCoords.Click += new System.EventHandler(this.lblCoords_Click);
+
+            this.dividerCoords.BackColor = ThemeColors.Slate300;
+            this.dividerCoords.Size = new Size(1, 12);
+            this.dividerCoords.Location = new Point(1020, 9);
+
             this.dividerScale.BackColor = ThemeColors.Slate300;
             this.dividerScale.Size = new Size(1, 12);
             this.dividerScale.Anchor = AnchorStyles.Top | AnchorStyles.Right;
@@ -114,6 +134,8 @@ namespace Hue_travel.Shell
             this.pillReady.Location = new Point(1108, 4);
 
             this.Controls.Add(this.pillReady);
+            this.Controls.Add(this.dividerCoords);
+            this.Controls.Add(this.lblCoords);
             this.Controls.Add(this.dividerScale);
             this.Controls.Add(this.lblScale);
             this.Controls.Add(this.lblWeatherValue);

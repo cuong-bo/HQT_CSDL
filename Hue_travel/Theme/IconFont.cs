@@ -68,6 +68,27 @@ namespace Hue_travel.Theme
             }
         }
 
+        // "Measure area": a four-cornered outline with a dot on every corner (no matching glyph in the font subset).
+        private static void DrawArea(Bitmap bmp, int px, Color color)
+        {
+            float s = px / 16f;
+            PointF[] corners =
+            {
+                new PointF(3f * s, 4f * s), new PointF(13f * s, 3f * s), new PointF(12f * s, 13f * s), new PointF(2.5f * s, 11.5f * s),
+            };
+            using (Graphics g = Graphics.FromImage(bmp))
+            using (var pen = new Pen(color, Math.Max(1f, 1.3f * s)) { LineJoin = System.Drawing.Drawing2D.LineJoin.Round })
+            using (var fill = new SolidBrush(Color.FromArgb(48, color)))
+            using (var dot = new SolidBrush(color))
+            {
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                g.FillPolygon(fill, corners);
+                g.DrawPolygon(pen, corners);
+                float r = 1.7f * s;
+                foreach (PointF c in corners) g.FillEllipse(dot, c.X - r, c.Y - r, 2 * r, 2 * r);
+            }
+        }
+
         private static Bitmap Render(string name, int px, Color color)
         {
             if (px <= 0) px = 1;
@@ -75,6 +96,11 @@ namespace Hue_travel.Theme
             if (name == "minimize")
             {
                 DrawDash(bmp, px, color);
+                return bmp;
+            }
+            if (name == "measure_area")
+            {
+                DrawArea(bmp, px, color);
                 return bmp;
             }
 

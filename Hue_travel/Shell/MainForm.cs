@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Windows.Forms;
+using Hue_travel.MapEngine;
 using Hue_travel.Models;
 using Hue_travel.SampleData;
 using Hue_travel.Services;
@@ -27,6 +28,8 @@ namespace Hue_travel.Shell
         private readonly FloatingPanelForm[] panels;
         private readonly WeatherUpdater weatherUpdater = new WeatherUpdater(new OpenMeteoWeatherService());
         private readonly IAreaLocator areaLocator = new DemoAreaLocator();
+        private bool showDegrees;
+        private MapCursorEventArgs lastCursor;
 
         // The default layout opens once the window is on screen (the panels are owned by it).
         protected override void OnShown(EventArgs e)
@@ -70,7 +73,8 @@ namespace Hue_travel.Shell
             ribbonBar.ZoomInClicked += (s, e) => mapHost.ZoomIn();
             ribbonBar.ZoomOutClicked += (s, e) => mapHost.ZoomOut();
             ribbonBar.ZoomFullClicked += (s, e) => mapHost.ZoomToFull();
-            ribbonBar.MeasureToggled += (s, e) => mapHost.SetMeasureMode(!mapHost.IsMeasuring);
+            ribbonBar.MeasureToggled += (s, e) => mapHost.ToggleMeasure(MeasureKind.Distance);
+            ribbonBar.MeasureAreaToggled += (s, e) => mapHost.ToggleMeasure(MeasureKind.Area);
             ribbonBar.BaseMapSwitcherToggled += (s, e) => TogglePanel(baseMapSwitcherPopup);
 
             categoryRail.CategorySelected += (s, category) =>
@@ -105,6 +109,16 @@ namespace Hue_travel.Shell
             // Status bar: live scale and area from the map view, weather from Open-Meteo (no fixed placeholder text).
             statusBar.SetWeather(weatherUpdater.Text);
             weatherUpdater.TextChanged += (s, text) => statusBar.SetWeather(text);
+            statusBar.CoordinatesClicked += (s, e) =>
+            {
+                showDegrees = !showDegrees;
+                ShowCursorCoordinates();
+            };
+            mapHost.CursorMoved += (s, cursor) =>
+            {
+                lastCursor = cursor;
+                ShowCursorCoordinates();
+            };
             mapHost.ViewChanged += (s, view) =>
             {
                 statusBar.SetScale(MapScale.Format(view.ScaleDenominator));
@@ -163,6 +177,14 @@ namespace Hue_travel.Shell
             registerPanel.Visible = card == registerPanel;
             forgotPasswordPanel.Visible = card == forgotPasswordPanel;
             card.BringToFront();
+        }
+
+        private void ShowCursorCoordinates()
+        {
+            if (lastCursor == null) return;
+            statusBar.SetCoordinates(showDegrees
+                ? CoordinateFormatter.FormatDegrees(lastCursor.Longitude, lastCursor.Latitude)
+                : CoordinateFormatter.FormatUtm(lastCursor.Easting, lastCursor.Northing));
         }
 
         private void ShowPoiCard(Poi poi)

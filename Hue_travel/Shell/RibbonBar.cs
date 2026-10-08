@@ -14,6 +14,7 @@ namespace Hue_travel.Shell
         public event EventHandler BaseMapSwitcherToggled;
         public event EventHandler ZoomFullClicked;
         public event EventHandler MeasureToggled;
+        public event EventHandler MeasureAreaToggled;
 
         public RibbonBar()
         {
@@ -23,6 +24,8 @@ namespace Hue_travel.Shell
         private void btnZoomFull_Click(object sender, EventArgs e) => ZoomFullClicked?.Invoke(this, EventArgs.Empty);
 
         private void btnMeasure_Click(object sender, EventArgs e) => MeasureToggled?.Invoke(this, EventArgs.Empty);
+
+        private void btnMeasureArea_Click(object sender, EventArgs e) => MeasureAreaToggled?.Invoke(this, EventArgs.Empty);
 
         private void btnLayerControl_Click(object sender, EventArgs e) => LayerControlToggled?.Invoke(this, EventArgs.Empty);
 

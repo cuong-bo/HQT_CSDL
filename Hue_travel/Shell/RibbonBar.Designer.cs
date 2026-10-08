@@ -17,6 +17,7 @@ namespace Hue_travel.Shell
         private IconButton btnZoomOut;
         private IconButton btnZoomFull;
         private IconButton btnMeasure;
+        private IconButton btnMeasureArea;
         private Panel separatorBaseMap;
         private IconButton btnBaseMap;
 
@@ -39,6 +40,7 @@ namespace Hue_travel.Shell
             this.btnZoomOut = new IconButton();
             this.btnZoomFull = new IconButton();
             this.btnMeasure = new IconButton();
+            this.btnMeasureArea = new IconButton();
             this.separatorBaseMap = new Panel();
             this.btnBaseMap = new IconButton();
             this.SuspendLayout();
@@ -184,6 +186,21 @@ namespace Hue_travel.Shell
             this.btnMeasure.Margin = new Padding(3, 6, 3, 6);
             this.btnMeasure.Click += new System.EventHandler(this.btnMeasure_Click);
 
+            this.btnMeasureArea.Text = "\u0110o di\u1EC7n t\u00EDch";
+            this.btnMeasureArea.IconName = "measure_area";
+            this.btnMeasureArea.IconSize = 16;
+            this.btnMeasureArea.Font = ThemeFonts.Medium(12);
+            this.btnMeasureArea.ForeColor = ThemeColors.Slate700;
+            this.btnMeasureArea.IconColor = ThemeColors.Slate600;
+            this.btnMeasureArea.FillColor = Color.Transparent;
+            this.btnMeasureArea.HoverFillColor = ThemeColors.Slate100;
+            this.btnMeasureArea.Radius = 4;
+            this.btnMeasureArea.HorizontalPadding = 8;
+            this.btnMeasureArea.Gap = 4;
+            this.btnMeasureArea.Size = new Size(120, 28);
+            this.btnMeasureArea.Margin = new Padding(3, 6, 3, 6);
+            this.btnMeasureArea.Click += new System.EventHandler(this.btnMeasureArea_Click);
+
             this.separatorBaseMap.BackColor = ThemeColors.Slate200;
             this.separatorBaseMap.Size = new Size(1, 16);
             this.separatorBaseMap.Margin = new Padding(7, 12, 7, 12);
@@ -217,6 +234,7 @@ namespace Hue_travel.Shell
             this.flowItems.Controls.Add(this.btnZoomOut);
             this.flowItems.Controls.Add(this.btnZoomFull);
             this.flowItems.Controls.Add(this.btnMeasure);
+            this.flowItems.Controls.Add(this.btnMeasureArea);
             this.flowItems.Controls.Add(this.separatorBaseMap);
             this.flowItems.Controls.Add(this.btnBaseMap);
 
