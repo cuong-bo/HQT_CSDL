@@ -15,8 +15,6 @@ namespace Hue_travel.Shell
         private Label lblScale;
         private Label lblCoords;
         private Panel dividerCoords;
-        private Panel dividerScale;
-        private IconButton pillReady;
 
         protected override void Dispose(bool disposing)
         {
@@ -36,8 +34,6 @@ namespace Hue_travel.Shell
             this.lblScale = new Label();
             this.lblCoords = new Label();
             this.dividerCoords = new Panel();
-            this.dividerScale = new Panel();
-            this.pillReady = new IconButton();
             this.SuspendLayout();
 
             // h-7 white footer, 1px slate-200 top border, 12px slate-600 text.
@@ -115,28 +111,10 @@ namespace Hue_travel.Shell
             this.dividerCoords.Size = new Size(1, 12);
             this.dividerCoords.Location = new Point(1020, 9);
 
-            this.dividerScale.BackColor = ThemeColors.Slate300;
-            this.dividerScale.Size = new Size(1, 12);
-            this.dividerScale.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            this.dividerScale.Location = new Point(1130, 9);
 
-            this.pillReady.Text = "Bản đồ du lịch sẵn sàng";
-            this.pillReady.Font = ThemeFonts.SemiBold(12);
-            this.pillReady.ForeColor = ThemeColors.Emerald700;
-            this.pillReady.DotColor = ThemeColors.Emerald500;
-            this.pillReady.FillColor = Color.Transparent;
-            this.pillReady.HoverFillColor = Color.Transparent;
-            this.pillReady.HorizontalPadding = 0;
-            this.pillReady.Gap = 6;
-            this.pillReady.Cursor = Cursors.Default;
-            this.pillReady.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            this.pillReady.Size = new Size(160, 22);
-            this.pillReady.Location = new Point(1108, 4);
 
-            this.Controls.Add(this.pillReady);
             this.Controls.Add(this.dividerCoords);
             this.Controls.Add(this.lblCoords);
-            this.Controls.Add(this.dividerScale);
             this.Controls.Add(this.lblScale);
             this.Controls.Add(this.lblWeatherValue);
             this.Controls.Add(this.captionWeather);

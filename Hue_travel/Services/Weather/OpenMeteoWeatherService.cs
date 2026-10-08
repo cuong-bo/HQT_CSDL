@@ -25,7 +25,7 @@ namespace Hue_travel.Services.Weather
         {
             client = httpClient ?? SharedClient;
             requestUri = new Uri(string.Format(CultureInfo.InvariantCulture,
-                "https://api.open-meteo.com/v1/forecast?latitude={0}&longitude={1}&current=temperature_2m,weather_code,is_day&timezone=Asia%2FBangkok",
+                "https://api.open-meteo.com/v1/forecast?latitude={0}&longitude={1}&current=temperature_2m,apparent_temperature,weather_code,is_day,precipitation,wind_speed_10m,uv_index&timezone=Asia%2FBangkok",
                 latitude, longitude));
         }
 

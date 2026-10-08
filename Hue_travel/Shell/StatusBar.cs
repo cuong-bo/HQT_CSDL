@@ -44,8 +44,8 @@ namespace Hue_travel.Shell
         }
 
         /// <summary>
-        /// Reproduces the mockup's "justify-between" footer: area group pinned left, scale/ready
-        /// group pinned right, weather group centred in the space between them.
+        /// Reproduces the mockup's "justify-between" footer: area group pinned left, scale
+        /// and coordinates pinned right, weather group centred in the space between them.
         /// </summary>
         private void LayoutItems()
         {
@@ -56,11 +56,7 @@ namespace Hue_travel.Shell
             lblAreaValue.Top = top;
             captionArea.Top = (Height - captionArea.Height) / 2;
 
-            pillReady.Left = Width - Hue_travel.Theme.Ui.S(EdgePadding) - pillReady.Width;
-            pillReady.Top = (Height - pillReady.Height) / 2;
-            dividerScale.Left = pillReady.Left - Hue_travel.Theme.Ui.S(GroupGap) - dividerScale.Width;
-            dividerScale.Top = (Height - dividerScale.Height) / 2;
-            lblScale.Left = dividerScale.Left - Hue_travel.Theme.Ui.S(GroupGap) - lblScale.Width;
+            lblScale.Left = Width - Hue_travel.Theme.Ui.S(EdgePadding) - lblScale.Width;
             lblScale.Top = top;
 
             // Fixed-width read-out so the digits changing under the pointer do not shift the layout.

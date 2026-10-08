@@ -47,7 +47,7 @@ namespace Hue_travel.Services.Weather
             try
             {
                 lastGood = await service.GetCurrentAsync(cancellation.Token);
-                Publish(WeatherDescriber.Describe(lastGood.WeatherCode, lastGood.IsDay, lastGood.TemperatureC));
+                Publish(WeatherDescriber.Describe(lastGood));
                 timer.Interval = (int)RefreshInterval.TotalMilliseconds;
             }
             catch (OperationCanceledException)

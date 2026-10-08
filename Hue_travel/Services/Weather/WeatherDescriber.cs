@@ -3,20 +3,29 @@ using System.Globalization;
 
 namespace Hue_travel.Services.Weather
 {
-    /// <summary>Turns a WMO weather code and temperature into the Vietnamese status-bar sentence.</summary>
+    /// <summary>Turns a weather reading into the Vietnamese status-bar sentence and a sightseeing hint.</summary>
     public static class WeatherDescriber
     {
-        private const double HotFromC = 35;
-        private const double ColdUpToC = 15;
+        private const double FeelsLikeGapC = 3;       // show "cảm giác" only when it differs this much from the air temperature
+        private const double HotApparentFromC = 35;
+        private const double ColdApparentUpToC = 15;
+        private const double StrongWindFromKmh = 40;
+        private const double HighUvFrom = 8;
+        private const double RainFromMm = 0.1;
 
         private enum Condition { Clear, PartlyCloudy, Overcast, Fog, Drizzle, Rain, Thunderstorm, Other }
 
         /// <summary>For example "Nắng đẹp, 26°C - Rất thuận tiện tham quan".</summary>
-        public static string Describe(int weatherCode, bool isDay, double temperatureC)
+        public static string Describe(WeatherSnapshot reading)
         {
-            Condition condition = Classify(weatherCode);
-            return string.Format(CultureInfo.InvariantCulture, "{0}, {1:0}°C - {2}",
-                Label(condition, isDay), Math.Round(temperatureC), Advice(condition, temperatureC));
+            if (reading == null) throw new ArgumentNullException(nameof(reading));
+
+            Condition condition = Classify(reading.WeatherCode);
+            string feelsLike = Math.Abs(reading.ApparentC - reading.TemperatureC) >= FeelsLikeGapC
+                ? string.Format(CultureInfo.InvariantCulture, " (cảm giác {0:0}°C)", Math.Round(reading.ApparentC))
+                : string.Empty;
+            return string.Format(CultureInfo.InvariantCulture, "{0}, {1:0}°C{2} - {3}",
+                Label(condition, reading.IsDay), Math.Round(reading.TemperatureC), feelsLike, Advice(condition, reading));
         }
 
         private static Condition Classify(int code)
@@ -46,13 +55,17 @@ namespace Hue_travel.Services.Weather
             }
         }
 
-        private static string Advice(Condition condition, double temperatureC)
+        // The most important warning wins; "very convenient" is only said when nothing speaks against going out.
+        private static string Advice(Condition condition, WeatherSnapshot reading)
         {
             if (condition == Condition.Thunderstorm) return "Nên hạn chế đi ngoài trời";
-            if (condition == Condition.Rain || condition == Condition.Drizzle) return "Nên mang theo áo mưa";
+            if (condition == Condition.Rain || condition == Condition.Drizzle || reading.PrecipitationMm >= RainFromMm) return "Nên mang theo áo mưa";
             if (condition == Condition.Fog) return "Nên đi chậm và chú ý quan sát";
-            if (temperatureC >= HotFromC) return "Nắng nóng, nên mang theo nước và mũ";
-            if (temperatureC <= ColdUpToC) return "Trời se lạnh, nên mang theo áo khoác";
+            if (reading.WindKmh >= StrongWindFromKmh) return "Gió mạnh, nên cẩn thận khi di chuyển ngoài trời";
+            if (reading.ApparentC >= HotApparentFromC) return "Nắng nóng, nên mang theo nước và mũ";
+            if (reading.IsDay && reading.UvIndex >= HighUvFrom) return "Chỉ số UV cao, nên che nắng";
+            if (reading.ApparentC <= ColdApparentUpToC) return "Trời se lạnh, nên mang theo áo khoác";
+            if (!reading.IsDay) return "Trời tối, phù hợp dạo phố và ngắm sông Hương";
             return "Rất thuận tiện tham quan";
         }
     }
