@@ -124,7 +124,11 @@
     <Compile Include="MapEngine\MeasureKind.cs" />
     <Compile Include="MapEngine\MapCursorEventArgs.cs" />
     <Compile Include="Services\Area\SceneGeoreference.cs" />
-    <Compile Include="Services\Area\DemoPoiLocations.cs" />
+    <Compile Include="Services\Area\DemoPlaces.cs" />
+    <Compile Include="Services\Routing\GeoMath.cs" />
+    <Compile Include="Services\Routing\GeoPoint.cs" />
+    <Compile Include="Services\Routing\RoutePlan.cs" />
+    <Compile Include="Services\Routing\RoutePlanner.cs" />
     <Compile Include="MapEngine\MapCrs.cs" />
     <Compile Include="MapEngine\PoiLayerFilter.cs" />
     <Compile Include="MapEngine\BaseMapCatalog.cs" />

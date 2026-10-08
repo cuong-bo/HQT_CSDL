@@ -1,48 +1,38 @@
-﻿using System;
+﻿using Hue_travel.Services.Routing;
 
 namespace Hue_travel.Services.Area
 {
-    /// <summary>Stand-in locator for the demo scene: the nearest landmark within reach names the area (landmarks given in canvas coordinates).</summary>
+    /// <summary>Stand-in locator: the nearest landmark within reach names the area.</summary>
     public sealed class DemoAreaLocator : IAreaLocator
     {
         public const string DefaultArea = "Trung tâm Cố đô Huế & Bờ sông Hương";
 
-        private const double ReachInMetres = 150;
+        private const double ReachInKm = 0.25;
 
-        private static readonly Landmark[] Landmarks =
+        private static readonly string[] Names =
         {
-            new Landmark("Khu vực Hoàng Thành Huế", 620, 320),
-            new Landmark("Khu vực chùa Thiên Mụ & sông Hương", 300, 480),
-            new Landmark("Khu vực Ga Huế", 430, 670),
-            new Landmark("Khu ẩm thực phố Huế", 890, 560),
+            "Khu vực Hoàng Thành Huế",
+            "Khu vực chùa Thiên Mụ & sông Hương",
+            "Khu vực Ga Huế",
+            "Khu ẩm thực phố Huế",
         };
 
-        public string Locate(double x, double y)
+        private static readonly string[] PoiIds = { "dai-noi", "thien-mu", "ga-hue", "bun-bo-mu-roi" };
+
+        public string Locate(double longitude, double latitude)
         {
             string best = DefaultArea;
-            double bestDistance = ReachInMetres;
-            foreach (Landmark landmark in Landmarks)
+            double bestDistance = ReachInKm;
+            for (int i = 0; i < PoiIds.Length; i++)
             {
-                double distance = Math.Sqrt(Math.Pow(x - landmark.X, 2) + Math.Pow(y - landmark.Y, 2));
+                GeoPoint place;
+                if (!DemoPlaces.TryGetPoi(PoiIds[i], out place)) continue;
+                double distance = GeoMath.DistanceKm(longitude, latitude, place.Longitude, place.Latitude);
                 if (distance >= bestDistance) continue;
                 bestDistance = distance;
-                best = landmark.Name;
+                best = Names[i];
             }
             return best;
-        }
-
-        private sealed class Landmark
-        {
-            public Landmark(string name, double x, double y)
-            {
-                Name = name;
-                X = SceneGeoreference.X(x);
-                Y = SceneGeoreference.Y(y);
-            }
-
-            public string Name { get; }
-            public double X { get; }
-            public double Y { get; }
         }
     }
 }

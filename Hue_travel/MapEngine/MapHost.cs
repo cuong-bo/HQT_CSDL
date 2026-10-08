@@ -81,9 +81,11 @@ namespace Hue_travel.MapEngine
             axMap.Extents = view;
         }
 
-        /// <summary>Centres the map on a position (VN-2000 UTM metres) at street level.</summary>
-        public void ZoomTo(double easting, double northing)
+        /// <summary>Centres the map on a position (degrees) at street level.</summary>
+        public void ZoomTo(double longitude, double latitude)
         {
+            double easting = 0, northing = 0;
+            if (!axMap.DegreesToProj(longitude, latitude, ref easting, ref northing)) return;
             double halfWidth = 260 * SceneGeoreference.MetresPerCanvasUnit, halfHeight = 146 * SceneGeoreference.MetresPerCanvasUnit;
             var view = new Extents();
             view.SetBounds(easting - halfWidth, northing - halfHeight, 0, easting + halfWidth, northing + halfHeight, 0);
@@ -178,7 +180,9 @@ namespace Hue_travel.MapEngine
 
             // Map units are metres (the target CRS, VN-2000 UTM zone 48N, is metric); 96 DPI scaled to the screen.
             double denominator = MapScale.Denominator(xMax - xMin, axMap.Width, 96.0 * Ui.Scale);
-            ViewChanged?.Invoke(this, new MapViewChangedEventArgs((xMin + xMax) / 2, (yMin + yMax) / 2, denominator));
+            double centerX = (xMin + xMax) / 2, centerY = (yMin + yMax) / 2, longitude = 0, latitude = 0;
+            axMap.ProjToDegrees(centerX, centerY, ref longitude, ref latitude);
+            ViewChanged?.Invoke(this, new MapViewChangedEventArgs(centerX, centerY, longitude, latitude, denominator));
         }
 
         private void InitializeMap()

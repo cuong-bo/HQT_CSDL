@@ -6,6 +6,7 @@ using Hue_travel.Models;
 using Hue_travel.SampleData;
 using Hue_travel.Services;
 using Hue_travel.Services.Area;
+using Hue_travel.Services.Routing;
 using Hue_travel.Services.Weather;
 using Hue_travel.Theme;
 
@@ -88,8 +89,8 @@ namespace Hue_travel.Shell
             searchPoiPanel.PoiSelected += (s, poi) => ShowPoiCard(poi);
             searchPoiPanel.ShowOnMapRequested += (s, poi) =>
             {
-                double easting, northing;
-                if (DemoPoiLocations.TryGet(poi.Id, out easting, out northing)) mapHost.ZoomTo(easting, northing);
+                GeoPoint place;
+                if (DemoPlaces.TryGetPoi(poi.Id, out place)) mapHost.ZoomTo(place.Longitude, place.Latitude);
             };
 
             // Status bar: live scale and area from the map view, weather from Open-Meteo (no fixed placeholder text).
@@ -108,7 +109,7 @@ namespace Hue_travel.Shell
             mapHost.ViewChanged += (s, view) =>
             {
                 statusBar.SetScale(MapScale.Format(view.ScaleDenominator));
-                statusBar.SetArea(areaLocator.Locate(view.CenterX, view.CenterY));
+                statusBar.SetArea(areaLocator.Locate(view.CenterLongitude, view.CenterLatitude));
             };
 
         }

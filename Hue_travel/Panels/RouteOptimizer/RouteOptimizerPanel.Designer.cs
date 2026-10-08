@@ -39,6 +39,9 @@ namespace Hue_travel.Panels.RouteOptimizer
         private RichTextBlock textLeg2;
         private Label lblLeg2Value;
         private RoundedPanel boxLeg3;
+        private RoundedPanel boxLeg4;
+        private RichTextBlock textLeg4;
+        private Label lblLeg4Value;
         private RichTextBlock textLeg3;
         private Label lblLeg3Value;
         private Panel panelFooter;
@@ -86,6 +89,9 @@ namespace Hue_travel.Panels.RouteOptimizer
             this.textLeg2 = new RichTextBlock();
             this.lblLeg2Value = new Label();
             this.boxLeg3 = new RoundedPanel();
+            this.boxLeg4 = new RoundedPanel();
+            this.textLeg4 = new RichTextBlock();
+            this.lblLeg4Value = new Label();
             this.textLeg3 = new RichTextBlock();
             this.lblLeg3Value = new Label();
             this.panelFooter = new Panel();
@@ -323,7 +329,7 @@ namespace Hue_travel.Panels.RouteOptimizer
             this.boxStats.Controls.Add(this.lblSavingCaption);
             this.boxStats.Controls.Add(this.lblSavingValue);
 
-            this.lblDetail.Text = "Chi tiết các chặng di chuyển:";
+            this.lblDetail.Text = "Chi tiết các chặng di chuyển (ước tính):";
             this.lblDetail.Font = ThemeFonts.Bold(12);
             this.lblDetail.ForeColor = ThemeColors.Slate800;
             this.lblDetail.AutoSize = true;
@@ -399,6 +405,30 @@ namespace Hue_travel.Panels.RouteOptimizer
             this.boxLeg3.Controls.Add(this.textLeg3);
             this.boxLeg3.Controls.Add(this.lblLeg3Value);
 
+            this.boxLeg4.FillColor = ThemeColors.Slate50;
+            this.boxLeg4.BorderColor = ThemeColors.Slate100;
+            this.boxLeg4.Radius = 4;
+            this.boxLeg4.Size = new Size(356, 46);
+            this.boxLeg4.Location = new Point(14, 724);
+            this.textLeg4.Text = "";
+            this.textLeg4.Font = ThemeFonts.Regular(12);
+            this.textLeg4.BoldFont = ThemeFonts.Bold(12);
+            this.textLeg4.ForeColor = ThemeColors.Slate800;
+            this.textLeg4.LineSpacing = 1.25f;
+            this.textLeg4.Size = new Size(336, 18);
+            this.textLeg4.Location = new Point(8, 5);
+            this.lblLeg4Value.Text = "";
+            this.lblLeg4Value.Font = ThemeFonts.SemiBold(11);
+            this.lblLeg4Value.ForeColor = ThemeColors.Primary;
+            this.lblLeg4Value.BackColor = Color.Transparent;
+            this.lblLeg4Value.AutoSize = false;
+            this.lblLeg4Value.TextAlign = ContentAlignment.MiddleRight;
+            this.lblLeg4Value.Size = new Size(336, 18);
+            this.lblLeg4Value.Location = new Point(8, 24);
+            this.boxLeg4.Controls.Add(this.textLeg4);
+            this.boxLeg4.Controls.Add(this.lblLeg4Value);
+
+            this.panelBody.Controls.Add(this.boxLeg4);
             this.panelBody.Controls.Add(this.boxLeg3);
             this.panelBody.Controls.Add(this.boxLeg2);
             this.panelBody.Controls.Add(this.boxLeg1);
