@@ -19,7 +19,6 @@ namespace Hue_travel.Shell
         private IconButton btnMeasure;
         private Panel separatorBaseMap;
         private IconButton btnBaseMap;
-        private IconButton pillStatus;
 
         protected override void Dispose(bool disposing)
         {
@@ -42,7 +41,6 @@ namespace Hue_travel.Shell
             this.btnMeasure = new IconButton();
             this.separatorBaseMap = new Panel();
             this.btnBaseMap = new IconButton();
-            this.pillStatus = new IconButton();
             this.SuspendLayout();
             this.flowItems.SuspendLayout();
 
@@ -222,23 +220,6 @@ namespace Hue_travel.Shell
             this.flowItems.Controls.Add(this.separatorBaseMap);
             this.flowItems.Controls.Add(this.btnBaseMap);
 
-            // --- Right-aligned status pill: rounded-full sky-50 / sky-200, green dot, 12px text ---
-            this.pillStatus.Text = "Đang xem bản đồ thành phố";
-            this.pillStatus.Font = ThemeFonts.Regular(12);
-            this.pillStatus.ForeColor = ThemeColors.Sky700;
-            this.pillStatus.DotColor = ThemeColors.Emerald500;
-            this.pillStatus.Gap = 4;
-            this.pillStatus.HorizontalPadding = 8;
-            this.pillStatus.FillColor = ThemeColors.Sky50;
-            this.pillStatus.HoverFillColor = ThemeColors.Sky50;
-            this.pillStatus.BorderColor = ThemeColors.Sky200;
-            this.pillStatus.Radius = 12;
-            this.pillStatus.Cursor = Cursors.Default;
-            this.pillStatus.Size = new Size(190, 22);
-            this.pillStatus.Location = new Point(1078, 9);
-            this.pillStatus.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-
-            this.Controls.Add(this.pillStatus);
             this.Controls.Add(this.flowItems);
             this.Name = "RibbonBar";
             this.Size = new Size(1280, 40);

@@ -15,13 +15,9 @@ namespace Hue_travel.Shell
         public event EventHandler ZoomFullClicked;
         public event EventHandler MeasureToggled;
 
-        private const int EdgePadding = 12; // px-3
-
         public RibbonBar()
         {
             InitializeComponent();
-            // The pill is right-anchored; place it by its measured width once.
-            pillStatus.Left = Width - Hue_travel.Theme.Ui.S(EdgePadding) - pillStatus.Width;
         }
 
         private void btnZoomFull_Click(object sender, EventArgs e) => ZoomFullClicked?.Invoke(this, EventArgs.Empty);
