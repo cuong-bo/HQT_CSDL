@@ -17,6 +17,7 @@ namespace Hue_travel.Theme
         private readonly IconButton revealButton = new IconButton();
         private bool isRevealable;
         private bool isFocused;
+        private bool hasError;
 
         public InputField()
         {
@@ -35,7 +36,7 @@ namespace Hue_travel.Theme
             textBox.Font = Font;
             textBox.GotFocus += (s, e) => { isFocused = true; Invalidate(); };
             textBox.LostFocus += (s, e) => { isFocused = false; Invalidate(); };
-            textBox.TextChanged += (s, e) => OnTextChanged(EventArgs.Empty);
+            textBox.TextChanged += (s, e) => { hasError = false; Invalidate(); OnTextChanged(EventArgs.Empty); };
 
             leadingIcon.AutoWidth = false;
             leadingIcon.IconSize = 15;
@@ -94,6 +95,10 @@ namespace Hue_travel.Theme
         [Browsable(true), EditorBrowsable(EditorBrowsableState.Always)]
         public override string Text { get { return textBox.Text; } set { textBox.Text = value; } }
 
+        /// <summary>Draws the border in red until the text is edited again.</summary>
+        [Browsable(false)]
+        public bool HasError { get { return hasError; } set { hasError = value; Invalidate(); } }
+
         protected override void OnResize(EventArgs e) { base.OnResize(e); LayoutChildren(); }
 
         private void LayoutChildren()
@@ -114,7 +119,7 @@ namespace Hue_travel.Theme
             g.SmoothingMode = SmoothingMode.AntiAlias;
             using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), 6))
             using (var fill = new SolidBrush(ThemeColors.Slate50))
-            using (var pen = new Pen(isFocused ? ThemeColors.Primary : ThemeColors.Slate200, 1f))
+            using (var pen = new Pen(hasError ? ThemeColors.Red500 : isFocused ? ThemeColors.Primary : ThemeColors.Slate200, 1f))
             {
                 g.FillPath(fill, path);
                 g.DrawPath(pen, path);

@@ -6,6 +6,7 @@ using Hue_travel.Panels.RouteOptimizer;
 using Hue_travel.Panels.SearchPoi;
 using Hue_travel.Panels.TravelGuide;
 using Hue_travel.Auth;
+using Hue_travel.Theme;
 
 namespace Hue_travel.Shell
 {
@@ -26,6 +27,7 @@ namespace Hue_travel.Shell
         private PoiIdentifyCard poiIdentifyCard;
         private BaseMapSwitcherPopup baseMapSwitcherPopup;
         private AuthModal authModal;
+        private Toast toast;
         private RegisterPanel registerPanel;
         private ForgotPasswordPanel forgotPasswordPanel;
 
@@ -49,6 +51,7 @@ namespace Hue_travel.Shell
             this.poiIdentifyCard = new PoiIdentifyCard();
             this.baseMapSwitcherPopup = new BaseMapSwitcherPopup();
             this.authModal = new AuthModal();
+            this.toast = new Toast();
             this.registerPanel = new RegisterPanel();
             this.forgotPasswordPanel = new ForgotPasswordPanel();
             this.SuspendLayout();
@@ -146,6 +149,9 @@ namespace Hue_travel.Shell
             this.forgotPasswordPanel.Visible = false;
 
             this.Controls.Add(this.statusBar);
+
+            this.toast.TopOffset = 104;
+            this.Controls.Add(this.toast);
 
             this.ResumeLayout(false);
         }

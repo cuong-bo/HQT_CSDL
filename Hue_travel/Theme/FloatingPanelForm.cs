@@ -52,6 +52,11 @@ namespace Hue_travel.Theme
             if (keepBottom) Top = bottom - Height;
         }
 
+        /// <summary>Raised when the panel wants the host window to show a toast message.</summary>
+        public event EventHandler<ToastMessage> MessageRaised;
+
+        protected void Notify(string text, ToastKind kind = ToastKind.Info) => MessageRaised?.Invoke(this, new ToastMessage(text, kind));
+
         protected void RaiseCloseRequested() => CloseRequested?.Invoke(this, EventArgs.Empty);
 
         protected override void OnResize(EventArgs e)

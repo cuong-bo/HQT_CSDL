@@ -20,6 +20,19 @@ namespace Hue_travel.Panels.LayerControl
             rowPiers.CheckedChanged += (s, e) => RaiseLayerToggled("piers", rowPiers.Checked);
         }
 
+        /// <summary>
+        /// Shows only the given category group (null = every group). The road layer is a base layer
+        /// and is left as the user set it.
+        /// </summary>
+        public void SetOnlyGroup(string group)
+        {
+            rowHeritage.Checked = group == null || group == "heritage";
+            rowFood.Checked = group == null || group == "food";
+            rowStay.Checked = group == null || group == "stay";
+            rowRiver.Checked = group == null || group == "river";
+            rowPiers.Checked = group == null || group == "piers";
+        }
+
         private void RaiseLayerToggled(string group, bool visible) =>
             LayerToggled?.Invoke(this, new KeyValuePair<string, bool>(group, visible));
 

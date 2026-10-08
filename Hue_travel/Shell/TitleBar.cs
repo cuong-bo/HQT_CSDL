@@ -27,6 +27,18 @@ namespace Hue_travel.Shell
         {
             InitializeComponent();
             LayoutRightGroup();
+
+            // Double-clicking the bar maximises / restores, like a normal window caption.
+            EventHandler toggleMaximize = (s, e) => MaximizeClicked?.Invoke(this, EventArgs.Empty);
+            panelRoot.DoubleClick += toggleMaximize;
+            lblLogo.DoubleClick += toggleMaximize;
+            picLogo.DoubleClick += toggleMaximize;
+        }
+
+        /// <summary>Shows the "restore" icon while the window is maximised, "maximise" otherwise.</summary>
+        public void SetMaximized(bool isMaximized)
+        {
+            btnMaximize.IconName = isMaximized ? "filter_none" : "crop_square";
         }
 
         /// <summary>

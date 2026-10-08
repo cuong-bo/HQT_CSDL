@@ -17,6 +17,8 @@ namespace Hue_travel.Panels.SearchPoi
         /// <summary>Raised by a result card's "Bản đồ" button: the host should zoom the map to the POI.</summary>
         public event EventHandler<Poi> ShowOnMapRequested;
 
+        private PoiCategory? category;
+
         private readonly List<KeyValuePair<PoiResultCard, Poi>> cards = new List<KeyValuePair<PoiResultCard, Poi>>();
 
         public SearchPoiPanel()
@@ -42,19 +44,61 @@ namespace Hue_travel.Panels.SearchPoi
                     PoiSelected?.Invoke(this, poi);
                 };
             }
+            chipAll.Click += (s, e) => SetCategory(null);
+            chipHeritage.Click += (s, e) => SetCategory(PoiCategory.Heritage);
+            chipFood.Click += (s, e) => SetCategory(PoiCategory.Food);
+            chipStay.Click += (s, e) => SetCategory(PoiCategory.Stay);
+            ApplyChipStyles();
             RefreshResults();
+        }
+
+        /// <summary>Filters the results by category (null = all) and highlights the matching chip.</summary>
+        public void SetCategory(PoiCategory? newCategory)
+        {
+            category = newCategory;
+            ApplyChipStyles();
+            RefreshResults();
+        }
+
+        // Active chip: sky-100 / primary / semibold; others slate-100 / medium. Widths follow the text, so re-flow left to right.
+        private void ApplyChipStyles()
+        {
+            var chips = new[]
+            {
+                new KeyValuePair<IconButton, PoiCategory?>(chipAll, null),
+                new KeyValuePair<IconButton, PoiCategory?>(chipHeritage, PoiCategory.Heritage),
+                new KeyValuePair<IconButton, PoiCategory?>(chipFood, PoiCategory.Food),
+                new KeyValuePair<IconButton, PoiCategory?>(chipStay, PoiCategory.Stay),
+            };
+            int x = 12;
+            foreach (KeyValuePair<IconButton, PoiCategory?> pair in chips)
+            {
+                IconButton chip = pair.Key;
+                bool active = pair.Value == category;
+                chip.ForeColor = active ? ThemeColors.Primary : ThemeColors.Slate600;
+                chip.FillColor = active ? ThemeColors.Sky100 : ThemeColors.Slate100;
+                chip.HoverFillColor = active ? ThemeColors.Sky100 : ThemeColors.Slate200;
+                chip.BorderColor = active ? ThemeColors.Sky200 : ThemeColors.Slate200;
+                chip.Font = active ? ThemeFonts.SemiBold(11) : ThemeFonts.Medium(11);
+                chip.Left = x;
+                x += chip.Width + 6;
+            }
         }
 
         private void header_CloseClicked(object sender, EventArgs e) => RaiseCloseRequested();
 
         private void txtKeyword_TextChanged(object sender, EventArgs e) => RefreshResults();
 
-        private void lblClear_Click(object sender, EventArgs e) => txtKeyword.Clear();
+        private void lblClear_Click(object sender, EventArgs e)
+        {
+            txtKeyword.Clear();
+            SetCategory(null);
+        }
 
         /// <summary>Filters the result cards by the keyword (diacritic-insensitive) and re-stacks the visible ones.</summary>
         private void RefreshResults()
         {
-            IReadOnlyList<Poi> matches = PoiSearchFilter.Apply(cards.Select(c => c.Value), txtKeyword.Text, null);
+            IReadOnlyList<Poi> matches = PoiSearchFilter.Apply(cards.Select(c => c.Value), txtKeyword.Text, category);
             int row = 0;
             foreach (KeyValuePair<PoiResultCard, Poi> pair in cards)
             {

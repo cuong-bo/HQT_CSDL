@@ -1,7 +1,9 @@
+using System;
 using System.Linq;
 using System.Windows.Forms;
 using Hue_travel.Models;
 using Hue_travel.SampleData;
+using Hue_travel.Theme;
 
 namespace Hue_travel.Shell
 {
@@ -11,6 +13,11 @@ namespace Hue_travel.Shell
         {
             InitializeComponent();
             WireEvents();
+            foreach (Control child in Controls)
+            {
+                var panel = child as FloatingPanelForm;
+                if (panel != null) panel.MessageRaised += (s, e) => toast.ShowMessage(e.Text, e.Kind);
+            }
             RestoreFloatingOrder();
         }
 
@@ -29,9 +36,16 @@ namespace Hue_travel.Shell
         {
             titleBar.MinimizeClicked += (s, e) => WindowState = FormWindowState.Minimized;
             titleBar.MaximizeClicked += (s, e) =>
-                WindowState = WindowState == FormWindowState.Maximized
-                    ? FormWindowState.Normal
-                    : FormWindowState.Maximized;
+            {
+                if (WindowState == FormWindowState.Maximized)
+                {
+                    WindowState = FormWindowState.Normal;
+                    return;
+                }
+                // A borderless window would otherwise cover the taskbar when maximised.
+                MaximizedBounds = Screen.FromControl(this).WorkingArea;
+                WindowState = FormWindowState.Maximized;
+            };
             titleBar.CloseClicked += (s, e) => Close();
             titleBar.AuthClicked += (s, e) => ToggleAuth();
 
@@ -45,7 +59,12 @@ namespace Hue_travel.Shell
             ribbonBar.MeasureToggled += (s, e) => mapHost.SetMeasureMode(!mapHost.IsMeasuring);
             ribbonBar.BaseMapSwitcherToggled += (s, e) => TogglePanel(baseMapSwitcherPopup);
 
-            categoryRail.CategorySelected += (s, category) => TogglePanel(searchPoiPanel, forceVisible: true);
+            categoryRail.CategorySelected += (s, category) =>
+            {
+                TogglePanel(searchPoiPanel, forceVisible: true);
+                searchPoiPanel.SetCategory(category);
+                layerControlPanel.SetOnlyGroup(GroupFor(category));
+            };
 
             layerControlPanel.CloseRequested += (s, e) => layerControlPanel.Visible = false;
             routeOptimizerPanel.CloseRequested += (s, e) => routeOptimizerPanel.Visible = false;
@@ -75,6 +94,26 @@ namespace Hue_travel.Shell
                 baseMapSwitcherPopup.Visible = false;
             };
             mapHost.BaseMapRequested += (s, mapId) => baseMapSwitcherPopup.MarkSelected(mapId);
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            if (titleBar != null) titleBar.SetMaximized(WindowState == FormWindowState.Maximized);
+        }
+
+        // Map layer group shown for a rail category (null = every group).
+        private static string GroupFor(PoiCategory? category)
+        {
+            switch (category)
+            {
+                case PoiCategory.Heritage: return "heritage";
+                case PoiCategory.Food: return "food";
+                case PoiCategory.Stay: return "stay";
+                case PoiCategory.River: return "river";
+                case PoiCategory.Transport: return "piers";
+                default: return null;
+            }
         }
 
         private void TogglePanel(Control panel, bool forceVisible = false)

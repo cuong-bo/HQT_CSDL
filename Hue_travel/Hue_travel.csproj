@@ -107,6 +107,9 @@
     <Compile Include="Theme\NoAutoScrollPanel.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Theme\Toast.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Theme\FloatingPanelForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -195,6 +198,7 @@
     <Compile Include="Panels\PoiIdentify\PoiIdentifyCard.Designer.cs">
       <DependentUpon>PoiIdentifyCard.cs</DependentUpon>
     </Compile>
+    <Compile Include="Auth\AuthValidation.cs" />
     <Compile Include="Auth\AuthTabStrip.cs">
       <SubType>Component</SubType>
     </Compile>

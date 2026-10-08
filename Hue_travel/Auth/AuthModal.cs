@@ -12,6 +12,24 @@ namespace Hue_travel.Auth
         public AuthModal()
         {
             InitializeComponent();
+            btnLogin.Click += (s, e) => Submit();
+        }
+
+        private void Submit()
+        {
+            txtLoginId.HasError = !AuthValidation.IsEmailOrPhone(txtLoginId.Text);
+            txtLoginPassword.HasError = !AuthValidation.IsStrongEnoughPassword(txtLoginPassword.Text);
+            if (txtLoginId.HasError)
+            {
+                Notify("Email hoặc số điện thoại chưa hợp lệ", ToastKind.Error);
+                return;
+            }
+            if (txtLoginPassword.HasError)
+            {
+                Notify("Mật khẩu cần tối thiểu " + AuthValidation.MinPasswordLength + " ký tự", ToastKind.Error);
+                return;
+            }
+            Notify("Thông tin hợp lệ. Chức năng đăng nhập sẽ hoạt động khi kết nối CSDL tài khoản", ToastKind.Info);
         }
 
         private void header_CloseClicked(object sender, EventArgs e) => RaiseCloseRequested();
