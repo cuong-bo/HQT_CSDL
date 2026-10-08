@@ -89,6 +89,24 @@ namespace Hue_travel.Theme
             }
         }
 
+        // "Landscape": two mountains and a sun.
+        private static void DrawLandscape(Bitmap bmp, int px, Color color)
+        {
+            float s = px / 16f;
+            PointF[] ridge =
+            {
+                new PointF(0.5f * s, 13.5f * s), new PointF(5.5f * s, 5.5f * s), new PointF(8.5f * s, 10f * s),
+                new PointF(10.5f * s, 7.5f * s), new PointF(15.5f * s, 13.5f * s),
+            };
+            using (Graphics g = Graphics.FromImage(bmp))
+            using (var fill = new SolidBrush(color))
+            {
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                g.FillPolygon(fill, ridge);
+                g.FillEllipse(fill, 11f * s, 1.5f * s, 3.2f * s, 3.2f * s);
+            }
+        }
+
         private static Bitmap Render(string name, int px, Color color)
         {
             if (px <= 0) px = 1;
@@ -101,6 +119,11 @@ namespace Hue_travel.Theme
             if (name == "measure_area")
             {
                 DrawArea(bmp, px, color);
+                return bmp;
+            }
+            if (name == "landscape")
+            {
+                DrawLandscape(bmp, px, color);
                 return bmp;
             }
 

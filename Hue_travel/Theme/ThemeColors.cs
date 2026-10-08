@@ -30,7 +30,7 @@ namespace Hue_travel.Theme
         public static readonly Color CategoryHeritage = ColorTranslator.FromHtml("#D97706");
         public static readonly Color CategoryFood = ColorTranslator.FromHtml("#EA580C");
         public static readonly Color CategoryStay = ColorTranslator.FromHtml("#2563EB");
-        public static readonly Color CategoryRiver = ColorTranslator.FromHtml("#0891B2");
+        public static readonly Color CategoryScenery = ColorTranslator.FromHtml("#0891B2");
 
         public static readonly Color StatusOnline = ColorTranslator.FromHtml("#10B981");
         public static readonly Color BadgeAmber = ColorTranslator.FromHtml("#F59E0B");

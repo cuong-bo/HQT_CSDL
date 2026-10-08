@@ -33,7 +33,8 @@ namespace Hue_travel.Panels.PoiIdentify
             {
                 case PoiCategory.Food: return "Ẩm thực";
                 case PoiCategory.Stay: return "Lưu trú";
-                case PoiCategory.River: return "Sông Hương";
+                case PoiCategory.Scenery: return "Cảnh quan";
+                case PoiCategory.Service: return "Dịch vụ";
                 case PoiCategory.Transport: return "Giao thông";
                 default: return "Địa điểm";
             }
