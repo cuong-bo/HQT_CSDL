@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 using AxInterop.MapWinGIS;
 using Interop.MapWinGIS;
@@ -15,9 +16,17 @@ namespace Hue_travel.MapEngine
         private static readonly string[] BaseMapIds = { "standard", "satellite", "night" };
 
         private string baseMapId = "standard";
+        private SceneIndex scene = new SceneIndex();
+        private readonly Dictionary<string, bool> groupVisibility = new Dictionary<string, bool>();
+        private int mouseDownX = int.MinValue, mouseDownY = int.MinValue;
+        private bool wasButtonDown;
+        private readonly Timer pressTracker = new Timer { Interval = 10 };
 
         /// <summary>Raised when the on-map quick switch picks a base map ("standard", "satellite" or "night").</summary>
         public event EventHandler<string> BaseMapRequested;
+
+        /// <summary>Raised when a pin is clicked; the argument is the pin key (the sample POI id, e.g. "dai-noi").</summary>
+        public event EventHandler<string> PinClicked;
 
         public MapHost()
         {
@@ -30,6 +39,8 @@ namespace Hue_travel.MapEngine
             boxInfo.BringToFront();
             LayoutOverlays();
             Resize += (s, e) => LayoutOverlays();
+            new ToolTip().SetToolTip(compass, "Khôi phục hướng Bắc");
+            Disposed += (s, e) => pressTracker.Dispose();
 
         }
 
@@ -75,8 +86,59 @@ namespace Hue_travel.MapEngine
 
             // Rebuild the layers in the new palette but keep the user's current view.
             Extents view = axMap.Extents;
-            MapScene.Build(axMap, MapPalette.For(mapId), zoomToFull: false);
+            BuildScene(zoomToFull: false);
             axMap.Extents = view;
+        }
+
+        /// <summary>Shows or hides one toggle group of map layers ("heritage", "food", "stay", "roads", "river", "piers").</summary>
+        public void SetGroupVisible(string group, bool visible)
+        {
+            groupVisibility[group] = visible;
+            ApplyGroupVisibility(group);
+        }
+
+        /// <summary>Centres the map on a pin and zooms in to it. Returns false when the key has no pin on the map.</summary>
+        public bool ZoomToPin(string key)
+        {
+            PinLocation pin = scene.Pins.Find(p => p.Key == key);
+            if (pin == null) return false;
+
+            var view = new Extents();
+            view.SetBounds(pin.X - 260, pin.Y - 146, 0, pin.X + 260, pin.Y + 146, 0);
+            axMap.Extents = view;
+            return true;
+        }
+
+        private void BuildScene(bool zoomToFull)
+        {
+            scene = MapScene.Build(axMap, MapPalette.For(baseMapId), zoomToFull);
+            foreach (string group in groupVisibility.Keys) ApplyGroupVisibility(group);
+        }
+
+        private void ApplyGroupVisibility(string group)
+        {
+            List<int> handles;
+            if (!scene.Groups.TryGetValue(group, out handles)) return;
+            foreach (int handle in handles) axMap.set_LayerVisible(handle, groupVisibility[group]);
+        }
+
+        // A click is a press and release in (almost) the same spot, so panning is not mistaken for a pin click.
+        private void axMap_MouseUp(int x, int y)
+        {
+            if (IsMeasuring || Math.Abs(x - mouseDownX) > 3 || Math.Abs(y - mouseDownY) > 3) return;
+
+            string hit = null;
+            double best = double.MaxValue;
+            foreach (PinLocation pin in scene.Pins)
+            {
+                double px = 0, py = 0;
+                axMap.ProjToPixel(pin.X, pin.Y, ref px, ref py);
+                // The pin picture sits above its anchor point: ~110 px wide, ~80 px tall.
+                if (Math.Abs(x - px) > 55 || y < py - 80 || y > py + 8) continue;
+                double distance = Math.Abs(x - px) + Math.Abs(y - py + 30);
+                if (distance < best) { best = distance; hit = pin.Key; }
+            }
+            if (hit != null) PinClicked?.Invoke(this, hit);
         }
 
         private void InitializeMap()
@@ -86,7 +148,23 @@ namespace Hue_travel.MapEngine
             axMap.ShowRedrawTime = false;
             axMap.ShowVersionNumber = false;
             axMap.CursorMode = tkCursorMode.cmPan;
-            MapScene.Build(axMap, MapPalette.For(baseMapId));
+            axMap.SendMouseDown = true;
+            axMap.SendMouseUp = true;
+            // The ActiveX map does not raise MouseDown while panning, so note where the left button went down by polling.
+            pressTracker.Tick += (s, e) =>
+            {
+                bool isDown = (Control.MouseButtons & MouseButtons.Left) != 0;
+                if (isDown && !wasButtonDown)
+                {
+                    System.Drawing.Point p = axMap.PointToClient(Cursor.Position);
+                    mouseDownX = p.X;
+                    mouseDownY = p.Y;
+                }
+                wasButtonDown = isDown;
+            };
+            pressTracker.Start();
+            axMap.MouseUpEvent += (s, e) => axMap_MouseUp(e.x, e.y);
+            BuildScene(zoomToFull: true);
         }
 
         // Anchors the overlays like the mockup: info pill centred at the top, controls in the top-right column.

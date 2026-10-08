@@ -58,6 +58,28 @@ namespace Hue_travel.MapEngine
         }
     }
 
+    /// <summary>Where a pin sits in map units (used for click hit-testing and zoom-to-pin).</summary>
+    public sealed class PinLocation
+    {
+        public string Key { get; set; }
+        public double X { get; set; }
+        public double Y { get; set; }
+    }
+
+    /// <summary>Layer handles per toggle group ("heritage", "food", "roads", "river", ...) and the pin positions of the built scene.</summary>
+    public sealed class SceneIndex
+    {
+        public Dictionary<string, List<int>> Groups { get; } = new Dictionary<string, List<int>>();
+        public List<PinLocation> Pins { get; } = new List<PinLocation>();
+
+        public void Add(string group, int handle)
+        {
+            List<int> handles;
+            if (!Groups.TryGetValue(group, out handles)) Groups[group] = handles = new List<int>();
+            handles.Add(handle);
+        }
+    }
+
     /// <summary>
     /// Builds the Huế sightseeing map shown in GiaoDien/screen.png as in-memory MapWinGIS
     /// shapefiles. Coordinates are the mockup's 1600x900 SVG canvas with Y flipped
@@ -71,26 +93,27 @@ namespace Hue_travel.MapEngine
         private static readonly PointF[] RiverOutline = BuildRiverOutline();
 
         /// <summary>Replaces every layer of <paramref name="map"/> with the scene drawn in <paramref name="palette"/>.</summary>
-        public static void Build(AxMap map, MapPalette palette, bool zoomToFull = true)
+        public static SceneIndex Build(AxMap map, MapPalette palette, bool zoomToFull = true)
         {
             map.RemoveAllLayers();
             map.BackColor = palette.Background;
+            var index = new SceneIndex();
 
-            AddPolygons(map, new[] { RiverOutline }, palette.River, palette.RiverEdge, 1.5f, false);
-            AddPolygons(map, new[] { Poly(1150, 420, 1220, 390, 1290, 392, 1340, 430, 1300, 452, 1230, 455) }, palette.Island, palette.IslandEdge, 1.5f, false);
-            AddPolygons(map, new[] { Poly(460, 210, 690, 160, 760, 380, 520, 430) }, palette.Citadel, palette.CitadelEdge, 2.5f, false);
-            AddPolygons(map, new[] { Poly(530, 245, 660, 220, 695, 340, 560, 370) }, palette.Citadel, ColorTranslator.FromHtml("#CA8A04"), 2f, true);
+            index.Add("river", AddPolygons(map, new[] { RiverOutline }, palette.River, palette.RiverEdge, 1.5f, false));
+            index.Add("river", AddPolygons(map, new[] { Poly(1150, 420, 1220, 390, 1290, 392, 1340, 430, 1300, 452, 1230, 455) }, palette.Island, palette.IslandEdge, 1.5f, false));
+            index.Add("heritage", AddPolygons(map, new[] { Poly(460, 210, 690, 160, 760, 380, 520, 430) }, palette.Citadel, palette.CitadelEdge, 2.5f, false));
+            index.Add("heritage", AddPolygons(map, new[] { Poly(530, 245, 660, 220, 695, 340, 560, 370) }, palette.Citadel, ColorTranslator.FromHtml("#CA8A04"), 2f, true));
 
             PointF[][] roads =
             {
                 Line(280, 200, 960, 90), Line(420, 720, 1180, 580), Line(740, 450, 1150, 260), Line(300, 480, 460, 760),
             };
-            AddLines(map, roads, palette.RoadCasing, 5f, false);
-            AddLines(map, roads, palette.Road, 2f, false);
+            index.Add("roads", AddLines(map, roads, palette.RoadCasing, 5f, false));
+            index.Add("roads", AddLines(map, roads, palette.Road, 2f, false));
 
-            AddLines(map, new[] { Line(500, 580, 550, 690) }, ColorTranslator.FromHtml("#64748B"), 6f, false);
-            AddLines(map, new[] { Line(720, 465, 770, 585) }, ColorTranslator.FromHtml("#94A3B8"), 6f, false);
-            AddLines(map, new[] { Line(900, 440, 940, 560) }, ColorTranslator.FromHtml("#0284C7"), 6f, false);
+            index.Add("roads", AddLines(map, new[] { Line(500, 580, 550, 690) }, ColorTranslator.FromHtml("#64748B"), 6f, false));
+            index.Add("roads", AddLines(map, new[] { Line(720, 465, 770, 585) }, ColorTranslator.FromHtml("#94A3B8"), 6f, false));
+            index.Add("roads", AddLines(map, new[] { Line(900, 440, 940, 560) }, ColorTranslator.FromHtml("#0284C7"), 6f, false));
 
             PointF[][] route =
             {
@@ -98,28 +121,29 @@ namespace Hue_travel.MapEngine
                 Line(620, 320, 590, 280, 310, 390, 300, 480),
                 Line(300, 480, 430, 670, 890, 560),
             };
-            AddLines(map, route, ColorTranslator.FromHtml("#0284C7"), 5f, false);
-            AddLines(map, route, Color.White, 2.5f, true);
+            index.Add("roads", AddLines(map, route, ColorTranslator.FromHtml("#0284C7"), 5f, false));
+            index.Add("roads", AddLines(map, route, Color.White, 2.5f, true));
 
-            AddLabels(map, palette.RiverLabel, 12, new[] { Tuple.Create("SÔNG HƯƠNG", 680.0, 560.0, -15.0) });
-            AddLabels(map, ColorTranslator.FromHtml("#15803D"), 9, new[] { Tuple.Create("Cồn Hến", 1235.0, 432.0, 0.0) });
-            AddLabels(map, ColorTranslator.FromHtml("#854D0E"), 10, new[] { Tuple.Create("HOÀNG THÀNH HUẾ", 610.0, 302.0, 0.0) });
-            AddLabels(map, palette.PlaceLabel, 8, new[]
+            index.Add("river", AddLabels(map, palette.RiverLabel, 12, new[] { Tuple.Create("SÔNG HƯƠNG", 680.0, 560.0, -15.0) }));
+            index.Add("river", AddLabels(map, ColorTranslator.FromHtml("#15803D"), 9, new[] { Tuple.Create("Cồn Hến", 1235.0, 432.0, 0.0) }));
+            index.Add("heritage", AddLabels(map, ColorTranslator.FromHtml("#854D0E"), 10, new[] { Tuple.Create("HOÀNG THÀNH HUẾ", 610.0, 302.0, 0.0) }));
+            index.Add("roads", AddLabels(map, palette.PlaceLabel, 8, new[]
             {
                 Tuple.Create("Cầu Dã Viên", 470.0, 650.0, -65.0),
                 Tuple.Create("Cầu Phú Xuân", 690.0, 535.0, -65.0),
                 Tuple.Create("Cầu Trường Tiền", 965.0, 505.0, 70.0),
-            });
+            }));
 
             Color bg = palette.Background;
             Color sky = ColorTranslator.FromHtml("#0284C7");
             Color slate = ColorTranslator.FromHtml("#1E293B");
-            AddPin(map, 430, 670, bg, new PinSpec { Caption = "Ga Huế (Điểm xuất phát)", Icon = "train", Marker = slate, MarkerSize = 32, IconSize = 18, LabelFill = slate, LabelText = Color.White, LabelRadius = 12, StatusDot = true, CaptionPx = 11 });
-            AddPin(map, 620, 320, bg, new PinSpec { Caption = "Đại Nội - Hoàng Thành Huế", Icon = "account_balance", Order = 1, Marker = sky, MarkerSize = 36, IconSize = 20, LabelFill = sky, LabelText = Color.White, BadgeFill = ThemeColors.Amber400, BadgeText = slate, LabelRadius = 8, CaptionPx = 12, CaptionBold = true });
-            AddPin(map, 300, 480, bg, new PinSpec { Caption = "Chùa Thiên Mụ", Icon = "temple_buddhist", Order = 2, Marker = sky, MarkerSize = 32, IconSize = 18, LabelFill = Color.White, LabelBorder = ThemeColors.Sky100, LabelText = slate, BadgeFill = sky, BadgeText = Color.White, LabelRadius = 4, CaptionPx = 12 });
-            AddPin(map, 890, 560, bg, new PinSpec { Caption = "Quán Bún Bò Mụ Rơi", Icon = "restaurant", Order = 3, Marker = ThemeColors.Amber600, MarkerSize = 32, IconSize = 18, LabelFill = Color.White, LabelBorder = ThemeColors.Amber100, LabelText = slate, BadgeFill = ThemeColors.Amber600, BadgeText = Color.White, LabelRadius = 4, CaptionPx = 12 });
+            AddPin(map, index, null, "ga-hue", 430, 670, bg, new PinSpec { Caption = "Ga Huế (Điểm xuất phát)", Icon = "train", Marker = slate, MarkerSize = 32, IconSize = 18, LabelFill = slate, LabelText = Color.White, LabelRadius = 12, StatusDot = true, CaptionPx = 11 });
+            AddPin(map, index, "heritage", "dai-noi", 620, 320, bg, new PinSpec { Caption = "Đại Nội - Hoàng Thành Huế", Icon = "account_balance", Order = 1, Marker = sky, MarkerSize = 36, IconSize = 20, LabelFill = sky, LabelText = Color.White, BadgeFill = ThemeColors.Amber400, BadgeText = slate, LabelRadius = 8, CaptionPx = 12, CaptionBold = true });
+            AddPin(map, index, "heritage", "thien-mu", 300, 480, bg, new PinSpec { Caption = "Chùa Thiên Mụ", Icon = "temple_buddhist", Order = 2, Marker = sky, MarkerSize = 32, IconSize = 18, LabelFill = Color.White, LabelBorder = ThemeColors.Sky100, LabelText = slate, BadgeFill = sky, BadgeText = Color.White, LabelRadius = 4, CaptionPx = 12 });
+            AddPin(map, index, "food", "bun-bo-mu-roi", 890, 560, bg, new PinSpec { Caption = "Quán Bún Bò Mụ Rơi", Icon = "restaurant", Order = 3, Marker = ThemeColors.Amber600, MarkerSize = 32, IconSize = 18, LabelFill = Color.White, LabelBorder = ThemeColors.Amber100, LabelText = slate, BadgeFill = ThemeColors.Amber600, BadgeText = Color.White, LabelRadius = 4, CaptionPx = 12 });
 
             if (zoomToFull) map.ZoomToMaxExtents();
+            return index;
         }
 
         private static uint Ole(Color color) => (uint)ColorTranslator.ToOle(color);
@@ -235,7 +259,7 @@ namespace Hue_travel.MapEngine
             sf.EditInsertShape(shape, ref index);
         }
 
-        private static void AddPolygons(AxMap map, IEnumerable<PointF[]> rings, Color fill, Color edge, float edgeWidth, bool dashed)
+        private static int AddPolygons(AxMap map, IEnumerable<PointF[]> rings, Color fill, Color edge, float edgeWidth, bool dashed)
         {
             Shapefile sf = NewShapefile(ShpfileType.SHP_POLYGON);
             foreach (PointF[] ring in rings) Insert(sf, CreatePolygon(ring));
@@ -243,21 +267,21 @@ namespace Hue_travel.MapEngine
             sf.DefaultDrawingOptions.LineColor = Ole(edge);
             sf.DefaultDrawingOptions.LineWidth = edgeWidth;
             if (dashed) sf.DefaultDrawingOptions.LineStipple = tkDashStyle.dsDash;
-            map.AddLayer(sf, true);
+            return map.AddLayer(sf, true);
         }
 
-        private static void AddLines(AxMap map, IEnumerable<PointF[]> lines, Color color, float width, bool dashed)
+        private static int AddLines(AxMap map, IEnumerable<PointF[]> lines, Color color, float width, bool dashed)
         {
             Shapefile sf = NewShapefile(ShpfileType.SHP_POLYLINE);
             foreach (PointF[] line in lines) Insert(sf, CreatePolyline(line));
             sf.DefaultDrawingOptions.LineColor = Ole(color);
             sf.DefaultDrawingOptions.LineWidth = width;
             if (dashed) sf.DefaultDrawingOptions.LineStipple = tkDashStyle.dsDash;
-            map.AddLayer(sf, true);
+            return map.AddLayer(sf, true);
         }
 
         // Text labels hang off an invisible point layer so each style (colour/size) gets its own Labels object.
-        private static void AddLabels(AxMap map, Color color, int fontSize, IEnumerable<Tuple<string, double, double, double>> items)
+        private static int AddLabels(AxMap map, Color color, int fontSize, IEnumerable<Tuple<string, double, double, double>> items)
         {
             Shapefile sf = NewShapefile(ShpfileType.SHP_POINT);
             sf.DefaultDrawingOptions.PointSize = 1f;
@@ -276,11 +300,11 @@ namespace Hue_travel.MapEngine
             sf.Labels.Alignment = tkLabelAlignment.laCenter;
             sf.Labels.AvoidCollisions = false;
             sf.Labels.Visible = true;
-            map.AddLayer(sf, true);
+            return map.AddLayer(sf, true);
         }
 
         // A pin is a picture drawn with GDI+ (caption pill, icon marker, stem) so it matches the mockup.
-        private static void AddPin(AxMap map, double x, double y, Color background, PinSpec spec)
+        private static void AddPin(AxMap map, SceneIndex index, string group, string key, double x, double y, Color background, PinSpec spec)
         {
             PointF p = Flip(x, y);
             Shapefile sf = NewShapefile(ShpfileType.SHP_POINT);
@@ -317,7 +341,9 @@ namespace Hue_travel.MapEngine
                 sf.Labels.Alignment = tkLabelAlignment.laTopCenter;
                 sf.Labels.Visible = true;
             }
-            map.AddLayer(sf, true);
+            int handle = map.AddLayer(sf, true);
+            if (group != null) index.Add(group, handle);
+            index.Pins.Add(new PinLocation { Key = key, X = p.X, Y = p.Y });
         }
     }
 }

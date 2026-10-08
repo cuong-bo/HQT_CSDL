@@ -25,6 +25,33 @@ namespace Hue_travel.Theme
             SetStyle(ControlStyles.ResizeRedraw, true);
         }
 
+        private int expandedHeight;
+        private bool isCollapsed;
+
+        /// <summary>Collapses the panel to its header strip, or restores it. Bottom-anchored panels keep their bottom edge.</summary>
+        public void ToggleCollapsed(int collapsedHeight)
+        {
+            bool keepBottom = (Anchor & AnchorStyles.Bottom) != 0 && (Anchor & AnchorStyles.Top) == 0;
+            int bottom = Bottom;
+            if (!isCollapsed)
+            {
+                expandedHeight = Height;
+                Height = collapsedHeight;
+            }
+            else
+            {
+                Height = expandedHeight;
+            }
+            isCollapsed = !isCollapsed;
+
+            // Only the header strip stays; docked body/footer would otherwise overlap it.
+            foreach (Control child in Controls)
+            {
+                if (!(child is PanelHeader)) child.Visible = !isCollapsed;
+            }
+            if (keepBottom) Top = bottom - Height;
+        }
+
         protected void RaiseCloseRequested() => CloseRequested?.Invoke(this, EventArgs.Empty);
 
         protected override void OnResize(EventArgs e)

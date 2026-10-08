@@ -1,5 +1,7 @@
+using System.Linq;
 using System.Windows.Forms;
 using Hue_travel.Models;
+using Hue_travel.SampleData;
 
 namespace Hue_travel.Shell
 {
@@ -59,6 +61,13 @@ namespace Hue_travel.Shell
             forgotPasswordPanel.BackToLoginRequested += (s, e) => ShowAuthCard(authModal);
 
             searchPoiPanel.PoiSelected += (s, poi) => ShowPoiCard(poi);
+            searchPoiPanel.ShowOnMapRequested += (s, poi) => mapHost.ZoomToPin(poi.Id);
+            layerControlPanel.LayerToggled += (s, e) => mapHost.SetGroupVisible(e.Key, e.Value);
+            mapHost.PinClicked += (s, key) =>
+            {
+                Poi poi = SamplePois.All.FirstOrDefault(p => p.Id == key);
+                if (poi != null) ShowPoiCard(poi);
+            };
 
             baseMapSwitcherPopup.BaseMapSelected += (s, mapId) =>
             {

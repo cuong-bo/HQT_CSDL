@@ -14,6 +14,9 @@ namespace Hue_travel.Panels.SearchPoi
 
         public event EventHandler<Poi> PoiSelected;
 
+        /// <summary>Raised by a result card's "Bản đồ" button: the host should zoom the map to the POI.</summary>
+        public event EventHandler<Poi> ShowOnMapRequested;
+
         private readonly List<KeyValuePair<PoiResultCard, Poi>> cards = new List<KeyValuePair<PoiResultCard, Poi>>();
 
         public SearchPoiPanel()
@@ -33,7 +36,11 @@ namespace Hue_travel.Panels.SearchPoi
                 };
                 cards.Add(new KeyValuePair<PoiResultCard, Poi>(captured, poi));
                 captured.Click += (s, e) => PoiSelected?.Invoke(this, poi);
-                captured.ShowOnMapClicked += (s, e) => PoiSelected?.Invoke(this, poi);
+                captured.ShowOnMapClicked += (s, e) =>
+                {
+                    ShowOnMapRequested?.Invoke(this, poi);
+                    PoiSelected?.Invoke(this, poi);
+                };
             }
             RefreshResults();
         }

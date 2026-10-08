@@ -31,7 +31,12 @@ namespace Hue_travel.Theme
             ConfigureButton(closeButton, "close");
             closeButton.HoverFillColor = ThemeColors.Error;
             closeButton.HoverIconColor = Color.White;
-            minimizeButton.Click += (s, e) => MinimizeClicked?.Invoke(this, EventArgs.Empty);
+            minimizeButton.Click += (s, e) =>
+            {
+                (FindForm() as FloatingPanelForm)?.ToggleCollapsed(Height);
+                MinimizeClicked?.Invoke(this, EventArgs.Empty);
+            };
+            Cursor = Cursors.SizeAll; // the mockup's cursor-move title strip
             closeButton.Click += (s, e) => CloseClicked?.Invoke(this, EventArgs.Empty);
             Controls.Add(minimizeButton);
             Controls.Add(closeButton);
@@ -73,6 +78,38 @@ namespace Hue_travel.Theme
             int top = (Height - closeButton.Height) / 2;
             closeButton.Location = new Point(Width - 12 - closeButton.Width, top);
             minimizeButton.Location = new Point(closeButton.Left - 4 - minimizeButton.Width, top);
+        }
+
+        private Point dragStart;
+        private bool isDragging;
+
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+            if (e.Button != MouseButtons.Left) return;
+            isDragging = true;
+            dragStart = e.Location;
+            Capture = true;
+        }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            Form form = FindForm();
+            if (!isDragging || form == null || form.Parent == null) return;
+
+            // Move the panel inside its host, keeping at least part of the header reachable.
+            Rectangle host = form.Parent.ClientRectangle;
+            int left = Math.Max(-form.Width + 80, Math.Min(host.Width - 80, form.Left + e.X - dragStart.X));
+            int top = Math.Max(0, Math.Min(host.Height - Height, form.Top + e.Y - dragStart.Y));
+            form.Location = new Point(left, top);
+        }
+
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+            isDragging = false;
+            Capture = false;
         }
 
         protected override void OnResize(EventArgs e)

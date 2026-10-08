@@ -18,6 +18,7 @@ namespace Hue_travel.Panels.PoiIdentify
             if (poi == null) return;
 
             btnBadge.Text = poi.Category == PoiCategory.Heritage ? "Di tích cấp Quốc gia đặc biệt" : CategoryName(poi.Category);
+            lblHeaderTitle.Left = btnBadge.Right + 10; // the title follows the badge, whatever its width
             lblName.Text = poi.Name;
             lblAddress.Text = poi.Address;
             lblHoursValue.Text = poi.OpeningHours;

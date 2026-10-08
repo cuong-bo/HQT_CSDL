@@ -19,6 +19,8 @@ namespace Hue_travel.MapEngine.Overlays
         private string[] icons = new string[0];
         private int activeIndex = -1;
         private int hoverIndex = -1;
+        private string[] tips = new string[0];
+        private readonly ToolTip tooltip = new ToolTip();
 
         public event EventHandler<int> ItemClicked;
 
@@ -45,6 +47,14 @@ namespace Hue_travel.MapEngine.Overlays
             }
         }
 
+        /// <summary>Tooltip texts separated by "|", in the same order as <see cref="IconList"/>.</summary>
+        [Category("Appearance")]
+        public string ToolTipList
+        {
+            get { return string.Join("|", tips); }
+            set { tips = string.IsNullOrEmpty(value) ? new string[0] : value.Split('|'); }
+        }
+
         [Category("Appearance")] public Color ActiveFill { get; set; }
         [Category("Appearance")] public Color ActiveIconColor { get; set; }
 
@@ -53,7 +63,23 @@ namespace Hue_travel.MapEngine.Overlays
 
         private int IndexAt(Point p) => p.Y < 1 ? -1 : Math.Min(icons.Length - 1, (p.Y - 1) / (ItemSize + 1));
 
-        protected override void OnMouseMove(MouseEventArgs e) { hoverIndex = IndexAt(e.Location); Invalidate(); base.OnMouseMove(e); }
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            int index = IndexAt(e.Location);
+            if (index != hoverIndex)
+            {
+                hoverIndex = index;
+                tooltip.SetToolTip(this, index >= 0 && index < tips.Length ? tips[index] : "");
+                Invalidate();
+            }
+            base.OnMouseMove(e);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing) tooltip.Dispose();
+            base.Dispose(disposing);
+        }
         protected override void OnMouseLeave(EventArgs e) { hoverIndex = -1; Invalidate(); base.OnMouseLeave(e); }
 
         protected override void OnMouseClick(MouseEventArgs e)
