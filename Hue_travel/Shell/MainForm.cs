@@ -28,7 +28,7 @@ namespace Hue_travel.Shell
         private readonly FloatingPanelForm[] panels;
         private readonly WeatherUpdater weatherUpdater = new WeatherUpdater(new OpenMeteoWeatherService());
         private readonly IAreaLocator areaLocator = new DemoAreaLocator();
-        private bool showDegrees;
+        private bool showDegrees = true; // degrees are the familiar format; click the read-out for UTM metres
         private MapCursorEventArgs lastCursor;
 
         // Only the main window opens at start-up; the panels appear when the user asks for them (ribbon, rail, search).

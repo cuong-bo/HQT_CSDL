@@ -99,7 +99,7 @@ namespace Hue_travel.Shell
             this.lblScale.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             this.lblScale.Location = new Point(1030, 5);
 
-            this.lblCoords.Text = "E -- · N --";
+            this.lblCoords.Text = "--°N, --°E";
             this.lblCoords.Font = ThemeFonts.Regular(12);
             this.lblCoords.ForeColor = ThemeColors.Slate600;
             this.lblCoords.BackColor = Color.Transparent;
