@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Reflection;
 using AxInterop.MapWinGIS;
+using Hue_travel.Services.Area;
 using Hue_travel.Theme;
 using Interop.MapWinGIS;
 
@@ -96,6 +97,7 @@ namespace Hue_travel.MapEngine
         public static SceneIndex Build(AxMap map, MapPalette palette, bool zoomToFull = true)
         {
             map.RemoveAllLayers();
+            MapCrs.Apply(map);
             map.BackColor = palette.Background;
             var index = new SceneIndex();
 
@@ -145,6 +147,11 @@ namespace Hue_travel.MapEngine
             if (zoomToFull) map.ZoomToMaxExtents();
             return index;
         }
+
+        // Canvas points are Y-flipped (see Flip); layers are stored in VN-2000 / UTM metres.
+        private static double MapX(PointF p) => SceneGeoreference.X(p.X);
+
+        private static double MapY(PointF p) => SceneGeoreference.Y(CanvasHeight - p.Y);
 
         private static uint Ole(Color color) => (uint)ColorTranslator.ToOle(color);
 
@@ -225,8 +232,8 @@ namespace Hue_travel.MapEngine
 
             var shape = new Shape();
             shape.Create(ShpfileType.SHP_POLYGON);
-            foreach (PointF p in ordered) shape.AddPoint(p.X, p.Y);
-            shape.AddPoint(ordered[0].X, ordered[0].Y);
+            foreach (PointF p in ordered) shape.AddPoint(MapX(p), MapY(p));
+            shape.AddPoint(MapX(ordered[0]), MapY(ordered[0]));
             return shape;
         }
 
@@ -234,7 +241,7 @@ namespace Hue_travel.MapEngine
         {
             var shape = new Shape();
             shape.Create(ShpfileType.SHP_POLYLINE);
-            foreach (PointF p in points) shape.AddPoint(p.X, p.Y);
+            foreach (PointF p in points) shape.AddPoint(MapX(p), MapY(p));
             return shape;
         }
 
@@ -242,7 +249,7 @@ namespace Hue_travel.MapEngine
         {
             var shape = new Shape();
             shape.Create(ShpfileType.SHP_POINT);
-            shape.AddPoint(p.X, p.Y);
+            shape.AddPoint(MapX(p), MapY(p));
             return shape;
         }
 
@@ -291,7 +298,7 @@ namespace Hue_travel.MapEngine
             {
                 PointF p = Flip(item.Item2, item.Item3);
                 Insert(sf, CreatePoint(p));
-                sf.Labels.AddLabel(item.Item1, p.X, p.Y, item.Item4, -1, 0, 0);
+                sf.Labels.AddLabel(item.Item1, MapX(p), MapY(p), item.Item4, -1, 0, 0);
             }
             sf.Labels.FontName = "Plus Jakarta Sans";
             sf.Labels.FontSize = fontSize;
@@ -337,13 +344,13 @@ namespace Hue_travel.MapEngine
                 sf.DefaultDrawingOptions.PointShape = tkPointShapeType.ptShapeCircle;
                 sf.DefaultDrawingOptions.PointSize = 18f;
                 sf.DefaultDrawingOptions.FillColor = Ole(spec.Marker);
-                sf.Labels.AddLabel(spec.Caption, p.X, p.Y, 0, -1, 0, 0);
+                sf.Labels.AddLabel(spec.Caption, MapX(p), MapY(p), 0, -1, 0, 0);
                 sf.Labels.Alignment = tkLabelAlignment.laTopCenter;
                 sf.Labels.Visible = true;
             }
             int handle = map.AddLayer(sf, true);
             if (group != null) index.Add(group, handle);
-            index.Pins.Add(new PinLocation { Key = key, X = p.X, Y = p.Y });
+            index.Pins.Add(new PinLocation { Key = key, X = MapX(p), Y = MapY(p) });
         }
     }
 }

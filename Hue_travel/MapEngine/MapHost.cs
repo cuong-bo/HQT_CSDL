@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using AxInterop.MapWinGIS;
 using Hue_travel.Services;
+using Hue_travel.Services.Area;
 using Hue_travel.Theme;
 using Interop.MapWinGIS;
 
@@ -112,7 +113,8 @@ namespace Hue_travel.MapEngine
             if (pin == null) return false;
 
             var view = new Extents();
-            view.SetBounds(pin.X - 260, pin.Y - 146, 0, pin.X + 260, pin.Y + 146, 0);
+            double halfWidth = 260 * SceneGeoreference.MetresPerCanvasUnit, halfHeight = 146 * SceneGeoreference.MetresPerCanvasUnit;
+            view.SetBounds(pin.X - halfWidth, pin.Y - halfHeight, 0, pin.X + halfWidth, pin.Y + halfHeight, 0);
             axMap.Extents = view;
             return true;
         }

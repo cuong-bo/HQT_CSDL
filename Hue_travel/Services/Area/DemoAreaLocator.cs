@@ -2,12 +2,12 @@
 
 namespace Hue_travel.Services.Area
 {
-    /// <summary>Stand-in locator for the demo scene: the nearest landmark within reach names the area.</summary>
+    /// <summary>Stand-in locator for the demo scene: the nearest landmark within reach names the area (landmarks given in canvas coordinates).</summary>
     public sealed class DemoAreaLocator : IAreaLocator
     {
         public const string DefaultArea = "Trung tâm Cố đô Huế & Bờ sông Hương";
 
-        private const double ReachInMapUnits = 150;
+        private const double ReachInMetres = 150;
 
         private static readonly Landmark[] Landmarks =
         {
@@ -20,7 +20,7 @@ namespace Hue_travel.Services.Area
         public string Locate(double x, double y)
         {
             string best = DefaultArea;
-            double bestDistance = ReachInMapUnits;
+            double bestDistance = ReachInMetres;
             foreach (Landmark landmark in Landmarks)
             {
                 double distance = Math.Sqrt(Math.Pow(x - landmark.X, 2) + Math.Pow(y - landmark.Y, 2));
@@ -36,8 +36,8 @@ namespace Hue_travel.Services.Area
             public Landmark(string name, double x, double y)
             {
                 Name = name;
-                X = x;
-                Y = y;
+                X = SceneGeoreference.X(x);
+                Y = SceneGeoreference.Y(y);
             }
 
             public string Name { get; }
