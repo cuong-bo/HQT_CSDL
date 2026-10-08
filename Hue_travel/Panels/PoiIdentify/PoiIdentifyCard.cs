@@ -1,10 +1,10 @@
-﻿using System;
-using System.Windows.Forms;
+using System;
 using Hue_travel.Models;
+using Hue_travel.Theme;
 
 namespace Hue_travel.Panels.PoiIdentify
 {
-    public partial class PoiIdentifyCard : Form
+    public partial class PoiIdentifyCard : FloatingPanelForm
     {
         public PoiIdentifyCard()
         {
@@ -17,13 +17,25 @@ namespace Hue_travel.Panels.PoiIdentify
         {
             if (poi == null) return;
 
-            lblBadge.Text = poi.Category == PoiCategory.Heritage ? "Di tích cấp Quốc gia đặc biệt" : poi.Category.ToString();
+            btnBadge.Text = poi.Category == PoiCategory.Heritage ? "Di tích cấp Quốc gia đặc biệt" : CategoryName(poi.Category);
             lblName.Text = poi.Name;
             lblAddress.Text = poi.Address;
-            lblHours.Text = $"Giờ mở cửa: {poi.OpeningHours}";
-            lblPrice.Text = $"Giá vé: {poi.TicketPrice}";
+            lblHoursValue.Text = poi.OpeningHours;
+            lblPriceValue.Text = poi.TicketPrice;
             Visible = true;
             BringToFront();
+        }
+
+        private static string CategoryName(PoiCategory category)
+        {
+            switch (category)
+            {
+                case PoiCategory.Food: return "Ẩm thực";
+                case PoiCategory.Stay: return "Lưu trú";
+                case PoiCategory.River: return "Sông Hương";
+                case PoiCategory.Transport: return "Giao thông";
+                default: return "Địa điểm";
+            }
         }
     }
 }

@@ -20,9 +20,28 @@ namespace Hue_travel.Shell
         public event EventHandler MaximizeClicked;
         public event EventHandler CloseClicked;
 
+        private const int EdgePadding = 0;       // window buttons touch the edge
+        private const int WindowButtonWidth = 48; // enlarged for readability
+
         public TitleBar()
         {
             InitializeComponent();
+            LayoutRightGroup();
+        }
+
+        /// <summary>
+        /// Positions the right-hand group (auth button, window buttons)
+        /// from the measured widths so the spacing matches the mockup's flex gaps. The
+        /// controls are right-anchored, so this only needs to run once.
+        /// </summary>
+        private void LayoutRightGroup()
+        {
+            int right = Width - EdgePadding;
+            btnClose.Left = right - WindowButtonWidth;
+            btnMaximize.Left = btnClose.Left - WindowButtonWidth;
+            btnMinimize.Left = btnMaximize.Left - WindowButtonWidth;
+
+            btnAuth.Left = btnMinimize.Left - 10 - btnAuth.Width;
         }
 
         /// <summary>Lets the user drag the borderless MainForm by its title bar (FormBorderStyle.None has no built-in move handle).</summary>

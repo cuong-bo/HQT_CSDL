@@ -1,17 +1,20 @@
-﻿using System;
-using System.Windows.Forms;
+using System;
+using Hue_travel.Theme;
 
 namespace Hue_travel.Panels.LayerControl
 {
-    public partial class LayerControlPanel : Form
+    public partial class LayerControlPanel : FloatingPanelForm
     {
-        public event EventHandler CloseRequested;
-
         public LayerControlPanel()
         {
             InitializeComponent();
         }
 
-        private void btnClose_Click(object sender, EventArgs e) => CloseRequested?.Invoke(this, EventArgs.Empty);
+        private void header_CloseClicked(object sender, EventArgs e) => RaiseCloseRequested();
+
+        private void sliderBrightness_ValueChanged(object sender, EventArgs e)
+        {
+            lblBrightnessValue.Text = sliderBrightness.Value + "%";
+        }
     }
 }

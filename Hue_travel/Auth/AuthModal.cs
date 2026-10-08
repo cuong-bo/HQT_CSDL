@@ -1,28 +1,26 @@
-﻿using System;
-using System.Windows.Forms;
+using System;
+using Hue_travel.Theme;
 
 namespace Hue_travel.Auth
 {
-    public partial class AuthModal : Form
+    /// <summary>UI-only login card (no real authentication in this phase). The register tab and the forgot-password link ask the host to switch forms.</summary>
+    public partial class AuthModal : FloatingPanelForm
     {
-        public event EventHandler CloseRequested;
+        public event EventHandler RegisterRequested;
+        public event EventHandler ForgotPasswordRequested;
 
         public AuthModal()
         {
             InitializeComponent();
         }
 
-        private void panelBackdrop_Click(object sender, EventArgs e) => CloseRequested?.Invoke(this, EventArgs.Empty);
+        private void header_CloseClicked(object sender, EventArgs e) => RaiseCloseRequested();
 
-        private void btnClose_Click(object sender, EventArgs e) => CloseRequested?.Invoke(this, EventArgs.Empty);
-
-        protected override void OnSizeChanged(EventArgs e)
+        private void tabs_TabSelected(object sender, int tab)
         {
-            base.OnSizeChanged(e);
-            if (panelCard == null) return;
-            panelCard.Location = new System.Drawing.Point(
-                (Width - panelCard.Width) / 2,
-                (Height - panelCard.Height) / 2);
+            if (tab == 1) RegisterRequested?.Invoke(this, EventArgs.Empty);
         }
+
+        private void lblForgot_Click(object sender, EventArgs e) => ForgotPasswordRequested?.Invoke(this, EventArgs.Empty);
     }
 }

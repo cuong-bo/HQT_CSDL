@@ -1,41 +1,40 @@
-﻿using System;
+using System;
 using System.Linq;
-using System.Windows.Forms;
-using Hue_travel.SampleData;
+using Hue_travel.Theme;
 
 namespace Hue_travel.Panels.RouteOptimizer
 {
-    public partial class RouteOptimizerPanel : Form
+    public partial class RouteOptimizerPanel : FloatingPanelForm
     {
+        private static readonly string[] StartPoints =
+        {
+            "Ga Huế (Đường Bùi Thị Xuân)",
+            "Bến thuyền Tòa Khâm (Đường Lê Lợi)",
+            "Sân bay Quốc tế Phú Bài",
+            "Bến xe phía Nam TP. Huế",
+            "Khách sạn đang ở",
+        };
+
+        private readonly RouteStopRow[] stops;
+
         public RouteOptimizerPanel()
         {
             InitializeComponent();
 
-            foreach (var poi in SamplePois.All)
-            {
-                cboStartPoint.Items.Add(poi.Name);
-                clbDestinations.Items.Add(poi.Name);
-            }
-            if (cboStartPoint.Items.Count > 0) cboStartPoint.SelectedIndex = 0;
-
+            cboStartPoint.Items.AddRange(StartPoints);
+            stops = new[] { stopDaiNoi, stopThienMu, stopBunBo, stopKhaiDinh };
+            foreach (RouteStopRow stop in stops) stop.CheckedChanged += (s, e) => RefreshSelectionSummary();
             RefreshSelectionSummary();
         }
 
-        private void btnClose_Click(object sender, EventArgs e) => Hide();
+        private void header_CloseClicked(object sender, EventArgs e) => RaiseCloseRequested();
 
-        private void clbDestinations_ItemCheck(object sender, ItemCheckEventArgs e)
-        {
-            BeginInvoke((Action)RefreshSelectionSummary);
-        }
-
+        /// <summary>Numbers the ticked stops 1..N in list order and updates the "Đã chọn N điểm" counter.</summary>
         private void RefreshSelectionSummary()
         {
-            var selected = SamplePois.All
-                .Where((poi, index) => clbDestinations.GetItemChecked(index))
-                .ToList();
-
-            var summary = RouteSelection.BuildOrderedSummary(selected);
-            lblSelectedCount.Text = $"Đã chọn {summary.Count} điểm";
+            int order = 0;
+            foreach (RouteStopRow stop in stops.Where(s => s.Checked)) stop.Order = ++order;
+            lblSelectedCount.Text = $"Đã chọn {order} điểm";
         }
     }
 }

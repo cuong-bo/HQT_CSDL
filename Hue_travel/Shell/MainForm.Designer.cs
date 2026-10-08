@@ -26,6 +26,8 @@ namespace Hue_travel.Shell
         private PoiIdentifyCard poiIdentifyCard;
         private BaseMapSwitcherPopup baseMapSwitcherPopup;
         private AuthModal authModal;
+        private RegisterPanel registerPanel;
+        private ForgotPasswordPanel forgotPasswordPanel;
 
         protected override void Dispose(bool disposing)
         {
@@ -47,25 +49,28 @@ namespace Hue_travel.Shell
             this.poiIdentifyCard = new PoiIdentifyCard();
             this.baseMapSwitcherPopup = new BaseMapSwitcherPopup();
             this.authModal = new AuthModal();
+            this.registerPanel = new RegisterPanel();
+            this.forgotPasswordPanel = new ForgotPasswordPanel();
             this.SuspendLayout();
 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.ClientSize = new System.Drawing.Size(1280, 800);
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.ClientSize = new System.Drawing.Size(1536, 860);
             this.Text = "Cố Đô GIS";
 
             this.titleBar.Dock = System.Windows.Forms.DockStyle.Top;
-            this.titleBar.Size = new System.Drawing.Size(1280, 36);
+            this.titleBar.Size = new System.Drawing.Size(1536, 56);
 
             this.ribbonBar.Dock = System.Windows.Forms.DockStyle.Top;
-            this.ribbonBar.Size = new System.Drawing.Size(1280, 40);
+            this.ribbonBar.Size = new System.Drawing.Size(1536, 40);
 
             this.categoryRail.Dock = System.Windows.Forms.DockStyle.Left;
             this.categoryRail.Size = new System.Drawing.Size(48, 724);
 
             this.statusBar.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.statusBar.Size = new System.Drawing.Size(1280, 28);
+            this.statusBar.Size = new System.Drawing.Size(1536, 28);
 
             this.mapHost.Dock = System.Windows.Forms.DockStyle.Fill;
 
@@ -75,37 +80,41 @@ namespace Hue_travel.Shell
             // TopLevel must be set false before it can be embedded as a child control, and it
             // must be Show()'n once to force handle creation before Visible can be toggled later.
             this.layerControlPanel.TopLevel = false;
-            this.layerControlPanel.Location = new System.Drawing.Point(64, 88);
+            this.layerControlPanel.Location = new System.Drawing.Point(64, 144);
             this.Controls.Add(this.layerControlPanel);
             this.layerControlPanel.Show();
-            this.layerControlPanel.Visible = false;
+            this.layerControlPanel.Visible = true;
 
             this.routeOptimizerPanel.TopLevel = false;
-            this.routeOptimizerPanel.Location = new System.Drawing.Point(888, 88);
+            this.routeOptimizerPanel.Location = new System.Drawing.Point(1136, 144);
+            this.routeOptimizerPanel.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             this.Controls.Add(this.routeOptimizerPanel);
             this.routeOptimizerPanel.Show();
-            this.routeOptimizerPanel.Visible = false;
+            this.routeOptimizerPanel.Visible = true;
 
             this.searchPoiPanel.TopLevel = false;
-            this.searchPoiPanel.Location = new System.Drawing.Point(372, 88);
+            this.searchPoiPanel.Location = new System.Drawing.Point(348, 144);
             this.Controls.Add(this.searchPoiPanel);
             this.searchPoiPanel.Show();
-            this.searchPoiPanel.Visible = false;
+            this.searchPoiPanel.Visible = true;
 
             this.travelGuidePanel.TopLevel = false;
-            this.travelGuidePanel.Location = new System.Drawing.Point(888, 400);
+            this.travelGuidePanel.Location = new System.Drawing.Point(1136, 272);
+            this.travelGuidePanel.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
             this.Controls.Add(this.travelGuidePanel);
             this.travelGuidePanel.Show();
-            this.travelGuidePanel.Visible = false;
+            this.travelGuidePanel.Visible = true;
 
             this.poiIdentifyCard.TopLevel = false;
-            this.poiIdentifyCard.Location = new System.Drawing.Point(370, 560);
+            this.poiIdentifyCard.Location = new System.Drawing.Point(522, 618);
+            this.poiIdentifyCard.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.Controls.Add(this.poiIdentifyCard);
             this.poiIdentifyCard.Show();
-            this.poiIdentifyCard.Visible = false;
+            this.poiIdentifyCard.Visible = true;
 
             this.baseMapSwitcherPopup.TopLevel = false;
-            this.baseMapSwitcherPopup.Location = new System.Drawing.Point(1060, 84);
+            this.baseMapSwitcherPopup.Location = new System.Drawing.Point(1264, 98);
+            this.baseMapSwitcherPopup.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             this.Controls.Add(this.baseMapSwitcherPopup);
             this.baseMapSwitcherPopup.Show();
             this.baseMapSwitcherPopup.Visible = false;
@@ -114,11 +123,27 @@ namespace Hue_travel.Shell
             this.Controls.Add(this.ribbonBar);
             this.Controls.Add(this.titleBar);
 
+            // Auth cards share one spot (top-16, centred over the map); only one is visible at a time.
             this.authModal.TopLevel = false;
-            this.authModal.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.authModal.Location = new System.Drawing.Point(582, 160);
+            this.authModal.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.Controls.Add(this.authModal);
             this.authModal.Show();
             this.authModal.Visible = false;
+
+            this.registerPanel.TopLevel = false;
+            this.registerPanel.Location = new System.Drawing.Point(582, 160);
+            this.registerPanel.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.Controls.Add(this.registerPanel);
+            this.registerPanel.Show();
+            this.registerPanel.Visible = false;
+
+            this.forgotPasswordPanel.TopLevel = false;
+            this.forgotPasswordPanel.Location = new System.Drawing.Point(572, 144);
+            this.forgotPasswordPanel.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.Controls.Add(this.forgotPasswordPanel);
+            this.forgotPasswordPanel.Show();
+            this.forgotPasswordPanel.Visible = false;
 
             this.Controls.Add(this.statusBar);
 

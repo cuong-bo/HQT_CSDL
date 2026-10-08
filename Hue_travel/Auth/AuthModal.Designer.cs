@@ -1,4 +1,5 @@
-﻿using Guna.UI2.WinForms;
+using System.Drawing;
+using System.Windows.Forms;
 using Hue_travel.Theme;
 
 namespace Hue_travel.Auth
@@ -6,15 +7,19 @@ namespace Hue_travel.Auth
     partial class AuthModal
     {
         private System.ComponentModel.IContainer components = null;
-        private Guna2Panel panelBackdrop;
-        private Guna2Panel panelCard;
-        private Guna2Panel panelHeader;
-        private System.Windows.Forms.Label lblTitle;
-        private Guna2Button btnClose;
-        private Guna2TextBox txtEmail;
-        private Guna2TextBox txtPassword;
-        private Guna2Button btnSubmit;
-        private System.Windows.Forms.LinkLabel lnkForgotPassword;
+        private PanelHeader header;
+        private AuthTabStrip tabs;
+        private Label lblLoginId;
+        private InputField txtLoginId;
+        private Label lblLoginPassword;
+        private Label lblForgot;
+        private InputField txtLoginPassword;
+        private CheckBox chkRemember;
+        private IconButton btnLogin;
+        private Panel dividerLeft;
+        private Label lblOr;
+        private Panel dividerRight;
+        private IconButton btnGoogle;
 
         protected override void Dispose(bool disposing)
         {
@@ -22,82 +27,133 @@ namespace Hue_travel.Auth
             base.Dispose(disposing);
         }
 
+        // Every property is assigned inline (no helper calls) so the WinForms Designer can render it.
         private void InitializeComponent()
         {
-            this.panelBackdrop = new Guna2Panel();
-            this.panelCard = new Guna2Panel();
-            this.panelHeader = new Guna2Panel();
-            this.lblTitle = new System.Windows.Forms.Label();
-            this.btnClose = new Guna2Button();
-            this.txtEmail = new Guna2TextBox();
-            this.txtPassword = new Guna2TextBox();
-            this.btnSubmit = new Guna2Button();
-            this.lnkForgotPassword = new System.Windows.Forms.LinkLabel();
+            this.header = new PanelHeader();
+            this.tabs = new AuthTabStrip();
+            this.lblLoginId = new Label();
+            this.txtLoginId = new InputField();
+            this.lblLoginPassword = new Label();
+            this.lblForgot = new Label();
+            this.txtLoginPassword = new InputField();
+            this.chkRemember = new CheckBox();
+            this.btnLogin = new IconButton();
+            this.dividerLeft = new Panel();
+            this.lblOr = new Label();
+            this.dividerRight = new Panel();
+            this.btnGoogle = new IconButton();
             this.SuspendLayout();
 
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.ShowInTaskbar = false;
+            // w-[420px] card.
+            this.BackColor = ThemeColors.SurfaceContainerLowest;
+            this.Size = new Size(420, 384);
 
-            this.panelBackdrop.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelBackdrop.FillColor = System.Drawing.Color.FromArgb(15, 23, 42);
-            this.panelBackdrop.Click += new System.EventHandler(this.panelBackdrop_Click);
+            this.header.IconName = "lock";
+            this.header.Text = "Form Đăng Nhập & Đăng Ký Tài Khoản";
+            this.header.Prominent = true;
+            this.header.CloseClicked += new System.EventHandler(this.header_CloseClicked);
 
-            this.panelCard.Size = new System.Drawing.Size(420, 360);
-            this.panelCard.FillColor = ThemeColors.SurfaceContainerLowest;
-            this.panelCard.BorderRadius = ThemeMetrics.RadiusLg;
-            this.panelCard.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.tabs.ActiveTab = 0;
+            this.tabs.Size = new Size(388, 30);
+            this.tabs.Location = new Point(16, 48);
+            this.tabs.TabSelected += new System.EventHandler<int>(this.tabs_TabSelected);
 
-            this.panelHeader.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panelHeader.Height = 36;
-            this.panelHeader.FillColor = ThemeColors.Primary;
+            this.lblLoginId.Text = "Email hoặc Số điện thoại:";
+            this.lblLoginId.Font = ThemeFonts.Medium(12);
+            this.lblLoginId.ForeColor = ThemeColors.Slate700;
+            this.lblLoginId.AutoSize = true;
+            this.lblLoginId.Location = new Point(16, 96);
 
-            this.lblTitle.Text = "Đăng Nhập — Cố Đô GIS";
-            this.lblTitle.Font = ThemeFonts.LabelMd;
-            this.lblTitle.ForeColor = ThemeColors.OnPrimary;
-            this.lblTitle.AutoSize = true;
-            this.lblTitle.Location = new System.Drawing.Point(12, 10);
+            this.txtLoginId.IconName = "mail";
+            this.txtLoginId.Text = "dukhach@huegis.vn";
+            this.txtLoginId.Size = new Size(388, 32);
+            this.txtLoginId.Location = new Point(16, 118);
 
-            this.btnClose.Text = "✕";
-            this.btnClose.Size = new System.Drawing.Size(24, 24);
-            this.btnClose.Location = new System.Drawing.Point(384, 6);
-            this.btnClose.FillColor = ThemeColors.Primary;
-            this.btnClose.ForeColor = ThemeColors.OnPrimary;
-            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
+            this.lblLoginPassword.Text = "Mật khẩu:";
+            this.lblLoginPassword.Font = ThemeFonts.Medium(12);
+            this.lblLoginPassword.ForeColor = ThemeColors.Slate700;
+            this.lblLoginPassword.AutoSize = true;
+            this.lblLoginPassword.Location = new Point(16, 162);
 
-            this.panelHeader.Controls.Add(this.lblTitle);
-            this.panelHeader.Controls.Add(this.btnClose);
+            this.lblForgot.Text = "Quên mật khẩu?";
+            this.lblForgot.Font = ThemeFonts.Medium(11);
+            this.lblForgot.ForeColor = ThemeColors.Primary;
+            this.lblForgot.Cursor = Cursors.Hand;
+            this.lblForgot.AutoSize = false;
+            this.lblForgot.TextAlign = ContentAlignment.MiddleRight;
+            this.lblForgot.Size = new Size(140, 18);
+            this.lblForgot.Location = new Point(264, 162);
+            this.lblForgot.Click += new System.EventHandler(this.lblForgot_Click);
 
-            this.txtEmail.PlaceholderText = "Email đã đăng ký";
-            this.txtEmail.Location = new System.Drawing.Point(24, 64);
-            this.txtEmail.Size = new System.Drawing.Size(372, 32);
+            this.txtLoginPassword.IconName = "lock";
+            this.txtLoginPassword.IsPassword = true;
+            this.txtLoginPassword.Text = "Huetravel2025";
+            this.txtLoginPassword.Size = new Size(388, 32);
+            this.txtLoginPassword.Location = new Point(16, 184);
 
-            this.txtPassword.PlaceholderText = "Mật khẩu";
-            this.txtPassword.PasswordChar = '•';
-            this.txtPassword.Location = new System.Drawing.Point(24, 108);
-            this.txtPassword.Size = new System.Drawing.Size(372, 32);
+            this.chkRemember.Text = "Ghi nhớ phiên đăng nhập";
+            this.chkRemember.Checked = true;
+            this.chkRemember.Font = ThemeFonts.Regular(11);
+            this.chkRemember.ForeColor = ThemeColors.Slate600;
+            this.chkRemember.AutoSize = true;
+            this.chkRemember.Location = new Point(16, 228);
 
-            this.lnkForgotPassword.Text = "Quên mật khẩu?";
-            this.lnkForgotPassword.AutoSize = true;
-            this.lnkForgotPassword.Location = new System.Drawing.Point(24, 148);
+            this.btnLogin.AutoWidth = false;
+            this.btnLogin.Text = "Đăng Nhập Ngay";
+            this.btnLogin.IconName = "login";
+            this.btnLogin.IconSize = 16;
+            this.btnLogin.Font = ThemeFonts.SemiBold(12);
+            this.btnLogin.ForeColor = Color.White;
+            this.btnLogin.IconColor = Color.White;
+            this.btnLogin.FillColor = ThemeColors.Primary;
+            this.btnLogin.HoverFillColor = ThemeColors.PrimaryContainer;
+            this.btnLogin.Radius = 6;
+            this.btnLogin.Gap = 6;
+            this.btnLogin.Size = new Size(388, 32);
+            this.btnLogin.Location = new Point(16, 258);
 
-            this.btnSubmit.Text = "Đăng Nhập";
-            this.btnSubmit.Location = new System.Drawing.Point(24, 180);
-            this.btnSubmit.Size = new System.Drawing.Size(372, 36);
-            this.btnSubmit.FillColor = ThemeColors.Primary;
-            this.btnSubmit.ForeColor = ThemeColors.OnPrimary;
-            this.btnSubmit.Font = ThemeFonts.LabelMd;
+            this.dividerLeft.BackColor = ThemeColors.Slate200;
+            this.dividerLeft.Size = new Size(166, 1);
+            this.dividerLeft.Location = new Point(16, 314);
+            this.lblOr.Text = "HOẶC";
+            this.lblOr.Font = ThemeFonts.Medium(10);
+            this.lblOr.ForeColor = ThemeColors.Slate400;
+            this.lblOr.AutoSize = false;
+            this.lblOr.TextAlign = ContentAlignment.MiddleCenter;
+            this.lblOr.Size = new Size(56, 16);
+            this.lblOr.Location = new Point(182, 306);
+            this.dividerRight.BackColor = ThemeColors.Slate200;
+            this.dividerRight.Size = new Size(166, 1);
+            this.dividerRight.Location = new Point(238, 314);
 
-            this.panelCard.Controls.Add(this.btnSubmit);
-            this.panelCard.Controls.Add(this.lnkForgotPassword);
-            this.panelCard.Controls.Add(this.txtPassword);
-            this.panelCard.Controls.Add(this.txtEmail);
-            this.panelCard.Controls.Add(this.panelHeader);
+            this.btnGoogle.AutoWidth = false;
+            this.btnGoogle.Text = "G   Tiếp tục với tài khoản Google";
+            this.btnGoogle.Font = ThemeFonts.Medium(12);
+            this.btnGoogle.ForeColor = ThemeColors.Slate700;
+            this.btnGoogle.FillColor = Color.White;
+            this.btnGoogle.HoverFillColor = ThemeColors.Slate50;
+            this.btnGoogle.BorderColor = ThemeColors.Slate200;
+            this.btnGoogle.Radius = 6;
+            this.btnGoogle.Size = new Size(388, 32);
+            this.btnGoogle.Location = new Point(16, 332);
 
-            this.panelBackdrop.Controls.Add(this.panelCard);
-            this.Controls.Add(this.panelBackdrop);
+            this.Controls.Add(this.btnGoogle);
+            this.Controls.Add(this.dividerRight);
+            this.Controls.Add(this.lblOr);
+            this.Controls.Add(this.dividerLeft);
+            this.Controls.Add(this.btnLogin);
+            this.Controls.Add(this.chkRemember);
+            this.Controls.Add(this.txtLoginPassword);
+            this.Controls.Add(this.lblForgot);
+            this.Controls.Add(this.lblLoginPassword);
+            this.Controls.Add(this.txtLoginId);
+            this.Controls.Add(this.lblLoginId);
+            this.Controls.Add(this.tabs);
+            this.Controls.Add(this.header);
             this.Name = "AuthModal";
-            this.Size = new System.Drawing.Size(1000, 700);
             this.ResumeLayout(false);
+            this.PerformLayout();
         }
     }
 }

@@ -1,4 +1,8 @@
-﻿using AxInterop.MapWinGIS;
+using System.Drawing;
+using System.Windows.Forms;
+using AxInterop.MapWinGIS;
+using Hue_travel.MapEngine.Overlays;
+using Hue_travel.Theme;
 
 namespace Hue_travel.MapEngine
 {
@@ -6,6 +10,12 @@ namespace Hue_travel.MapEngine
     {
         private System.ComponentModel.IContainer components = null;
         private AxMap axMap;
+        private RoundedPanel boxInfo;
+        private IconButton captionInfo;
+        private IconButton tagInfo;
+        private MapToolStack stackBaseMaps;
+        private CompassButton compass;
+        private MapToolStack stackZoom;
 
         protected override void Dispose(bool disposing)
         {
@@ -16,19 +26,82 @@ namespace Hue_travel.MapEngine
             base.Dispose(disposing);
         }
 
+        // Every property is assigned inline (no helper calls) so the WinForms Designer can render it.
         private void InitializeComponent()
         {
             this.axMap = new AxMap();
+            this.boxInfo = new RoundedPanel();
+            this.captionInfo = new IconButton();
+            this.tagInfo = new IconButton();
+            this.stackBaseMaps = new MapToolStack();
+            this.compass = new CompassButton();
+            this.stackZoom = new MapToolStack();
             ((System.ComponentModel.ISupportInitialize)(this.axMap)).BeginInit();
             this.SuspendLayout();
 
-            this.axMap.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.axMap.Dock = DockStyle.Fill;
             this.axMap.Name = "axMap";
             this.axMap.TabIndex = 0;
 
+            // Top info pill: white, sky-100 border, explore icon + hint + "route shown" tag.
+            this.boxInfo.FillColor = Color.White;
+            this.boxInfo.BorderColor = ThemeColors.Sky100;
+            this.boxInfo.Radius = 16;
+            this.boxInfo.Size = new Size(680, 32);
+            this.boxInfo.Location = new Point(240, 12);
+
+            this.captionInfo.AutoWidth = false;
+            this.captionInfo.Text = "Bản đồ du lịch Cố đô Huế - Nhấn vào các địa điểm để xem thông tin chi tiết";
+            this.captionInfo.IconName = "explore";
+            this.captionInfo.IconSize = 18;
+            this.captionInfo.IconColor = ThemeColors.Sky600;
+            this.captionInfo.Font = ThemeFonts.Medium(12);
+            this.captionInfo.ForeColor = ThemeColors.Slate700;
+            this.captionInfo.FillColor = Color.Transparent;
+            this.captionInfo.HoverFillColor = Color.Transparent;
+            this.captionInfo.HorizontalPadding = 0;
+            this.captionInfo.Gap = 8;
+            this.captionInfo.Cursor = Cursors.Default;
+            this.captionInfo.Size = new Size(410, 28);
+            this.captionInfo.Location = new Point(16, 2);
+
+            this.tagInfo.AutoWidth = true;
+            this.tagInfo.Text = "Đang hiển thị lộ trình";
+            this.tagInfo.Font = ThemeFonts.SemiBold(11);
+            this.tagInfo.ForeColor = ThemeColors.Sky600;
+            this.tagInfo.FillColor = ThemeColors.Sky50;
+            this.tagInfo.HoverFillColor = ThemeColors.Sky50;
+            this.tagInfo.Radius = 12;
+            this.tagInfo.HorizontalPadding = 8;
+            this.tagInfo.Cursor = Cursors.Default;
+            this.tagInfo.Height = 22;
+            this.tagInfo.Location = new Point(430, 5);
+            this.boxInfo.Controls.Add(this.captionInfo);
+            this.boxInfo.Controls.Add(this.tagInfo);
+
+            // Right column (top-16 right-4): base map switch, compass, zoom/pan.
+            this.stackBaseMaps.IconList = "map,satellite_alt,dark_mode";
+            this.stackBaseMaps.ActiveIndex = 0;
+            this.stackBaseMaps.Location = new Point(1020, 64);
+            this.stackBaseMaps.ItemClicked += new System.EventHandler<int>(this.stackBaseMaps_ItemClicked);
+
+            this.compass.Location = new Point(1021, 184);
+            this.compass.Click += new System.EventHandler(this.compass_Click);
+
+            this.stackZoom.IconList = "add,remove,pan_tool";
+            this.stackZoom.ActiveIndex = 2;
+            this.stackZoom.ActiveFill = ThemeColors.Sky50;
+            this.stackZoom.ActiveIconColor = ThemeColors.Sky600;
+            this.stackZoom.Location = new Point(1020, 226);
+            this.stackZoom.ItemClicked += new System.EventHandler<int>(this.stackZoom_ItemClicked);
+
+            this.Controls.Add(this.stackZoom);
+            this.Controls.Add(this.compass);
+            this.Controls.Add(this.stackBaseMaps);
+            this.Controls.Add(this.boxInfo);
             this.Controls.Add(this.axMap);
             this.Name = "MapHost";
-            this.Size = new System.Drawing.Size(900, 700);
+            this.Size = new Size(1080, 700);
 
             ((System.ComponentModel.ISupportInitialize)(this.axMap)).EndInit();
             this.ResumeLayout(false);

@@ -34,5 +34,44 @@ namespace Hue_travel.Theme
 
         public static readonly Color StatusOnline = ColorTranslator.FromHtml("#10B981");
         public static readonly Color BadgeAmber = ColorTranslator.FromHtml("#F59E0B");
+
+        // Tailwind palette entries referenced directly by the mockup's class names.
+        public static readonly Color Slate50 = ColorTranslator.FromHtml("#F8FAFC");
+        public static readonly Color Slate100 = ColorTranslator.FromHtml("#F1F5F9");
+        public static readonly Color Slate200 = ColorTranslator.FromHtml("#E2E8F0");
+        public static readonly Color Slate300 = ColorTranslator.FromHtml("#CBD5E1");
+        public static readonly Color Slate400 = ColorTranslator.FromHtml("#94A3B8");
+        public static readonly Color Slate500 = ColorTranslator.FromHtml("#64748B");
+        public static readonly Color Slate600 = ColorTranslator.FromHtml("#475569");
+        public static readonly Color Slate700 = ColorTranslator.FromHtml("#334155");
+        public static readonly Color Slate800 = ColorTranslator.FromHtml("#1E293B");
+        public static readonly Color Slate900 = ColorTranslator.FromHtml("#0F172A");
+
+        public static readonly Color Sky50 = ColorTranslator.FromHtml("#F0F9FF");
+        public static readonly Color Sky100 = ColorTranslator.FromHtml("#E0F2FE");
+        public static readonly Color Sky200 = ColorTranslator.FromHtml("#BAE6FD");
+        public static readonly Color Sky300 = ColorTranslator.FromHtml("#7DD3FC");
+        public static readonly Color Sky400 = ColorTranslator.FromHtml("#38BDF8");
+        public static readonly Color Sky500 = ColorTranslator.FromHtml("#0EA5E9");
+        public static readonly Color Sky600 = ColorTranslator.FromHtml("#0284C7");
+        public static readonly Color Sky700 = ColorTranslator.FromHtml("#0369A1");
+        public static readonly Color Sky800 = ColorTranslator.FromHtml("#075985");
+        public static readonly Color Sky900 = ColorTranslator.FromHtml("#0C4A6E");
+
+        public static readonly Color Amber50 = ColorTranslator.FromHtml("#FFFBEB");
+        public static readonly Color Amber100 = ColorTranslator.FromHtml("#FEF3C7");
+        public static readonly Color Amber400 = ColorTranslator.FromHtml("#FBBF24");
+        public static readonly Color Amber500 = ColorTranslator.FromHtml("#F59E0B");
+        public static readonly Color Amber600 = ColorTranslator.FromHtml("#D97706");
+        public static readonly Color Amber700 = ColorTranslator.FromHtml("#B45309");
+        public static readonly Color Amber900 = ColorTranslator.FromHtml("#78350F");
+
+        public static readonly Color Orange600 = ColorTranslator.FromHtml("#EA580C");
+        public static readonly Color Blue600 = ColorTranslator.FromHtml("#2563EB");
+        public static readonly Color Cyan400 = ColorTranslator.FromHtml("#22D3EE");
+        public static readonly Color Cyan600 = ColorTranslator.FromHtml("#0891B2");
+        public static readonly Color Emerald500 = ColorTranslator.FromHtml("#10B981");
+        public static readonly Color Emerald700 = ColorTranslator.FromHtml("#047857");
+        public static readonly Color Red500 = ColorTranslator.FromHtml("#EF4444");
     }
 }

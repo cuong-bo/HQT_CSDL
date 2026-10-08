@@ -1,4 +1,5 @@
-﻿using Guna.UI2.WinForms;
+using System.Drawing;
+using System.Windows.Forms;
 using Hue_travel.Theme;
 
 namespace Hue_travel.Shell
@@ -6,10 +7,14 @@ namespace Hue_travel.Shell
     partial class AppStatusBar
     {
         private System.ComponentModel.IContainer components = null;
-        private Guna2Panel panelRoot;
-        private System.Windows.Forms.Label lblCoordinates;
-        private System.Windows.Forms.Label lblScale;
-        private System.Windows.Forms.Label lblWeather;
+        private Panel panelTopBorder;
+        private IconButton captionArea;
+        private Label lblAreaValue;
+        private IconButton captionWeather;
+        private Label lblWeatherValue;
+        private Label lblScale;
+        private Panel dividerScale;
+        private IconButton pillReady;
 
         protected override void Dispose(bool disposing)
         {
@@ -17,45 +22,109 @@ namespace Hue_travel.Shell
             base.Dispose(disposing);
         }
 
+        // Every property is assigned inline (no helper calls) so the WinForms Designer can render it.
+        // Final x-positions are set by AppStatusBar.LayoutItems() (flex "justify-between" behaviour).
         private void InitializeComponent()
         {
-            this.panelRoot = new Guna2Panel();
-            this.lblCoordinates = new System.Windows.Forms.Label();
-            this.lblScale = new System.Windows.Forms.Label();
-            this.lblWeather = new System.Windows.Forms.Label();
+            this.panelTopBorder = new Panel();
+            this.captionArea = new IconButton();
+            this.lblAreaValue = new Label();
+            this.captionWeather = new IconButton();
+            this.lblWeatherValue = new Label();
+            this.lblScale = new Label();
+            this.dividerScale = new Panel();
+            this.pillReady = new IconButton();
             this.SuspendLayout();
 
-            this.panelRoot.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelRoot.FillColor = ThemeColors.SurfaceContainerLowest;
+            // h-7 white footer, 1px slate-200 top border, 12px slate-600 text.
+            this.BackColor = ThemeColors.SurfaceContainerLowest;
 
-            this.lblCoordinates.Font = ThemeFonts.BodySm;
-            this.lblCoordinates.ForeColor = ThemeColors.OnSurfaceVariant;
-            this.lblCoordinates.AutoSize = true;
-            this.lblCoordinates.Location = new System.Drawing.Point(12, 7);
-            this.lblCoordinates.Text = "Khu vực đang xem: Trung tâm Cố đô Huế & Bờ sông Hương";
+            this.panelTopBorder.Dock = DockStyle.Top;
+            this.panelTopBorder.Height = 1;
+            this.panelTopBorder.BackColor = ThemeColors.Slate200;
 
-            this.lblWeather.Font = ThemeFonts.BodySm;
-            this.lblWeather.ForeColor = ThemeColors.OnSurfaceVariant;
-            this.lblWeather.AutoSize = true;
-            this.lblWeather.Location = new System.Drawing.Point(560, 7);
-            this.lblWeather.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            this.lblWeather.Text = "Thời tiết hôm nay: Nắng đẹp, 26°C";
+            this.captionArea.Text = "Khu vực đang xem:";
+            this.captionArea.IconName = "explore";
+            this.captionArea.IconSize = 15;
+            this.captionArea.IconColor = ThemeColors.Primary;
+            this.captionArea.Font = ThemeFonts.Regular(12);
+            this.captionArea.ForeColor = ThemeColors.Slate600;
+            this.captionArea.FillColor = Color.Transparent;
+            this.captionArea.HoverFillColor = Color.Transparent;
+            this.captionArea.HorizontalPadding = 0;
+            this.captionArea.Gap = 8;
+            this.captionArea.Cursor = Cursors.Default;
+            this.captionArea.Size = new Size(150, 22);
+            this.captionArea.Location = new Point(12, 4);
 
-            this.lblScale.Font = ThemeFonts.BodySm;
-            this.lblScale.ForeColor = ThemeColors.OnSurfaceVariant;
+            this.lblAreaValue.Text = "Trung tâm Cố đô Huế & Bờ sông Hương";
+            this.lblAreaValue.Font = ThemeFonts.Bold(12);
+            this.lblAreaValue.ForeColor = ThemeColors.Slate600;
+            this.lblAreaValue.BackColor = Color.Transparent;
+            this.lblAreaValue.AutoSize = true;
+            this.lblAreaValue.UseMnemonic = false;
+            this.lblAreaValue.Location = new Point(166, 5);
+
+            this.captionWeather.Text = "Thời tiết hôm nay:";
+            this.captionWeather.IconName = "wb_sunny";
+            this.captionWeather.IconSize = 16;
+            this.captionWeather.IconColor = ThemeColors.Amber500;
+            this.captionWeather.Font = ThemeFonts.Regular(12);
+            this.captionWeather.ForeColor = ThemeColors.Slate600;
+            this.captionWeather.FillColor = Color.Transparent;
+            this.captionWeather.HoverFillColor = Color.Transparent;
+            this.captionWeather.HorizontalPadding = 0;
+            this.captionWeather.Gap = 8;
+            this.captionWeather.Cursor = Cursors.Default;
+            this.captionWeather.Size = new Size(150, 22);
+            this.captionWeather.Location = new Point(520, 4);
+
+            this.lblWeatherValue.Text = "Nắng đẹp, 26°C - Rất thuận tiện tham quan";
+            this.lblWeatherValue.Font = ThemeFonts.Bold(12);
+            this.lblWeatherValue.ForeColor = ThemeColors.Slate600;
+            this.lblWeatherValue.BackColor = Color.Transparent;
+            this.lblWeatherValue.AutoSize = true;
+            this.lblWeatherValue.UseMnemonic = false;
+            this.lblWeatherValue.Location = new Point(676, 5);
+
+            this.lblScale.Text = "Tỉ lệ: 1 : 15,000";
+            this.lblScale.Font = ThemeFonts.Regular(12);
+            this.lblScale.ForeColor = ThemeColors.Slate600;
+            this.lblScale.BackColor = Color.Transparent;
             this.lblScale.AutoSize = true;
-            this.lblScale.Location = new System.Drawing.Point(900, 7);
-            this.lblScale.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            this.lblScale.Text = "Tỉ lệ: 1:15,000";
+            this.lblScale.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            this.lblScale.Location = new Point(1030, 5);
 
-            this.panelRoot.Controls.Add(this.lblCoordinates);
-            this.panelRoot.Controls.Add(this.lblWeather);
-            this.panelRoot.Controls.Add(this.lblScale);
+            this.dividerScale.BackColor = ThemeColors.Slate300;
+            this.dividerScale.Size = new Size(1, 12);
+            this.dividerScale.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            this.dividerScale.Location = new Point(1130, 9);
 
-            this.Controls.Add(this.panelRoot);
+            this.pillReady.Text = "Bản đồ du lịch sẵn sàng";
+            this.pillReady.Font = ThemeFonts.SemiBold(12);
+            this.pillReady.ForeColor = ThemeColors.Emerald700;
+            this.pillReady.DotColor = ThemeColors.Emerald500;
+            this.pillReady.FillColor = Color.Transparent;
+            this.pillReady.HoverFillColor = Color.Transparent;
+            this.pillReady.HorizontalPadding = 0;
+            this.pillReady.Gap = 6;
+            this.pillReady.Cursor = Cursors.Default;
+            this.pillReady.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            this.pillReady.Size = new Size(160, 22);
+            this.pillReady.Location = new Point(1108, 4);
+
+            this.Controls.Add(this.pillReady);
+            this.Controls.Add(this.dividerScale);
+            this.Controls.Add(this.lblScale);
+            this.Controls.Add(this.lblWeatherValue);
+            this.Controls.Add(this.captionWeather);
+            this.Controls.Add(this.lblAreaValue);
+            this.Controls.Add(this.captionArea);
+            this.Controls.Add(this.panelTopBorder);
             this.Name = "AppStatusBar";
-            this.Size = new System.Drawing.Size(1280, 28);
+            this.Size = new Size(1280, 28);
             this.ResumeLayout(false);
+            this.PerformLayout();
         }
     }
 }

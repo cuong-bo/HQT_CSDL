@@ -1,4 +1,5 @@
-﻿using Guna.UI2.WinForms;
+using System.Drawing;
+using System.Windows.Forms;
 using Hue_travel.Theme;
 
 namespace Hue_travel.Panels.SearchPoi
@@ -6,12 +7,22 @@ namespace Hue_travel.Panels.SearchPoi
     partial class SearchPoiPanel
     {
         private System.ComponentModel.IContainer components = null;
-        private Guna2Panel panelHeader;
-        private System.Windows.Forms.Label lblTitle;
-        private Guna2Button btnClose;
-        private Guna2TextBox txtKeyword;
-        private System.Windows.Forms.ListBox lstResults;
-        private System.Windows.Forms.Label lblResultCount;
+        private PanelHeader header;
+        private Panel panelBody;
+        private RoundedPanel boxSearch;
+        private IconButton iconSearch;
+        private TextBox txtKeyword;
+        private IconButton chipAll;
+        private IconButton chipHeritage;
+        private IconButton chipFood;
+        private IconButton chipStay;
+        private RichTextBlock lblResultCount;
+        private IconButton btnAdvancedFilter;
+        private PoiResultCard cardMuRoi;
+        private PoiResultCard cardBaTuyet;
+        private PoiResultCard cardCam;
+        private Panel panelFooter;
+        private Label lblClear;
 
         protected override void Dispose(bool disposing)
         {
@@ -19,63 +30,189 @@ namespace Hue_travel.Panels.SearchPoi
             base.Dispose(disposing);
         }
 
+        // Every property is assigned inline (no helper calls) so the WinForms Designer can render it.
         private void InitializeComponent()
         {
-            this.panelHeader = new Guna2Panel();
-            this.lblTitle = new System.Windows.Forms.Label();
-            this.btnClose = new Guna2Button();
-            this.txtKeyword = new Guna2TextBox();
-            this.lstResults = new System.Windows.Forms.ListBox();
-            this.lblResultCount = new System.Windows.Forms.Label();
+            this.header = new PanelHeader();
+            this.panelBody = new Panel();
+            this.boxSearch = new RoundedPanel();
+            this.iconSearch = new IconButton();
+            this.txtKeyword = new TextBox();
+            this.chipAll = new IconButton();
+            this.chipHeritage = new IconButton();
+            this.chipFood = new IconButton();
+            this.chipStay = new IconButton();
+            this.lblResultCount = new RichTextBlock();
+            this.btnAdvancedFilter = new IconButton();
+            this.cardMuRoi = new PoiResultCard();
+            this.cardBaTuyet = new PoiResultCard();
+            this.cardCam = new PoiResultCard();
+            this.panelFooter = new Panel();
+            this.lblClear = new Label();
             this.SuspendLayout();
+            this.panelBody.SuspendLayout();
+            this.panelFooter.SuspendLayout();
 
+            // w-96 (384px) panel.
             this.BackColor = ThemeColors.SurfaceContainerLowest;
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.ShowInTaskbar = false;
+            this.Size = new Size(384, 420);
 
-            this.panelHeader.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panelHeader.Height = 32;
-            this.panelHeader.FillColor = ThemeColors.Primary;
+            this.header.IconName = "search";
+            this.header.Text = "Tra Cứu Địa Điểm Du Lịch & Ẩm Thực Huế";
+            this.header.Prominent = true;
+            this.header.CloseClicked += new System.EventHandler(this.header_CloseClicked);
 
-            this.lblTitle.Text = "Tra Cứu Địa Điểm Du Lịch & Ẩm Thực Huế";
-            this.lblTitle.Font = ThemeFonts.LabelMd;
-            this.lblTitle.ForeColor = ThemeColors.OnPrimary;
-            this.lblTitle.AutoSize = true;
-            this.lblTitle.Location = new System.Drawing.Point(8, 8);
+            // Footer: "Dữ liệu: ..." and "Xóa tìm kiếm".
+            this.panelFooter.Dock = DockStyle.Bottom;
+            this.panelFooter.Height = 30;
+            this.panelFooter.BackColor = ThemeColors.Slate50;
+            this.lblClear.Text = "Xóa tìm kiếm";
+            this.lblClear.Font = ThemeFonts.SemiBold(11);
+            this.lblClear.ForeColor = ThemeColors.Primary;
+            this.lblClear.Cursor = Cursors.Hand;
+            this.lblClear.AutoSize = false;
+            this.lblClear.TextAlign = ContentAlignment.MiddleRight;
+            this.lblClear.Size = new Size(100, 30);
+            this.lblClear.Location = new Point(272, 0);
+            this.lblClear.Click += new System.EventHandler(this.lblClear_Click);
+            this.panelFooter.Controls.Add(this.lblClear);
 
-            this.btnClose.Text = "✕";
-            this.btnClose.Size = new System.Drawing.Size(20, 20);
-            this.btnClose.Location = new System.Drawing.Point(356, 6);
-            this.btnClose.FillColor = ThemeColors.Primary;
-            this.btnClose.ForeColor = ThemeColors.OnPrimary;
-            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
+            this.panelBody.Dock = DockStyle.Fill;
+            this.panelBody.BackColor = ThemeColors.SurfaceContainerLowest;
 
-            this.panelHeader.Controls.Add(this.lblTitle);
-            this.panelHeader.Controls.Add(this.btnClose);
-
-            this.txtKeyword.PlaceholderText = "Tìm kiếm: Bún bò, Chùa, Lăng tẩm, Khách sạn...";
-            this.txtKeyword.Location = new System.Drawing.Point(8, 40);
-            this.txtKeyword.Size = new System.Drawing.Size(368, 32);
-            this.txtKeyword.Font = ThemeFonts.BodySm;
+            // Search field: h-8, slate-50 / slate-200, search icon at left.
+            this.boxSearch.FillColor = ThemeColors.Slate50;
+            this.boxSearch.BorderColor = ThemeColors.Slate200;
+            this.boxSearch.Size = new Size(360, 32);
+            this.boxSearch.Location = new Point(12, 12);
+            this.iconSearch.AutoWidth = false;
+            this.iconSearch.IconName = "search";
+            this.iconSearch.IconSize = 15;
+            this.iconSearch.IconColor = ThemeColors.Slate400;
+            this.iconSearch.FillColor = Color.Transparent;
+            this.iconSearch.HoverFillColor = Color.Transparent;
+            this.iconSearch.Cursor = Cursors.IBeam;
+            this.iconSearch.Size = new Size(16, 16);
+            this.iconSearch.Location = new Point(10, 8);
+            this.txtKeyword.BorderStyle = BorderStyle.None;
+            this.txtKeyword.BackColor = ThemeColors.Slate50;
+            this.txtKeyword.ForeColor = ThemeColors.Slate800;
+            this.txtKeyword.Font = ThemeFonts.Regular(12);
+            this.txtKeyword.Text = "Bún bò";
+            this.txtKeyword.Size = new Size(316, 18);
+            this.txtKeyword.Location = new Point(32, 8);
             this.txtKeyword.TextChanged += new System.EventHandler(this.txtKeyword_TextChanged);
+            this.boxSearch.Controls.Add(this.iconSearch);
+            this.boxSearch.Controls.Add(this.txtKeyword);
 
-            this.lblResultCount.Font = ThemeFonts.BodySm;
-            this.lblResultCount.ForeColor = ThemeColors.OnSurfaceVariant;
-            this.lblResultCount.AutoSize = true;
-            this.lblResultCount.Location = new System.Drawing.Point(8, 78);
+            // Category chips (11px): active sky-100, others slate-100.
+            this.chipAll.Text = "Tất cả (150+)";
+            this.chipAll.Font = ThemeFonts.SemiBold(11);
+            this.chipAll.ForeColor = ThemeColors.Primary;
+            this.chipAll.FillColor = ThemeColors.Sky100;
+            this.chipAll.HoverFillColor = ThemeColors.Sky100;
+            this.chipAll.BorderColor = ThemeColors.Sky200;
+            this.chipAll.Radius = 4;
+            this.chipAll.HorizontalPadding = 8;
+            this.chipAll.Height = 22;
+            this.chipAll.Location = new Point(12, 54);
 
-            this.lstResults.Font = ThemeFonts.BodySm;
-            this.lstResults.Location = new System.Drawing.Point(8, 100);
-            this.lstResults.Size = new System.Drawing.Size(368, 220);
-            this.lstResults.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.lstResults.SelectedIndexChanged += new System.EventHandler(this.lstResults_SelectedIndexChanged);
+            this.chipHeritage.Text = "Di tích";
+            this.chipHeritage.Font = ThemeFonts.Medium(11);
+            this.chipHeritage.ForeColor = ThemeColors.Slate600;
+            this.chipHeritage.FillColor = ThemeColors.Slate100;
+            this.chipHeritage.HoverFillColor = ThemeColors.Slate200;
+            this.chipHeritage.BorderColor = ThemeColors.Slate200;
+            this.chipHeritage.Radius = 4;
+            this.chipHeritage.HorizontalPadding = 8;
+            this.chipHeritage.Height = 22;
+            this.chipHeritage.Location = new Point(106, 54);
 
-            this.Controls.Add(this.lstResults);
-            this.Controls.Add(this.lblResultCount);
-            this.Controls.Add(this.txtKeyword);
-            this.Controls.Add(this.panelHeader);
+            this.chipFood.Text = "Ẩm thực";
+            this.chipFood.Font = ThemeFonts.Medium(11);
+            this.chipFood.ForeColor = ThemeColors.Slate600;
+            this.chipFood.FillColor = ThemeColors.Slate100;
+            this.chipFood.HoverFillColor = ThemeColors.Slate200;
+            this.chipFood.BorderColor = ThemeColors.Slate200;
+            this.chipFood.Radius = 4;
+            this.chipFood.HorizontalPadding = 8;
+            this.chipFood.Height = 22;
+            this.chipFood.Location = new Point(158, 54);
+
+            this.chipStay.Text = "Lưu trú";
+            this.chipStay.Font = ThemeFonts.Medium(11);
+            this.chipStay.ForeColor = ThemeColors.Slate600;
+            this.chipStay.FillColor = ThemeColors.Slate100;
+            this.chipStay.HoverFillColor = ThemeColors.Slate200;
+            this.chipStay.BorderColor = ThemeColors.Slate200;
+            this.chipStay.Radius = 4;
+            this.chipStay.HorizontalPadding = 8;
+            this.chipStay.Height = 22;
+            this.chipStay.Location = new Point(218, 54);
+
+            // Result count + advanced filter link.
+            this.lblResultCount.Text = "Kết quả tìm kiếm: **3 địa điểm**";
+            this.lblResultCount.Font = ThemeFonts.Regular(11);
+            this.lblResultCount.BoldFont = ThemeFonts.Bold(11);
+            this.lblResultCount.ForeColor = ThemeColors.Slate500;
+            this.lblResultCount.LineSpacing = 1.4f;
+            this.lblResultCount.Size = new Size(200, 18);
+            this.lblResultCount.Location = new Point(13, 86);
+
+            this.btnAdvancedFilter.AutoWidth = true;
+            this.btnAdvancedFilter.Text = "Bộ lọc nâng cao";
+            this.btnAdvancedFilter.IconName = "tune";
+            this.btnAdvancedFilter.IconSize = 13;
+            this.btnAdvancedFilter.Font = ThemeFonts.Medium(11);
+            this.btnAdvancedFilter.ForeColor = ThemeColors.Primary;
+            this.btnAdvancedFilter.IconColor = ThemeColors.Primary;
+            this.btnAdvancedFilter.FillColor = Color.Transparent;
+            this.btnAdvancedFilter.HoverFillColor = Color.Transparent;
+            this.btnAdvancedFilter.HorizontalPadding = 0;
+            this.btnAdvancedFilter.Gap = 2;
+            this.btnAdvancedFilter.Height = 18;
+            this.btnAdvancedFilter.Location = new Point(262, 86);
+
+            // Result cards (66px, 8px apart).
+            this.cardMuRoi.Text = "Quán Bún Bò Huế Mụ Rơi";
+            this.cardMuRoi.Address = "40 Nguyễn Chí Diểu, Thuận Thành, TP. Huế";
+            this.cardMuRoi.Rating = "★ 4.8";
+            this.cardMuRoi.Distance = "Cách bạn 1.2 km • Mở cửa";
+            this.cardMuRoi.Tinted = true;
+            this.cardMuRoi.Size = new Size(360, 76);
+            this.cardMuRoi.Location = new Point(12, 112);
+
+            this.cardBaTuyet.Text = "Bún Bò Huế Bà Tuyết";
+            this.cardBaTuyet.Address = "47 Nguyễn Công Trứ, Phú Hội, TP. Huế";
+            this.cardBaTuyet.Rating = "★ 4.7";
+            this.cardBaTuyet.Distance = "Cách bạn 2.1 km • 35k - 50k";
+            this.cardBaTuyet.Size = new Size(360, 76);
+            this.cardBaTuyet.Location = new Point(12, 196);
+
+            this.cardCam.Text = "Bún Bò Cẩm - Vị Cố Đô";
+            this.cardCam.Address = "38 Trần Cao Vân, Phú Hội, TP. Huế";
+            this.cardCam.Rating = "★ 4.6";
+            this.cardCam.Distance = "Cách bạn 2.6 km • Mở cửa";
+            this.cardCam.Size = new Size(360, 76);
+            this.cardCam.Location = new Point(12, 280);
+
+            this.panelBody.Controls.Add(this.cardCam);
+            this.panelBody.Controls.Add(this.cardBaTuyet);
+            this.panelBody.Controls.Add(this.cardMuRoi);
+            this.panelBody.Controls.Add(this.btnAdvancedFilter);
+            this.panelBody.Controls.Add(this.lblResultCount);
+            this.panelBody.Controls.Add(this.chipStay);
+            this.panelBody.Controls.Add(this.chipFood);
+            this.panelBody.Controls.Add(this.chipHeritage);
+            this.panelBody.Controls.Add(this.chipAll);
+            this.panelBody.Controls.Add(this.boxSearch);
+
+            this.Controls.Add(this.panelBody);
+            this.Controls.Add(this.panelFooter);
+            this.Controls.Add(this.header);
             this.Name = "SearchPoiPanel";
-            this.Size = new System.Drawing.Size(384, 340);
+            this.panelFooter.ResumeLayout(false);
+            this.panelBody.ResumeLayout(false);
             this.ResumeLayout(false);
         }
     }
