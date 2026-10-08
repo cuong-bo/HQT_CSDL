@@ -8,7 +8,6 @@ namespace Hue_travel.Shell
     {
         private System.ComponentModel.IContainer components = null;
         private FlowLayoutPanel flowItems;
-        private IconButton btnLayerControl;
         private IconButton btnRouteOptimizer;
         private IconButton btnSearchPoi;
         private IconButton btnTravelGuide;
@@ -29,7 +28,6 @@ namespace Hue_travel.Shell
         private void InitializeComponent()
         {
             this.flowItems = new FlowLayoutPanel();
-            this.btnLayerControl = new IconButton();
             this.btnRouteOptimizer = new IconButton();
             this.btnSearchPoi = new IconButton();
             this.btnTravelGuide = new IconButton();
@@ -52,21 +50,6 @@ namespace Hue_travel.Shell
             this.flowItems.BackColor = ThemeColors.SurfaceContainerLowest;
 
             // --- Primary buttons: sky-50 fill, sky-200 border, sky-800 text, primary icon ---
-            this.btnLayerControl.Text = "Danh mục địa điểm";
-            this.btnLayerControl.IconName = "category";
-            this.btnLayerControl.IconSize = 16;
-            this.btnLayerControl.Font = ThemeFonts.SemiBold(12);
-            this.btnLayerControl.ForeColor = ThemeColors.Sky800;
-            this.btnLayerControl.IconColor = ThemeColors.Primary;
-            this.btnLayerControl.FillColor = ThemeColors.Sky50;
-            this.btnLayerControl.HoverFillColor = ThemeColors.Sky100;
-            this.btnLayerControl.BorderColor = ThemeColors.Sky200;
-            this.btnLayerControl.Radius = 6;
-            this.btnLayerControl.HorizontalPadding = 10;
-            this.btnLayerControl.Gap = 6;
-            this.btnLayerControl.Size = new Size(140, 28);
-            this.btnLayerControl.Margin = new Padding(3, 6, 3, 6);
-            this.btnLayerControl.Click += new System.EventHandler(this.btnLayerControl_Click);
 
             this.btnRouteOptimizer.Text = "Tìm đường ngắn nhất";
             this.btnRouteOptimizer.IconName = "alt_route";
@@ -198,7 +181,6 @@ namespace Hue_travel.Shell
             this.btnMeasureArea.Click += new System.EventHandler(this.btnMeasureArea_Click);
 
 
-            this.flowItems.Controls.Add(this.btnLayerControl);
             this.flowItems.Controls.Add(this.btnRouteOptimizer);
             this.flowItems.Controls.Add(this.btnSearchPoi);
             this.flowItems.Controls.Add(this.btnTravelGuide);

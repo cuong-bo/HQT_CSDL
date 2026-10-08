@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 using AxInterop.MapWinGIS;
+using Hue_travel.Models;
 using Hue_travel.Services;
 using Hue_travel.Services.Area;
 using Hue_travel.Theme;
@@ -20,6 +21,7 @@ namespace Hue_travel.MapEngine
 
         private string baseMapId = BaseMapCatalog.DefaultId;
         private readonly Timer viewTracker = new Timer { Interval = 150 };
+        private readonly PoiLayerFilter poiLayers = new PoiLayerFilter();
         private double lastXMin, lastXMax, lastYMin, lastYMax;
         private int lastPixelWidth = -1;
 
@@ -86,6 +88,21 @@ namespace Hue_travel.MapEngine
             var view = new Extents();
             view.SetBounds(easting - halfWidth, northing - halfHeight, 0, easting + halfWidth, northing + halfHeight, 0);
             axMap.Extents = view;
+        }
+
+        /// <summary>Registers a points-of-interest data layer (already added to the map) so the left rail can filter it.</summary>
+        public void AddPoiLayer(PoiCategory category, int layerHandle)
+        {
+            poiLayers.Add(category, layerHandle);
+            axMap.set_LayerVisible(layerHandle, poiLayers.IsVisible(layerHandle));
+        }
+
+        /// <summary>Shows only the POI layers of one category (null = all of them).</summary>
+        public void ShowOnlyCategory(PoiCategory? category)
+        {
+            poiLayers.ShowOnly(category);
+            foreach (int handle in poiLayers.Handles) axMap.set_LayerVisible(handle, poiLayers.IsVisible(handle));
+            axMap.Redraw();
         }
 
         public void PanMode(bool enabled)

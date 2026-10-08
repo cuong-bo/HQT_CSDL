@@ -19,7 +19,7 @@ namespace Hue_travel.Shell
             WireEvents();
             panels = new FloatingPanelForm[]
             {
-                layerControlPanel, searchPoiPanel, routeOptimizerPanel, travelGuidePanel, poiIdentifyCard,
+                searchPoiPanel, routeOptimizerPanel, travelGuidePanel, poiIdentifyCard,
                 authModal, registerPanel, forgotPasswordPanel,
             };
             foreach (FloatingPanelForm panel in panels) panel.MessageRaised += (s, e) => toast.ShowMessage(e.Text, e.Kind);
@@ -61,7 +61,6 @@ namespace Hue_travel.Shell
             titleBar.CloseClicked += (s, e) => Close();
             titleBar.AuthClicked += (s, e) => ToggleAuth();
 
-            ribbonBar.LayerControlToggled += (s, e) => TogglePanel(layerControlPanel);
             ribbonBar.RouteOptimizerToggled += (s, e) => TogglePanel(routeOptimizerPanel);
             ribbonBar.SearchPoiToggled += (s, e) => TogglePanel(searchPoiPanel);
             ribbonBar.TravelGuideToggled += (s, e) => TogglePanel(travelGuidePanel);
@@ -71,14 +70,10 @@ namespace Hue_travel.Shell
             ribbonBar.MeasureToggled += (s, e) => mapHost.ToggleMeasure(MeasureKind.Distance);
             ribbonBar.MeasureAreaToggled += (s, e) => mapHost.ToggleMeasure(MeasureKind.Area);
 
-            categoryRail.CategorySelected += (s, category) =>
-            {
-                TogglePanel(searchPoiPanel, forceVisible: true);
-                searchPoiPanel.SetCategory(category);
-                layerControlPanel.SetOnlyGroup(GroupFor(category));
-            };
 
-            layerControlPanel.CloseRequested += (s, e) => layerControlPanel.Visible = false;
+            // The left rail shows only the picked kind of object on the map.
+            categoryRail.CategorySelected += (s, category) => mapHost.ShowOnlyCategory(category);
+
             routeOptimizerPanel.CloseRequested += (s, e) => routeOptimizerPanel.Visible = false;
             searchPoiPanel.CloseRequested += (s, e) => searchPoiPanel.Visible = false;
             travelGuidePanel.CloseRequested += (s, e) => travelGuidePanel.Visible = false;
@@ -122,20 +117,6 @@ namespace Hue_travel.Shell
         {
             base.OnResize(e);
             if (titleBar != null) titleBar.SetMaximized(WindowState == FormWindowState.Maximized);
-        }
-
-        // Map layer group shown for a rail category (null = every group).
-        private static string GroupFor(PoiCategory? category)
-        {
-            switch (category)
-            {
-                case PoiCategory.Heritage: return "heritage";
-                case PoiCategory.Food: return "food";
-                case PoiCategory.Stay: return "stay";
-                case PoiCategory.River: return "river";
-                case PoiCategory.Transport: return "piers";
-                default: return null;
-            }
         }
 
         private void TogglePanel(Control panel, bool forceVisible = false)

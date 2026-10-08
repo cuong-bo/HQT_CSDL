@@ -1,5 +1,4 @@
 ﻿using Hue_travel.MapEngine;
-using Hue_travel.Panels.LayerControl;
 using Hue_travel.Panels.PoiIdentify;
 using Hue_travel.Panels.RouteOptimizer;
 using Hue_travel.Panels.SearchPoi;
@@ -19,7 +18,6 @@ namespace Hue_travel.Shell
         private AppStatusBar statusBar;
         private MapHost mapHost;
 
-        private LayerControlPanel layerControlPanel;
         private RouteOptimizerPanel routeOptimizerPanel;
         private SearchPoiPanel searchPoiPanel;
         private TravelGuidePanel travelGuidePanel;
@@ -42,7 +40,6 @@ namespace Hue_travel.Shell
             this.categoryRail = new CategoryRail();
             this.statusBar = new AppStatusBar();
             this.mapHost = new MapHost();
-            this.layerControlPanel = new LayerControlPanel();
             this.routeOptimizerPanel = new RouteOptimizerPanel();
             this.searchPoiPanel = new SearchPoiPanel();
             this.travelGuidePanel = new TravelGuidePanel();
@@ -83,7 +80,6 @@ namespace Hue_travel.Shell
             // Floating panels are real Forms owned by this window (not child controls): top-level windows
             // can carry the system's soft shadow and anti-aliased corners over the MapWinGIS map.
             // AttachTo records where each sits in this window and which edges it follows when resized.
-            this.layerControlPanel.AttachTo(this, new System.Drawing.Point(64, 144), System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left);
             this.searchPoiPanel.AttachTo(this, new System.Drawing.Point(348, 144), System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left);
             this.routeOptimizerPanel.AttachTo(this, new System.Drawing.Point(1136, 144), System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right);
             this.travelGuidePanel.AttachTo(this, new System.Drawing.Point(1136, 272), System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right);

@@ -5,7 +5,6 @@ namespace Hue_travel.Shell
 {
     public partial class RibbonBar : UserControl
     {
-        public event EventHandler LayerControlToggled;
         public event EventHandler RouteOptimizerToggled;
         public event EventHandler SearchPoiToggled;
         public event EventHandler TravelGuideToggled;
@@ -26,7 +25,6 @@ namespace Hue_travel.Shell
 
         private void btnMeasureArea_Click(object sender, EventArgs e) => MeasureAreaToggled?.Invoke(this, EventArgs.Empty);
 
-        private void btnLayerControl_Click(object sender, EventArgs e) => LayerControlToggled?.Invoke(this, EventArgs.Empty);
 
         private void btnRouteOptimizer_Click(object sender, EventArgs e) => RouteOptimizerToggled?.Invoke(this, EventArgs.Empty);
 
