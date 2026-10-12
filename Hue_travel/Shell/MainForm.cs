@@ -33,7 +33,7 @@ namespace Hue_travel.Shell
                 areaFromServer.Updated += (s, e) => ShowArea();
                 areaLocator = areaFromServer;
             }
-            weatherUpdater = new WeatherUpdater(api != null ? (IWeatherService)new ApiWeatherService(api) : new OpenMeteoWeatherService());
+            weatherUpdater = new WeatherUpdater(api != null ? (IWeatherService)new FallbackWeatherService(new ApiWeatherService(api), new OpenMeteoWeatherService()) : new OpenMeteoWeatherService());
 
             InitializeComponent();
             if (api != null) SetUpAccount();

@@ -139,7 +139,8 @@ namespace Hue_travel.MapEngine
         public void LoadPois(IReadOnlyList<Poi> pois)
         {
             Extents keptView = CopyOfView();   // MapWinGIS zooms to the new layer when the map was empty
-            foreach (int handle in poiLayers.Handles.ToList()) axMap.RemoveLayer(handle);
+            // New layers go in before the old ones come out: a map with no layers loses its tiles.
+            List<int> oldLayers = poiLayers.Handles.ToList();
             poiLayers.Clear();
             markers.Clear();
 
@@ -150,6 +151,7 @@ namespace Hue_travel.MapEngine
                 markers.AddRange(group.Select(p => new PoiMarker(p, handle)));
                 AddPoiLayer(group.Key, handle);
             }
+            foreach (int handle in oldLayers) axMap.RemoveLayer(handle);
             if (keptView != null) axMap.Extents = keptView;
             axMap.Redraw();
         }

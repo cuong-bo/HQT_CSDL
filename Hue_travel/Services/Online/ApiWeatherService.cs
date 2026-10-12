@@ -5,6 +5,31 @@ using Hue_travel.Services.Weather;
 
 namespace Hue_travel.Services.Online
 {
+    /// <summary>Asks the first service; when it fails, asks the second (our server first, then Open-Meteo directly).</summary>
+    public sealed class FallbackWeatherService : IWeatherService
+    {
+        private readonly IWeatherService primary;
+        private readonly IWeatherService secondary;
+
+        public FallbackWeatherService(IWeatherService primary, IWeatherService secondary)
+        {
+            this.primary = primary;
+            this.secondary = secondary;
+        }
+
+        public async Task<WeatherSnapshot> GetCurrentAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                return await primary.GetCurrentAsync(cancellationToken).ConfigureAwait(true);
+            }
+            catch (WeatherServiceException)
+            {
+                return await secondary.GetCurrentAsync(cancellationToken).ConfigureAwait(true);
+            }
+        }
+    }
+
     /// <summary>Weather from our own server, which asks Open-Meteo at most once per 15 minutes for everybody.</summary>
     public sealed class ApiWeatherService : IWeatherService
     {
