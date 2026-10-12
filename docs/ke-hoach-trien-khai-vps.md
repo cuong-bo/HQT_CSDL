@@ -6,7 +6,7 @@ người dùng, dữ liệu và xử lý nằm trên VPS Ubuntu". Không dùng t
 ## 0. Tình trạng thực hiện (cập nhật 13/10/2026)
 
 Đã làm xong và kiểm tra trên máy dựng (PostgreSQL 17 + PostGIS + pgRouting thật): **56 test API** (gồm test tích hợp với CSDL thật),
-**179 kiểm tra phía app**, dựng CSDL từ rỗng trong khoảng 18 giây, chạy lại nhiều lần vẫn đúng.
+**180 kiểm tra phía app**, dựng CSDL từ rỗng trong khoảng 18 giây, chạy lại nhiều lần vẫn đúng.
 Bộ Docker Compose đã chạy thật trên Docker Desktop (Windows): dựng ảnh, nạp dữ liệu, `/healthz`, địa điểm, tìm đường, chữ ký phản hồi
 (app kiểm tra bằng khóa tạo từ `gen-signing-key.sh`), sao lưu, khôi phục thử và khôi phục thay thế, quay lui API; trong lúc thử đã sửa
 hai lỗi thật (ảnh CSDL dựng trên Debian cũ không cài được pgRouting; `backup.sh` thoát lỗi vào mọi ngày không phải Chủ nhật).

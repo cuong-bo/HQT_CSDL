@@ -447,6 +447,8 @@ Check 'tiles: roadmap shows the new credit' (($maps | Where-Object { $_.Id -eq '
 Check 'tiles: invalid address keeps the built-in satellite' (($maps | Where-Object { $_.Id -eq 'satellite' }).TileUrl -like 'http://mt1.google.com/*') 'True'
 Check 'tiles: address without placeholders keeps the built-in hybrid' (($maps | Where-Object { $_.Id -eq 'hybrid' }).TileUrl -like 'http://mt1.google.com/*') 'True'
 Check 'tiles: the changed map gets a fresh provider id' ((($maps | Where-Object { $_.Id -eq 'roadmap' }).ProviderId) -ne 10001) 'True'
+[void]$apply.Invoke($null, [object[]]@([System.Collections.Generic.Dictionary[string,string]]$cfgUrls, ''))
+Check 'tiles: no credit announced means no credit shown' ((($catT.GetProperty('All').GetValue($null)) | Where-Object { $_.Id -eq 'roadmap' }).Attribution) ''
 Remove-Item $sessionPath -ErrorAction SilentlyContinue
 
 Write-Host "passed=$script:pass failed=$script:fail"

@@ -355,7 +355,7 @@ namespace Hue_travel.MapEngine
             axMap.Tiles.ProviderId = info.ProviderId;
             axMap.Tiles.Visible = true;
             attribution.Text = info.Attribution;
-            attribution.Visible = true;
+            attribution.Visible = !string.IsNullOrEmpty(info.Attribution);
             LayoutOverlays();
             axMap.Redraw();
         }

@@ -79,7 +79,7 @@ namespace Hue_travel.MapEngine
                 if (!changed) generation++;
                 changed = true;
                 next.Add(new BaseMapInfo(basis.Id, basis.Name, url.Trim(), FirstProviderId + generation * ProviderIdsPerGeneration + i,
-                    string.IsNullOrWhiteSpace(attribution) ? basis.Attribution : attribution.Trim()));
+                    string.IsNullOrWhiteSpace(attribution) ? string.Empty : attribution.Trim()));   // never keep Google's credit for another source
             }
             if (!changed) return false;
             All = next.AsReadOnly();
