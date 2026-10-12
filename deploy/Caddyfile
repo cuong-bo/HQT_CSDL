@@ -1,0 +1,20 @@
+# Plain HTTP only: there is no domain name, so no certificate. Everything goes to the API.
+{
+    auto_https off
+    admin off
+}
+
+:80 {
+    encode zstd gzip
+    header -Server
+
+    reverse_proxy api:8080 {
+        health_uri /healthz
+        health_interval 30s
+    }
+
+    log {
+        output stdout
+        format console
+    }
+}

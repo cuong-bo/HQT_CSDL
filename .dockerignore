@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+.git/
+DuLieu/
+DuLieu.zip
+GiaoDien/
+Hue_travel/
+tests/
+.superpowers/
+.claude/

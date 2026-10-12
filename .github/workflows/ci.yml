@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  api:
+    name: API build and unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      # The tests that need a database are skipped here (no HUE_TEST_DB); see db/README.md to run them locally.
+      - run: dotnet test tests/Hue_travel.Api.Tests --configuration Release
+
+  migrations:
+    name: SQL migrations apply on an empty database
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start PostGIS + pgRouting
+        run: |
+          docker build -t huegis-db deploy/db
+          docker run -d --name pg -e POSTGRES_PASSWORD=ci -e POSTGRES_DB=huegis -e APP_DB_PASSWORD=ci huegis-db
+          for i in $(seq 1 30); do docker exec pg pg_isready -U postgres -d huegis && break; sleep 2; done
+      - name: Apply migrations in order
+        run: |
+          for f in db/migrations/V*.sql; do
+            echo "== $f"
+            docker exec -i pg psql -U postgres -d huegis -v ON_ERROR_STOP=1 < "$f"
+          done
+
+  client:
+    name: Windows client build and service tests
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: microsoft/setup-msbuild@v2
+      - run: msbuild Hue_travel/Hue_travel.csproj /restore /p:Configuration=Debug /v:minimal
+      - name: Service tests (32-bit PowerShell, the app is x86)
+        run: C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests/client/test_services.ps1
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
