@@ -1,5 +1,6 @@
 bin/
 obj/
+installer/output/
 *.user
 .vs/
 .superpowers/

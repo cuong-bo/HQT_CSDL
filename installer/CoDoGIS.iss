@@ -48,7 +48,7 @@ Filename: "{sys}\regsvr32.exe"; Parameters: "/s ""{app}\MapWinGIS\MapWinGIS.ocx"
 Filename: "{app}\Hue_travel.exe"; Description: "Mở {#AppName}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
-Filename: "{sys}\regsvr32.exe"; Parameters: "/u /s ""{app}\MapWinGIS\MapWinGIS.ocx"""; Flags: runhidden
+Filename: "{sys}\regsvr32.exe"; Parameters: "/u /s ""{app}\MapWinGIS\MapWinGIS.ocx"""; RunOnceId: "UnregisterMapWinGIS"; Flags: runhidden
 
 [Code]
 var
