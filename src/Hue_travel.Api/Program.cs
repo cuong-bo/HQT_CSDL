@@ -8,6 +8,7 @@ using Hue_travel.Api.Options;
 using Hue_travel.Api.Owner;
 using Hue_travel.Api.Pois;
 using Hue_travel.Api.Routing;
+using Hue_travel.Api.Security;
 using Hue_travel.Api.Social;
 using Hue_travel.Api.Weather;
 using System.Security.Claims;
@@ -38,6 +39,7 @@ builder.Services.AddSingleton(sp =>
 });
 builder.Services.Configure<ClientSettings>(builder.Configuration.GetSection("Client"));
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<ResponseSigner>();
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSingleton<UserRepository>();
 builder.Services.AddSingleton<PoiRepository>();
@@ -100,6 +102,7 @@ if (proxyNetworks.Length > 0)
 }
 app.UseForwardedHeaders(forwarded);
 
+app.UseResponseSigning();   // outside the exception handler, so error replies are signed too
 app.UseExceptionHandler();
 app.Use(async (context, next) =>
 {

@@ -15,6 +15,9 @@ public sealed class ApiFixture : IDisposable
 {
     public const string JwtKey = "test-only-signing-key-0123456789-abcdef";
 
+    // One response-signing key for the whole test run.
+    public static readonly System.Security.Cryptography.ECDsa SigningKey = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
+
     public static string? ConnectionString { get; } = Environment.GetEnvironmentVariable("HUE_TEST_DB");
 
     public WebApplicationFactory<Program> Factory { get; }
@@ -25,6 +28,7 @@ public sealed class ApiFixture : IDisposable
         {
             builder.UseSetting("ConnectionStrings:Default", ConnectionString ?? "Host=localhost;Database=unused");
             builder.UseSetting("Jwt:Key", JwtKey);
+            builder.UseSetting("Signing:PrivateKeyPkcs8", Convert.ToBase64String(SigningKey.ExportPkcs8PrivateKey()));
             builder.UseSetting("RateLimit:AuthPerMinute", "1000");
             builder.UseSetting("RateLimit:GlobalPerMinute", "100000");
             builder.UseSetting("RateLimit:HeavyPerMinute", "1000");

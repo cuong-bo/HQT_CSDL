@@ -356,3 +356,52 @@ public class ClientSupportTests(ApiFixture fixture)
         Assert.InRange(x, 700000, 900000);
     }
 }
+
+[Collection("api")]
+public class SigningTests(ApiFixture fixture)
+{
+    private static bool Verify(HttpResponseMessage response, string method, string path, byte[] body)
+    {
+        string time = response.Headers.GetValues("X-Sig-Time").Single();
+        byte[] signature = Convert.FromBase64String(response.Headers.GetValues("X-Sig").Single());
+        byte[] payload = Hue_travel.Api.Security.ResponseSigner.Payload(time, method, path, body);
+        return ApiFixture.SigningKey.VerifyData(payload, signature, System.Security.Cryptography.HashAlgorithmName.SHA256,
+            System.Security.Cryptography.DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
+    }
+
+    [RequiresDbFact]
+    public async Task EveryV1ReplyIsSigned_AndTheSignatureCoversTheBody()
+    {
+        HttpResponseMessage response = await fixture.CreateClient().GetAsync("/v1/config");
+        byte[] body = await response.Content.ReadAsByteArrayAsync();
+        Assert.True(Verify(response, "GET", "/v1/config", body));
+
+        byte[] tampered = (byte[])body.Clone();
+        tampered[tampered.Length / 2] ^= 1;
+        Assert.False(Verify(response, "GET", "/v1/config", tampered));
+        Assert.False(Verify(response, "GET", "/v1/pois", body));   // a reply cannot be replayed for another path
+    }
+
+    [RequiresDbFact]
+    public async Task ErrorRepliesAreSignedToo()
+    {
+        HttpResponseMessage response = await fixture.CreateClient().GetAsync("/v1/pois/KHONG-CO");
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.True(Verify(response, "GET", "/v1/pois/KHONG-CO", await response.Content.ReadAsByteArrayAsync()));
+    }
+
+    [RequiresDbFact]
+    public async Task EmptyRepliesAreSignedToo()
+    {
+        HttpResponseMessage response = await fixture.CreateClient().PostAsJsonAsync("/v1/auth/logout", new { refreshToken = "x" });
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.True(Verify(response, "POST", "/v1/auth/logout", Array.Empty<byte>()));
+    }
+
+    [RequiresDbFact]
+    public async Task HealthCheckIsNotSigned_SoMonitoringStaysSimple()
+    {
+        HttpResponseMessage response = await fixture.CreateClient().GetAsync("/healthz");
+        Assert.False(response.Headers.Contains("X-Sig"));
+    }
+}

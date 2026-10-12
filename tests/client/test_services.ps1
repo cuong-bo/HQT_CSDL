@@ -241,6 +241,7 @@ public class FakeHandler : HttpMessageHandler {
     if (r[0] == null) { throw new HttpRequestException("network down"); }
     HttpResponseMessage m = new HttpResponseMessage((HttpStatusCode)(int)r[0]);
     m.Content = new StringContent((string)r[1], Encoding.UTF8, "application/json");
+    if (r.Length > 3) { m.Headers.Add("X-Sig-Time", (string)r[2]); m.Headers.Add("X-Sig", (string)r[3]); }
     return Task.FromResult(m);
   }
 }
@@ -304,7 +305,7 @@ Check 'tokens: removed' ($tl.Invoke($store, [object[]]@($null, $null))) 'False'
 
 $apiT = GetT ($online + 'ApiClient')
 $none = [Threading.CancellationToken]::None
-function New-Api($handler) { $s = [Activator]::CreateInstance($storeT, @($sessionPath)); $ctor = $apiT.GetConstructors()[0]; $ctor.Invoke([object[]]@('http://test.local', $s, [System.Net.Http.HttpMessageHandler]$handler)) }
+function New-Api($handler) { $s = [Activator]::CreateInstance($storeT, @($sessionPath)); $ctor = $apiT.GetConstructors()[0]; $ctor.Invoke([object[]]@('http://test.local', $s, [System.Net.Http.HttpMessageHandler]$handler, $null)) }
 function Await($task) { $task.Wait(); $task.Result }
 
 # 401 -> refresh once -> repeat the request with the new token
@@ -358,6 +359,44 @@ $h6.Responses.Enqueue([object[]]@(401, '{"detail":"Sai ten dang nhap hoac mat kh
 $auth6 = [Activator]::CreateInstance($authT, [object[]]@((New-Api $h6), [Activator]::CreateInstance($storeT, @($sessionPath))))
 Check 'auth: a refusal returns the message' (Await ($auth6.LoginAsync('nguoi', 'bad', $false))) 'Sai ten dang nhap hoac mat khau.'
 Check 'auth: nobody is signed in after a refusal' ($auth6.CurrentUser -eq $null) 'True'
+
+# ---- Response signature check (ECDSA P-256, made with the same rules as the server)
+$verT = GetT ($online + 'ResponseVerifier')
+$ec = New-Object System.Security.Cryptography.ECDsaCng 256
+$blob = $ec.Key.Export([System.Security.Cryptography.CngKeyBlobFormat]::EccPublicBlob)
+$spki = [byte[]](@(0x30,0x59,0x30,0x13,0x06,0x07,0x2a,0x86,0x48,0xce,0x3d,0x02,0x01,0x06,0x08,0x2a,0x86,0x48,0xce,0x3d,0x03,0x01,0x07,0x03,0x42,0x00,0x04) + @($blob[8..71]))
+$verifier = $verT.GetMethod('TryCreate').Invoke($null, @([Convert]::ToBase64String($spki)))
+Check 'signature: a good key gives a verifier' ($verifier -ne $null) 'True'
+Check 'signature: no key means no checking' ($verT.GetMethod('TryCreate').Invoke($null, @('')) -eq $null) 'True'
+Check 'signature: a bad key is refused' ($verT.GetMethod('TryCreate').Invoke($null, @('AAAA')) -eq $null) 'True'
+$ec.HashAlgorithm = [System.Security.Cryptography.CngAlgorithm]::Sha256
+$now = [DateTimeOffset]::UtcNow
+$timeText = $now.ToUnixTimeSeconds().ToString()
+$bodyBytes = [Text.Encoding]::UTF8.GetBytes('{"ok":true}')
+$headBytes = [Text.Encoding]::UTF8.GetBytes($timeText + "`nGET`n/v1/config`n")
+$sig = [Convert]::ToBase64String($ec.SignData([byte[]]($headBytes + $bodyBytes)))
+function Verify-Reply($method, $path, $time, $signature, $body, $when) {
+  $a = [object[]]@($method, $path, $time, $signature, [byte[]]$body, $when, $null)
+  $ok = $verifier.GetType().GetMethod('Verify').Invoke($verifier, $a)
+  "$ok"
+}
+Check 'signature: a genuine reply passes' (Verify-Reply 'GET' '/v1/config' $timeText $sig $bodyBytes $now) 'True'
+Check 'signature: a changed body fails' (Verify-Reply 'GET' '/v1/config' $timeText $sig ([Text.Encoding]::UTF8.GetBytes('{"ok":false}')) $now) 'False'
+Check 'signature: another path fails' (Verify-Reply 'GET' '/v1/pois' $timeText $sig $bodyBytes $now) 'False'
+Check 'signature: another method fails' (Verify-Reply 'POST' '/v1/config' $timeText $sig $bodyBytes $now) 'False'
+Check 'signature: a missing signature fails' (Verify-Reply 'GET' '/v1/config' $timeText $null $bodyBytes $now) 'False'
+Check 'signature: an old reply fails' (Verify-Reply 'GET' '/v1/config' $timeText $sig $bodyBytes ($now.AddHours(3))) 'False'
+
+# the client refuses unsigned replies once a key is set, and accepts signed ones
+function New-SignedApi($handler, $verifierObj) { $s = [Activator]::CreateInstance($storeT, @($sessionPath)); $ctor = $apiT.GetConstructors()[0]; $ctor.Invoke([object[]]@('http://test.local', $s, [System.Net.Http.HttpMessageHandler]$handler, $verifierObj)) }
+$hu = New-Object FakeHandler
+$hu.Responses.Enqueue([object[]]@(200, '{"a":1}'))
+$unsigned = Await ((New-SignedApi $hu $verifier).GetAsync('/v1/config', $none))
+Check 'signature: an unsigned reply is refused by the client' "$($unsigned.StatusCode)|$([int]($unsigned.Error.Length -gt 10))" '0|1'
+$hs = New-Object FakeHandler
+$hs.Responses.Enqueue([object[]]@(200, '{"ok":true}', $timeText, $sig))
+$signed = Await ((New-SignedApi $hs $verifier).GetAsync('/v1/config', $none))
+Check 'signature: a signed reply is accepted by the client' "$($signed.StatusCode)" '200'
 Remove-Item $sessionPath -ErrorAction SilentlyContinue
 
 Write-Host "passed=$script:pass failed=$script:fail"

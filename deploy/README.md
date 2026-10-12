@@ -41,6 +41,20 @@ deploy/scripts/deploy.sh status    # phải in {"status":"ok"}
 
 Kiểm tra từ máy khác: `curl http://IP_VPS/healthz` và `curl "http://IP_VPS/v1/pois?group=stay"`.
 
+### Ký phản hồi (khuyên dùng khi chạy HTTP)
+
+Máy chủ có thể ký mọi phản hồi `/v1/*` bằng ECDSA để app phát hiện dữ liệu bị sửa giữa đường (HTTP không mã hóa, nhưng chữ ký chặn
+việc giả vị trí, giả tuyến, giả cấu hình). Tạo một cặp khóa một lần:
+
+```bash
+deploy/scripts/gen-signing-key.sh
+```
+
+- Giá trị **riêng tư** đặt vào `deploy/.env` dòng `SIGNING_KEY=` rồi `deploy/scripts/deploy.sh up`.
+- Giá trị **công khai** đặt vào app: `ApiPublicKey` trong `Hue_travel.exe.config`, hoặc file `%ProgramData%\CoDoGIS\public.key`
+  (bộ cài có ô nhập), hoặc biến `HUE_API_PUBLIC_KEY`. Khi app có khóa công khai, nó **từ chối** mọi phản hồi thiếu chữ ký hoặc sai chữ ký.
+- Chữ ký không che nội dung: mật khẩu và token vẫn đi dạng chữ thường. Đổi khóa thì phải phát hành lại khóa công khai cho mọi máy.
+
 ## 3. Cập nhật và quay lui
 
 ```bash
@@ -91,7 +105,7 @@ deploy/scripts/restore.sh /var/backups/hue-travel/daily/huegis-YYYY-MM-DD.dump
 | Rủi ro | Cách giảm đã làm / nên làm |
 |---|---|
 | Mật khẩu và token đi dạng chữ thường trên đường truyền | Mật khẩu chỉ dùng cho app này, **không dùng lại mật khẩu ở nơi khác**; token truy cập sống 15 phút; làm mới token dùng một lần. Nên chuyển HTTPS khi có thể |
-| Kẻ ở giữa sửa dữ liệu trả về (giả vị trí, giả tuyến, giả `/v1/config`) | Chưa ký phản hồi. Nếu cần, thêm chữ ký ECDSA cho phản hồi và để app kiểm tra bằng khóa công khai nhúng trong app |
+| Kẻ ở giữa sửa dữ liệu trả về (giả vị trí, giả tuyến, giả `/v1/config`) | Phản hồi được ký ECDSA P-256 (mục "Ký phản hồi"); app có khóa công khai thì từ chối phản hồi không hợp lệ |
 | Dò mật khẩu | Giới hạn 10 lần/phút/IP cho đăng ký-đăng nhập-đổi mật khẩu, khóa tài khoản 15 phút sau 5 lần sai, bcrypt |
 | Giả địa chỉ IP để né giới hạn tốc độ | API chỉ tin `X-Forwarded-For` từ mạng nội bộ của Caddy và không mở cổng ra ngoài |
 | Lộ khóa JWT hoặc mật khẩu CSDL | Chỉ ở `deploy/.env` (không vào Git), API dùng role CSDL giới hạn (`huegis_app`, không sửa được nhật ký kiểm toán) |

@@ -27,7 +27,7 @@ namespace Hue_travel.Shell
             // Without one it works offline on the data that ships with it.
             if (ServerSettings.IsOnline)
             {
-                api = new ApiClient(ServerSettings.BaseUrl, new TokenStore());
+                api = new ApiClient(ServerSettings.BaseUrl, new TokenStore(), null, ResponseVerifier.TryCreate(ServerSettings.PublicKey));
                 auth = new AuthService(api, new TokenStore());
                 var areaFromServer = new ApiAreaLocator(api, areaLocator);
                 areaFromServer.Updated += (s, e) => ShowArea();

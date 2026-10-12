@@ -33,6 +33,8 @@ services:
       ConnectionStrings__Default: Host=db;Database=huegis;Username=huegis_app;Password=${APP_DB_PASSWORD}
       Jwt__Key: ${JWT_KEY:?set JWT_KEY in deploy/.env (at least 32 characters)}
       Client__MinimumVersion: ${MIN_CLIENT_VERSION:-1.0.0}
+      # Optional but recommended over HTTP: replies are signed with this ECDSA key (deploy/scripts/gen-signing-key.sh).
+      Signing__PrivateKeyPkcs8: ${SIGNING_KEY:-}
       # Only Caddy (inside this subnet) may tell the API the client address (X-Forwarded-For).
       Proxy__KnownNetworks__0: 172.30.0.0/24
     depends_on:

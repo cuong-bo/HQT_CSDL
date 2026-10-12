@@ -43,10 +43,14 @@ namespace Hue_travel.Services.Online
         private readonly SemaphoreSlim refreshLock = new SemaphoreSlim(1, 1);
         private bool persistSession;
 
-        public ApiClient(string baseUrl, TokenStore store, HttpMessageHandler handler = null)
+        private readonly ResponseVerifier verifier;
+
+        /// <param name="verifier">When given, every /v1 reply must carry a valid server signature (see <see cref="ResponseVerifier"/>).</param>
+        public ApiClient(string baseUrl, TokenStore store, HttpMessageHandler handler = null, ResponseVerifier verifier = null)
         {
             this.baseUrl = baseUrl.TrimEnd('/');
             this.store = store;
+            this.verifier = verifier;
             http = handler == null ? new HttpClient() : new HttpClient(handler);
             http.Timeout = TimeSpan.FromSeconds(15);
         }
@@ -130,7 +134,11 @@ namespace Hue_travel.Services.Online
                 {
                     using (HttpResponseMessage reply = await http.SendAsync(request, ct).ConfigureAwait(true))
                     {
-                        string text = await reply.Content.ReadAsStringAsync().ConfigureAwait(true);
+                        byte[] bytes = await reply.Content.ReadAsByteArrayAsync().ConfigureAwait(true);
+                        string problem;
+                        if (!IsGenuine(method, request.RequestUri, reply, bytes, out problem))
+                            return new ApiResponse { StatusCode = 0, Error = problem };   // treated like "server not reachable": nothing from it is used
+                        string text = Encoding.UTF8.GetString(bytes);
                         object json = JsonHelper.Parse(text);
                         var response = new ApiResponse { StatusCode = (int)reply.StatusCode, Body = text, Json = json };
                         if (!response.IsSuccess) response.Error = ErrorText(json, response.StatusCode);
@@ -146,6 +154,22 @@ namespace Hue_travel.Services.Online
                     return new ApiResponse { StatusCode = 0, Error = Unreachable };   // the 15 second timeout
                 }
             }
+        }
+
+        private bool IsGenuine(HttpMethod method, Uri uri, HttpResponseMessage reply, byte[] body, out string problem)
+        {
+            problem = null;
+            string path = ResponseVerifier.SignedPath(uri);
+            if (verifier == null || !path.StartsWith("/v1/", StringComparison.Ordinal)) return true;
+            return verifier.Verify(method.Method, path, HeaderValue(reply, "X-Sig-Time"), HeaderValue(reply, "X-Sig"), body, DateTimeOffset.UtcNow, out problem);
+        }
+
+        private static string HeaderValue(HttpResponseMessage reply, string name)
+        {
+            IEnumerable<string> values;
+            if (!reply.Headers.TryGetValues(name, out values)) return null;
+            foreach (string value in values) return value;
+            return null;
         }
 
         /// <summary>The human text of a ProblemDetails reply ("detail", else "title"), or a generic message.</summary>

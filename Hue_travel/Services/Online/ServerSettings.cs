@@ -18,6 +18,22 @@ namespace Hue_travel.Services.Online
 
         public static string BaseUrl => Current.Value;
 
+        /// <summary>
+        /// The server's public signing key (base64), from HUE_API_PUBLIC_KEY, %ProgramData%\CoDoGIS\public.key or the
+        /// ApiPublicKey setting. Empty means replies are not checked.
+        /// </summary>
+        public static string PublicKey => PublicKeyValue.Value;
+
+        private static readonly Lazy<string> PublicKeyValue = new Lazy<string>(() => FirstNonEmpty(
+            Environment.GetEnvironmentVariable("HUE_API_PUBLIC_KEY"), ReadCommonFile("public.key"), ConfigurationManager.AppSettings["ApiPublicKey"]));
+
+        private static string FirstNonEmpty(params string[] values)
+        {
+            foreach (string value in values)
+                if (!string.IsNullOrWhiteSpace(value)) return value.Trim();
+            return "";
+        }
+
         public static bool IsOnline => BaseUrl.Length > 0;
 
         /// <summary>The first candidate that is an absolute http or https address (without a trailing slash), or "".</summary>
@@ -41,11 +57,13 @@ namespace Hue_travel.Services.Online
             return value.TrimEnd('/');
         }
 
-        private static string ReadServerFile()
+        private static string ReadServerFile() => ReadCommonFile("server.txt");
+
+        private static string ReadCommonFile(string name)
         {
             try
             {
-                string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "CoDoGIS", "server.txt");
+                string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "CoDoGIS", name);
                 return File.Exists(path) ? File.ReadAllText(path) : null;
             }
             catch (IOException)

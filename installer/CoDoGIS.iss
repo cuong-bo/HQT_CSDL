@@ -75,7 +75,9 @@ begin
     'Địa chỉ máy chủ Cố Đô GIS',
     'Nhập địa chỉ do quản trị viên cung cấp, ví dụ http://203.0.113.10 . Để trống để chỉ dùng dữ liệu ngoại tuyến.');
   ServerPage.Add('Địa chỉ:', False);
+  ServerPage.Add('Khóa công khai của máy chủ (không bắt buộc, dùng để kiểm tra dữ liệu không bị sửa):', False);
   ServerPage.Values[0] := '';
+  ServerPage.Values[1] := '';
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
@@ -87,5 +89,6 @@ begin
     Dir := ExpandConstant('{commonappdata}\CoDoGIS');
     ForceDirectories(Dir);
     SaveStringToFile(Dir + '\server.txt', Trim(ServerPage.Values[0]), False);
+    SaveStringToFile(Dir + '\public.key', Trim(ServerPage.Values[1]), False);
   end;
 end;

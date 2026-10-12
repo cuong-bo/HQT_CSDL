@@ -126,6 +126,7 @@
     <Compile Include="Services\Online\JsonHelper.cs" />
     <Compile Include="Services\Online\TokenStore.cs" />
     <Compile Include="Services\Online\ApiClient.cs" />
+    <Compile Include="Services\Online\ResponseVerifier.cs" />
     <Compile Include="Services\Online\AuthService.cs" />
     <Compile Include="Services\Online\PoiJson.cs" />
     <Compile Include="Services\Online\ApiPoiSource.cs" />
