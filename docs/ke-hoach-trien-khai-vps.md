@@ -188,4 +188,105 @@ HTTP không mã hóa và không xác thực máy chủ. Với dự án này, cá
 
 1. **Khuyên dùng:** HTTPS với hostname miễn phí (phương án A) hoặc ghim chứng chỉ (phương án C). Chi phí bằng 0, chỉ thêm khoảng nửa ngày công.
 2. **Nếu giữ HTTP và giữ tài khoản:** áp dụng các cách giảm ở 9.1, đặc biệt ký phản hồi, token ngắn hạn, giới hạn số lần thử, và phát hành bộ cài qua HTTPS.
-3. **Rủi ro thấp nhất khi giữ HTTP:** bỏ tài khoản; app dùng ẩn danh với dữ liệu công khai (địa điểm, tìm đường). Khi đó không còn mật khẩu hay token nào để lộ.
+3. **Rủi ro thấp nhất khi giữ HTTP:** bỏ tài khoản; app dùng ẩn danh với dữ liệu công khai (địa điểm, tìm đường). Khi đó không còn mật khẩu hay token nào để lộ. (Lựa chọn này **không còn khả thi** sau quyết định ở mục 10: hệ thống có tài khoản.)
+
+## 10. Ba nhóm đối tượng: Quản trị viên, Người dùng, Chủ quản địa điểm
+
+Quyết định ngày 12/10/2026: hệ thống phục vụ ba vai trò. Điều này **thay đổi** mục 9: có tài khoản quản trị và chủ quản
+được quyền sửa dữ liệu, nên lộ mật khẩu hoặc token qua HTTP kéo theo nguy cơ sửa dữ liệu của cả hệ thống. Khi có hai vai trò
+này, **nên bắt buộc dùng HTTPS** (phương án A hoặc C ở mục 2, miễn phí, không cần mua tên miền).
+
+### 10.1 Ma trận quyền
+
+| Chức năng | Khách (chưa đăng nhập) | Người dùng | Chủ quản địa điểm | Quản trị viên |
+|---|---|---|---|---|
+| Xem bản đồ, lọc theo nhóm, tra cứu, thời tiết | Có | Có | Có | Có |
+| Lập lộ trình tối ưu | Có | Có | Có | Có |
+| Lưu lộ trình, địa điểm yêu thích | Không | Có | Có | Có |
+| Đánh giá, nhận xét địa điểm | Không | Có (qua kiểm duyệt) | Chỉ phản hồi đánh giá địa điểm của mình | Có |
+| Báo sai thông tin địa điểm | Không | Có | Có | Có |
+| Sửa thông tin địa điểm của mình (giờ mở, giá vé, SĐT, mô tả, ảnh, trạng thái tạm đóng) | Không | Không | Có | Có (mọi địa điểm) |
+| Đề xuất đổi tên, loại hình, vị trí địa điểm | Không | Không | Có (chờ duyệt) | Có (áp dụng ngay) |
+| Thông báo, sự kiện, khuyến mại của địa điểm | Không | Không | Có | Có |
+| Thống kê lượt xem, lượt chọn vào lộ trình | Không | Không | Có (địa điểm của mình) | Có (toàn hệ thống) |
+| Thêm, xóa địa điểm; nạp dữ liệu | Không | Không | Không | Có |
+| Duyệt đề xuất sửa, duyệt yêu cầu làm chủ quản | Không | Không | Không | Có |
+| Quản lý tài khoản (khóa, đặt lại mật khẩu, đổi vai trò) | Không | Không | Không | Có |
+| Kiểm duyệt đánh giá, xử lý báo sai | Không | Không | Không | Có |
+| Xem nhật ký thay đổi, sao lưu | Không | Không | Không | Có |
+
+Mọi kiểm tra quyền thực hiện **ở server** (vai trò nằm trong token, quyền sở hữu tra trong bảng `place_owner`).
+Ẩn nút ở app chỉ để giao diện gọn, không phải biện pháp bảo mật.
+
+### 10.2 Tài khoản khi không có email
+- **Người dùng:** tự đăng ký bằng tên đăng nhập và mật khẩu (không bắt buộc email), có giới hạn đăng ký theo địa chỉ IP.
+- **Chủ quản:** gửi yêu cầu làm chủ quản một địa điểm; quản trị viên xác minh ngoài hệ thống (gọi điện, giấy tờ) rồi duyệt. Hoặc quản trị viên tạo tài khoản và gán địa điểm.
+- **Quên mật khẩu:** không có luồng tự động (đã bỏ OTP); quản trị viên đặt lại mật khẩu tạm và yêu cầu đổi ngay khi đăng nhập.
+- Chính sách mật khẩu tối thiểu 8 ký tự (hiện app đang yêu cầu 6), khóa tạm sau nhiều lần sai, phiên hết hạn.
+
+### 10.3 Mô hình dữ liệu bổ sung
+
+| Bảng | Nội dung chính |
+|---|---|
+| `users` | id, tên đăng nhập, băm mật khẩu, tên hiển thị, `role` (user / owner / admin), trạng thái (hoạt động / khóa / buộc đổi mật khẩu), thời gian tạo, đăng nhập gần nhất |
+| `place_owner` | user_id, poi_id, trạng thái (chờ duyệt / đã duyệt / từ chối), người duyệt, thời gian |
+| `poi` (thêm cột) | `status` (hiển thị / ẩn / tạm đóng), `updated_by`, `updated_at`, `version`, xóa mềm |
+| `poi_edit_request` | poi_id, người gửi, nội dung thay đổi (JSON), trạng thái, người duyệt, ghi chú, thời gian |
+| `poi_media` | poi_id, tệp ảnh (đường dẫn, kích thước, trạng thái duyệt) |
+| `announcement` | poi_id, tiêu đề, nội dung, thời gian hiệu lực |
+| `review` | user_id, poi_id, điểm 1 đến 5, nhận xét, trạng thái kiểm duyệt, phản hồi của chủ quản |
+| `report` | user_id, poi_id, loại báo sai, nội dung, trạng thái xử lý |
+| `favorite`, `itinerary`, `itinerary_item` | địa điểm yêu thích và lộ trình đã lưu của người dùng |
+| `poi_stats_daily` | poi_id, ngày, lượt xem, lượt đưa vào lộ trình |
+| `audit_log` | ai, khi nào, làm gì, trên bản ghi nào, giá trị cũ và mới |
+
+### 10.4 API theo vai trò (tiền tố `/v1`)
+
+| Nhóm | Ví dụ điểm truy cập |
+|---|---|
+| Công khai | `GET /pois`, `GET /pois/{id}`, `GET /area`, `POST /route`, `GET /weather` |
+| Người dùng | `GET/PUT /me`, `GET/POST/DELETE /favorites`, `GET/POST/PUT/DELETE /itineraries`, `POST /pois/{id}/reviews`, `POST /pois/{id}/reports` |
+| Chủ quản | `GET /owner/places`, `PUT /owner/places/{id}` (trường được phép sửa), `POST /owner/places/{id}/edit-requests`, `POST /owner/places/{id}/media`, `POST /owner/places/{id}/announcements`, `GET /owner/places/{id}/stats`, `POST /owner/claims` |
+| Quản trị | `GET/POST/PUT/DELETE /admin/pois`, `GET/PUT /admin/users`, `POST /admin/users/{id}/reset-password`, `GET /admin/edit-requests` kèm duyệt, `GET /admin/claims` kèm duyệt, `GET /admin/reviews` kèm kiểm duyệt, `GET /admin/reports`, `GET /admin/audit`, `GET /admin/stats` |
+
+Bắt buộc: kiểm tra quyền sở hữu cho mọi thao tác `/owner/...`, ghi `audit_log` cho mọi thay đổi dữ liệu, giới hạn kích thước và loại tệp ảnh tải lên, đổi tên tệp tải lên (không dùng tên gốc), truy vấn có tham số.
+
+### 10.5 Giao diện trong app (một app, hiển thị theo vai trò)
+- Thanh tiêu đề hiện tên người dùng và nhãn vai trò; menu: hồ sơ, đổi mật khẩu, đăng xuất.
+- **Người dùng:** panel "Lộ trình của tôi" (lưu, mở lại), "Yêu thích", nút đánh giá và báo sai trong thẻ địa điểm.
+- **Chủ quản:** panel "Địa điểm của tôi" và hộp sửa thông tin (giờ mở, giá, SĐT, mô tả, ảnh, tạm đóng); chọn vị trí mới trên bản đồ để đề xuất đổi vị trí; xem thống kê lượt xem.
+- **Quản trị:** cửa sổ "Quản trị" gồm các tab: Tổng quan (số liệu), Người dùng, Địa điểm (thêm bằng cách chấm trên bản đồ), Phê duyệt (đề xuất sửa, yêu cầu làm chủ quản), Đánh giá và báo sai, Nhật ký.
+- Nút thuộc vai trò khác thì ẩn; thao tác bị từ chối ở server thì hiện thông báo rõ.
+
+### 10.6 Các giai đoạn bổ sung (ước lượng thô thêm 3 đến 4 tuần)
+
+| # | Giai đoạn | Nội dung | Nghiệm thu |
+|---|---|---|---|
+| R1 | Nền tảng vai trò (2 đến 3 ngày) | Bảng `users`, `place_owner`, `audit_log`; token mang vai trò; chốt kiểm tra quyền dùng chung; chính sách mật khẩu | Test tích hợp: người dùng gọi điểm truy cập quản trị bị từ chối; chủ quản sửa địa điểm không phải của mình bị từ chối |
+| R2 | Tính năng người dùng (3 đến 4 ngày) | Yêu thích, lưu lộ trình, báo sai; panel "Lộ trình của tôi" | Lưu rồi mở lại lộ trình trên máy khác cho cùng kết quả |
+| R3 | Chủ quản (5 đến 6 ngày) | Yêu cầu làm chủ quản; sửa trường được phép; đề xuất chờ duyệt; tải ảnh; thông báo; thống kê | Chủ quản sửa giờ mở, khách thấy ngay; đề xuất đổi vị trí chờ quản trị duyệt |
+| R4 | Quản trị (6 đến 8 ngày) | Cửa sổ quản trị: người dùng, địa điểm, duyệt, nhật ký, tổng quan | Quản trị duyệt đề xuất và xem lại được ai đã đổi gì |
+| R5 | Đánh giá và kiểm duyệt (3 đến 4 ngày) | Đánh giá 1 đến 5 sao, nhận xét, phản hồi của chủ quản, kiểm duyệt | Đánh giá chỉ hiện sau khi duyệt; mỗi người một đánh giá cho mỗi địa điểm |
+| R6 | Thống kê (2 đến 3 ngày) | Ghi lượt xem, lượt vào lộ trình; biểu đồ cho chủ quản và quản trị | Số liệu khớp với thao tác thử |
+
+Thứ tự đề xuất: R1, R2, R3, R4 (R5 và R6 sau, có thể cắt nếu thiếu thời gian). R1 làm ngay sau giai đoạn 4 (API).
+
+### 10.7 Rủi ro riêng của ba vai trò
+
+| Rủi ro | Cách giảm |
+|---|---|
+| Lộ tài khoản quản trị hoặc chủ quản qua HTTP | Dùng HTTPS; nếu vẫn HTTP thì ký phản hồi, token ngắn hạn, quản trị viên chỉ đăng nhập từ mạng tin cậy |
+| Người lạ nhận mình là chủ quản | Quản trị xác minh ngoài hệ thống trước khi duyệt; ghi nhật ký |
+| Chủ quản sửa sai hoặc phá thông tin | Trường nhạy cảm cần duyệt; `audit_log` lưu giá trị cũ để hoàn tác |
+| Đánh giá giả, nội dung xấu | Kiểm duyệt trước khi hiển thị, mỗi người một đánh giá, giới hạn tần suất |
+| Tải ảnh độc hại hoặc quá lớn | Giới hạn loại tệp (JPG, PNG), kích thước và số lượng; đổi tên; nén lại ở server |
+| Mất quản trị viên duy nhất | Có ít nhất hai tài khoản quản trị; có cách tạo quản trị bằng dòng lệnh trên VPS |
+| Dữ liệu cá nhân của người dùng (tên đăng nhập, vị trí, lộ trình) | Thu thập ít nhất có thể, ghi rõ trong chính sách; xóa tài khoản khi được yêu cầu |
+
+### 10.8 Cần chốt trước khi làm
+1. Chủ quản sửa thông tin thường (giờ mở, giá, SĐT, mô tả) có hiện ngay không, hay cũng phải chờ quản trị duyệt? (Đề xuất: hiện ngay, có nhật ký và hoàn tác; đổi tên, loại hình, vị trí thì chờ duyệt.)
+2. Chủ quản có tài khoản bằng cách nào: tự gửi yêu cầu rồi quản trị duyệt, hay quản trị tạo sẵn? (Đề xuất: cả hai.)
+3. Một địa điểm có nhiều chủ quản không? Một chủ quản có nhiều địa điểm không? (Đề xuất: cả hai đều có thể.)
+4. Có làm đánh giá và nhận xét của người dùng không (R5)? Có cho chủ quản tải ảnh không?
+5. Có bao nhiêu quản trị viên, và ai tạo quản trị viên đầu tiên?
+6. Chốt HTTPS (mục 2): cần thiết hơn nhiều khi có quản trị và chủ quản.
