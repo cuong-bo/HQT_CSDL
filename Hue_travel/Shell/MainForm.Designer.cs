@@ -25,7 +25,6 @@ namespace Hue_travel.Shell
         private AuthModal authModal;
         private Toast toast;
         private RegisterPanel registerPanel;
-        private ForgotPasswordPanel forgotPasswordPanel;
 
         protected override void Dispose(bool disposing)
         {
@@ -47,7 +46,6 @@ namespace Hue_travel.Shell
             this.authModal = new AuthModal();
             this.toast = new Toast();
             this.registerPanel = new RegisterPanel();
-            this.forgotPasswordPanel = new ForgotPasswordPanel();
             this.SuspendLayout();
 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
@@ -88,7 +86,6 @@ namespace Hue_travel.Shell
             // Auth cards share one spot (top-16, centred over the map); only one is visible at a time.
             this.authModal.AttachTo(this, new System.Drawing.Point(582, 160), System.Windows.Forms.AnchorStyles.Top);
             this.registerPanel.AttachTo(this, new System.Drawing.Point(582, 160), System.Windows.Forms.AnchorStyles.Top);
-            this.forgotPasswordPanel.AttachTo(this, new System.Drawing.Point(572, 144), System.Windows.Forms.AnchorStyles.Top);
 
             this.Controls.Add(this.statusBar);
 

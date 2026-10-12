@@ -212,12 +212,6 @@
     <Compile Include="Auth\RegisterPanel.Designer.cs">
       <DependentUpon>RegisterPanel.cs</DependentUpon>
     </Compile>
-    <Compile Include="Auth\ForgotPasswordPanel.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Auth\ForgotPasswordPanel.Designer.cs">
-      <DependentUpon>ForgotPasswordPanel.cs</DependentUpon>
-    </Compile>
     <Compile Include="Auth\AuthModal.cs">
       <SubType>Form</SubType>
     </Compile>

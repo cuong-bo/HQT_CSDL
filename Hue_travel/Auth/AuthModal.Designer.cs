@@ -12,14 +12,9 @@ namespace Hue_travel.Auth
         private Label lblLoginId;
         private InputField txtLoginId;
         private Label lblLoginPassword;
-        private Label lblForgot;
         private InputField txtLoginPassword;
         private CheckBox chkRemember;
         private IconButton btnLogin;
-        private Panel dividerLeft;
-        private Label lblOr;
-        private Panel dividerRight;
-        private IconButton btnGoogle;
 
         protected override void Dispose(bool disposing)
         {
@@ -35,19 +30,14 @@ namespace Hue_travel.Auth
             this.lblLoginId = new Label();
             this.txtLoginId = new InputField();
             this.lblLoginPassword = new Label();
-            this.lblForgot = new Label();
             this.txtLoginPassword = new InputField();
             this.chkRemember = new CheckBox();
             this.btnLogin = new IconButton();
-            this.dividerLeft = new Panel();
-            this.lblOr = new Label();
-            this.dividerRight = new Panel();
-            this.btnGoogle = new IconButton();
             this.SuspendLayout();
 
             // w-[420px] card.
             this.BackColor = ThemeColors.SurfaceContainerLowest;
-            this.Size = new Size(420, 384);
+            this.Size = new Size(420, 316);
 
             this.header.IconName = "lock";
             this.header.Text = "Form Đăng Nhập & Đăng Ký Tài Khoản";
@@ -77,15 +67,6 @@ namespace Hue_travel.Auth
             this.lblLoginPassword.AutoSize = true;
             this.lblLoginPassword.Location = new Point(16, 162);
 
-            this.lblForgot.Text = "Quên mật khẩu?";
-            this.lblForgot.Font = ThemeFonts.Medium(11);
-            this.lblForgot.ForeColor = ThemeColors.Primary;
-            this.lblForgot.Cursor = Cursors.Hand;
-            this.lblForgot.AutoSize = false;
-            this.lblForgot.TextAlign = ContentAlignment.MiddleRight;
-            this.lblForgot.Size = new Size(140, 18);
-            this.lblForgot.Location = new Point(264, 162);
-            this.lblForgot.Click += new System.EventHandler(this.lblForgot_Click);
 
             this.txtLoginPassword.IconName = "lock";
             this.txtLoginPassword.IsPassword = true;
@@ -114,39 +95,11 @@ namespace Hue_travel.Auth
             this.btnLogin.Size = new Size(388, 32);
             this.btnLogin.Location = new Point(16, 258);
 
-            this.dividerLeft.BackColor = ThemeColors.Slate200;
-            this.dividerLeft.Size = new Size(166, 1);
-            this.dividerLeft.Location = new Point(16, 314);
-            this.lblOr.Text = "HOẶC";
-            this.lblOr.Font = ThemeFonts.Medium(10);
-            this.lblOr.ForeColor = ThemeColors.Slate400;
-            this.lblOr.AutoSize = false;
-            this.lblOr.TextAlign = ContentAlignment.MiddleCenter;
-            this.lblOr.Size = new Size(56, 16);
-            this.lblOr.Location = new Point(182, 306);
-            this.dividerRight.BackColor = ThemeColors.Slate200;
-            this.dividerRight.Size = new Size(166, 1);
-            this.dividerRight.Location = new Point(238, 314);
 
-            this.btnGoogle.AutoWidth = false;
-            this.btnGoogle.Text = "G   Tiếp tục với tài khoản Google";
-            this.btnGoogle.Font = ThemeFonts.Medium(12);
-            this.btnGoogle.ForeColor = ThemeColors.Slate700;
-            this.btnGoogle.FillColor = Color.White;
-            this.btnGoogle.HoverFillColor = ThemeColors.Slate50;
-            this.btnGoogle.BorderColor = ThemeColors.Slate200;
-            this.btnGoogle.Radius = 6;
-            this.btnGoogle.Size = new Size(388, 32);
-            this.btnGoogle.Location = new Point(16, 332);
 
-            this.Controls.Add(this.btnGoogle);
-            this.Controls.Add(this.dividerRight);
-            this.Controls.Add(this.lblOr);
-            this.Controls.Add(this.dividerLeft);
             this.Controls.Add(this.btnLogin);
             this.Controls.Add(this.chkRemember);
             this.Controls.Add(this.txtLoginPassword);
-            this.Controls.Add(this.lblForgot);
             this.Controls.Add(this.lblLoginPassword);
             this.Controls.Add(this.txtLoginId);
             this.Controls.Add(this.lblLoginId);

@@ -21,7 +21,7 @@ namespace Hue_travel.Shell
             panels = new FloatingPanelForm[]
             {
                 searchPoiPanel, routeOptimizerPanel, travelGuidePanel, poiIdentifyCard,
-                authModal, registerPanel, forgotPasswordPanel,
+                authModal, registerPanel,
             };
             foreach (FloatingPanelForm panel in panels) panel.MessageRaised += (s, e) => toast.ShowMessage(e.Text, e.Kind);
         }
@@ -80,11 +80,8 @@ namespace Hue_travel.Shell
             travelGuidePanel.CloseRequested += (s, e) => travelGuidePanel.Visible = false;
             authModal.CloseRequested += (s, e) => authModal.Visible = false;
             registerPanel.CloseRequested += (s, e) => registerPanel.Visible = false;
-            forgotPasswordPanel.CloseRequested += (s, e) => forgotPasswordPanel.Visible = false;
             authModal.RegisterRequested += (s, e) => ShowAuthCard(registerPanel);
-            authModal.ForgotPasswordRequested += (s, e) => ShowAuthCard(forgotPasswordPanel);
             registerPanel.LoginRequested += (s, e) => ShowAuthCard(authModal);
-            forgotPasswordPanel.BackToLoginRequested += (s, e) => ShowAuthCard(authModal);
 
             searchPoiPanel.PoiSelected += (s, poi) => ShowPoiCard(poi);
             searchPoiPanel.ShowOnMapRequested += (s, poi) =>
@@ -129,10 +126,10 @@ namespace Hue_travel.Shell
         // The auth button toggles whichever auth card is open (login by default).
         private void ToggleAuth()
         {
-            bool anyOpen = authModal.Visible || registerPanel.Visible || forgotPasswordPanel.Visible;
+            bool anyOpen = authModal.Visible || registerPanel.Visible;
             if (anyOpen)
             {
-                authModal.Visible = registerPanel.Visible = forgotPasswordPanel.Visible = false;
+                authModal.Visible = registerPanel.Visible = false;
                 return;
             }
             ShowAuthCard(authModal);
@@ -142,7 +139,6 @@ namespace Hue_travel.Shell
         {
             authModal.Visible = card == authModal;
             registerPanel.Visible = card == registerPanel;
-            forgotPasswordPanel.Visible = card == forgotPasswordPanel;
             card.BringToFront();
         }
 
