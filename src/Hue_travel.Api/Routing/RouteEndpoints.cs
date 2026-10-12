@@ -42,6 +42,7 @@ public static class RouteEndpoints
             legs.Add(await routes.LegAsync(previous, next, ct));
             previous = next;
         }
+        await routes.CountRouteAddsAsync(stops, ct);
         return Results.Ok(new RouteResponse(order, legs, legs.Sum(l => l.Meters), legs.Sum(l => l.Seconds)));
     }
 }

@@ -1,11 +1,14 @@
 using System.Text;
 using System.Threading.RateLimiting;
+using Hue_travel.Api.Admin;
 using Hue_travel.Api.Area;
 using Hue_travel.Api.Auth;
 using Hue_travel.Api.Meta;
 using Hue_travel.Api.Options;
+using Hue_travel.Api.Owner;
 using Hue_travel.Api.Pois;
 using Hue_travel.Api.Routing;
+using Hue_travel.Api.Social;
 using Hue_travel.Api.Weather;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -56,7 +59,7 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
         RoleClaimType = "role",
     };
 });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options => options.AddPolicy("admin", policy => policy.RequireRole("admin")));
 
 builder.Services.AddRateLimiter(_ => { });   // the options are filled in below, once the configuration is available
 builder.Services.AddOptions<RateLimiterOptions>().Configure<IConfiguration>((options, configuration) =>
@@ -99,6 +102,9 @@ app.MapPoiEndpoints();
 app.MapAreaEndpoints();
 app.MapRouteEndpoints();
 app.MapWeatherEndpoints();
+app.MapSocialEndpoints();
+app.MapOwnerEndpoints();
+app.MapAdminEndpoints();
 
 app.Run();
 

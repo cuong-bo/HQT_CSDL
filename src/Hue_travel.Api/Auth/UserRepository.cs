@@ -22,13 +22,16 @@ public sealed class UserRepository(NpgsqlDataSource db)
     }
 
     /// <summary>Creates a user; returns null when the user name is already taken.</summary>
-    public async Task<AppUser?> CreateAsync(string username, string passwordHash, string displayName, CancellationToken ct)
+    public async Task<AppUser?> CreateAsync(
+        string username, string passwordHash, string displayName, CancellationToken ct, string role = "user", string status = "active")
     {
         await using NpgsqlCommand cmd = db.CreateCommand(
-            "insert into app_user (username, password_hash, display_name) values (@u::citext, @h, @d) returning " + Columns);
+            "insert into app_user (username, password_hash, display_name, role, status) values (@u::citext, @h, @d, @r, @s) returning " + Columns);
         cmd.Parameters.AddWithValue("u", username);
         cmd.Parameters.AddWithValue("h", passwordHash);
         cmd.Parameters.AddWithValue("d", displayName);
+        cmd.Parameters.AddWithValue("r", role);
+        cmd.Parameters.AddWithValue("s", status);
         try
         {
             return await ReadOneAsync(cmd, ct);
@@ -57,6 +60,26 @@ public sealed class UserRepository(NpgsqlDataSource db)
     {
         await using NpgsqlCommand cmd = db.CreateCommand(
             "update app_user set failed_logins = 0, locked_until = null, last_login_at = now() where id = @id");
+        cmd.Parameters.AddWithValue("id", id);
+        await cmd.ExecuteNonQueryAsync(ct);
+    }
+
+    /// <summary>Sets a new password, clears the failed-login counter and lock, and ends every session (refresh tokens).</summary>
+    public async Task SetPasswordAsync(long id, string passwordHash, CancellationToken ct, bool mustChange = false)
+    {
+        await using NpgsqlCommand cmd = db.CreateCommand(
+            "update app_user set password_hash = @h, failed_logins = 0, locked_until = null, " +
+            "status = case when @must then 'must_change_password' when status = 'must_change_password' then 'active' else status end where id = @id");
+        cmd.Parameters.AddWithValue("h", passwordHash);
+        cmd.Parameters.AddWithValue("must", mustChange);
+        cmd.Parameters.AddWithValue("id", id);
+        await cmd.ExecuteNonQueryAsync(ct);
+        await RevokeRefreshTokensAsync(id, ct);
+    }
+
+    public async Task RevokeRefreshTokensAsync(long id, CancellationToken ct)
+    {
+        await using NpgsqlCommand cmd = db.CreateCommand("update refresh_token set revoked_at = now() where user_id = @id and revoked_at is null");
         cmd.Parameters.AddWithValue("id", id);
         await cmd.ExecuteNonQueryAsync(ct);
     }

@@ -37,7 +37,9 @@ public static class PoiEndpoints
     private static async Task<IResult> GetAsync(string id, PoiRepository pois, CancellationToken ct)
     {
         PoiDto? poi = await pois.FindAsync(id, ct);
-        return poi == null ? Results.Problem(detail: "Không tìm thấy địa điểm.", statusCode: StatusCodes.Status404NotFound) : Results.Ok(poi);
+        if (poi == null) return Results.Problem(detail: "Không tìm thấy địa điểm.", statusCode: StatusCodes.Status404NotFound);
+        await pois.CountViewAsync(id, ct);
+        return Results.Ok(poi);
     }
 
     private static bool TryParseBbox(string text, out double[]? box)

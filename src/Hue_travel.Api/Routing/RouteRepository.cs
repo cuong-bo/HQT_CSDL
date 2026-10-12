@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Hue_travel.Api.Data;
 using Npgsql;
 
 namespace Hue_travel.Api.Routing;
@@ -38,6 +39,10 @@ public sealed class RouteRepository(NpgsqlDataSource db)
         }
         return matrix;
     }
+
+    public Task CountRouteAddsAsync(string[] ids, CancellationToken ct) =>
+        db.ExecAsync("insert into poi_stats_daily (poi_id, route_adds) select unnest(@ids), 1 " +
+                     "on conflict (poi_id, day) do update set route_adds = poi_stats_daily.route_adds + 1", ct, ("ids", ids));
 
     /// <summary>One leg along the roads: length, time and the line as GeoJSON in degrees.</summary>
     public async Task<RouteLeg> LegAsync(string fromId, string toId, CancellationToken ct)

@@ -1,3 +1,4 @@
+using Hue_travel.Api.Data;
 using Npgsql;
 using NpgsqlTypes;
 
@@ -49,6 +50,29 @@ public sealed class PoiRepository(NpgsqlDataSource db)
         cmd.Parameters.AddWithValue("id", id);
         await using NpgsqlDataReader r = await cmd.ExecuteReaderAsync(ct);
         return await r.ReadAsync(ct) ? Map(r) : null;
+    }
+
+    /// <summary>The places a user marked as favourites, newest first.</summary>
+    public async Task<IReadOnlyList<PoiDto>> FavoritesAsync(long userId, CancellationToken ct) =>
+        await ListAsync("select " + Columns + " from favorite f join poi p on p.id = f.poi_id where f.user_id = @u " +
+                        "and p.deleted_at is null and p.status = 'visible' order by f.created_at desc", userId, ct);
+
+    /// <summary>The places an owner manages (approved claims only).</summary>
+    public async Task<IReadOnlyList<PoiDto>> OwnedAsync(long userId, CancellationToken ct) =>
+        await ListAsync("select " + Columns + " from place_owner o join poi p on p.id = o.poi_id where o.user_id = @u " +
+                        "and o.status = 'approved' and p.deleted_at is null order by p.ten_khong_dau", userId, ct);
+
+    public Task CountViewAsync(string id, CancellationToken ct) =>
+        db.ExecAsync("insert into poi_stats_daily (poi_id, views) values (@p, 1) on conflict (poi_id, day) do update set views = poi_stats_daily.views + 1", ct, ("p", id));
+
+    private async Task<IReadOnlyList<PoiDto>> ListAsync(string sql, long userId, CancellationToken ct)
+    {
+        await using NpgsqlCommand cmd = db.CreateCommand(sql);
+        cmd.Parameters.AddWithValue("u", userId);
+        var items = new List<PoiDto>();
+        await using NpgsqlDataReader r = await cmd.ExecuteReaderAsync(ct);
+        while (await r.ReadAsync(ct)) items.Add(Map(r));
+        return items;
     }
 
     private static string? Text(NpgsqlDataReader r, int i) => r.IsDBNull(i) ? null : r.GetString(i);
