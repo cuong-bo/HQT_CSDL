@@ -54,6 +54,11 @@ set HUE_API_URL=http://localhost:5000   # bỏ trống để chạy ngoại tuy�
 Hue_travel\bin\Debug\Hue_travel.exe
 ```
 
+Địa chỉ máy chủ của app lấy theo thứ tự: biến môi trường `HUE_API_URL`, file `%ProgramData%\CoDoGIS\server.txt` (bộ cài ghi), rồi
+`ApiBaseUrl` trong `Hue_travel.exe.config`. Không có địa chỉ nào thì app chạy **ngoại tuyến** bằng dữ liệu đi kèm (đăng nhập tắt).
+
+Tài khoản quản trị đầu tiên: đăng ký trong app rồi cấp quyền một lần bằng SQL (xem `deploy/README.md`, mục 4).
+
 ## Nguồn và ghi công
 
 - Bản đồ nền: Google (tạm thời, dùng cho phát triển; cần nhà cung cấp hợp lệ khi phát hành rộng rãi, ví dụ MapTiler hoặc Esri).
