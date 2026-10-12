@@ -3,6 +3,34 @@
 Ngày lập: 12/10/2026. Phạm vi: chuyển dự án từ "app desktop đọc dữ liệu mẫu" sang "app desktop cài trên máy
 người dùng, dữ liệu và xử lý nằm trên VPS Ubuntu". Không dùng tên miền riêng.
 
+## 0. Tình trạng thực hiện (cập nhật 13/10/2026)
+
+Đã làm xong và kiểm tra trên máy dựng (PostgreSQL 17 + PostGIS + pgRouting thật): **52 test API** (gồm test tích hợp với CSDL thật),
+**153 kiểm tra phía app**, dựng CSDL từ rỗng trong khoảng 18 giây, chạy lại nhiều lần vẫn đúng.
+
+| Giai đoạn | Trạng thái | Ghi chú |
+|---|---|---|
+| 1. Dữ liệu thật trên bản đồ, ngoại tuyến | Xong | 109 điểm, lọc theo nhóm, bấm điểm hiện thẻ |
+| 2. PostgreSQL + PostGIS | Xong | `db/`, 7 migration, nạp lặp lại được, giữ chỉnh sửa của app |
+| 3. pgRouting | Xong | ma trận 8 điểm 0,24 giây; tuyến Ga Huế đến Đại Nội 2,9 km |
+| 4. API (.NET 8) | Xong | đăng nhập, địa điểm, tìm đường, ba vai trò (R1 đến R4), nhật ký kiểm toán; đã rà soát bảo mật và sửa |
+| 5. App trực tuyến | Xong | tài khoản, địa điểm từ máy chủ có lưu tạm, tìm đường bộ thật vẽ lên bản đồ, thời tiết và tên xã từ máy chủ, giao diện người dùng / chủ quản / quản trị |
+| 6. Bộ cài | Có script, chưa thử | `installer/CoDoGIS.iss` cần máy có MapWinGIS để dựng; chưa thử trên máy sạch |
+| 7. Triển khai VPS | Có file, chưa chạy thật | Docker Compose, Caddy (HTTP), script cài VPS, sao lưu, khôi phục; máy dựng không chạy Docker nên chưa thử |
+| 8. CI/CD, tài liệu | Có file, chưa chạy trên GitHub | `.github/workflows`, README, từ điển dữ liệu |
+
+**Các quyết định đã chốt (không còn là câu hỏi mở của mục 10.8):**
+chủ quản không sửa dữ liệu trực tiếp mà gửi yêu cầu chỉnh sửa, quản trị viên duyệt; tài khoản chủ quản có hai đường (gửi yêu cầu nhận địa điểm
+rồi được duyệt, hoặc quản trị viên tạo sẵn); một địa điểm có thể có nhiều chủ quản; đánh giá hiển thị ngay và quản trị viên ẩn khi cần;
+chưa làm tải ảnh lên; nên có ít nhất 2 quản trị viên; dùng HTTP, không HTTPS, không đăng nhập Google, không OTP.
+
+**Chưa làm hoặc còn rủi ro** (đã biết, chưa che hết):
+1. HTTP: mật khẩu và token đi dạng chữ thường; chưa ký phản hồi chống sửa giữa đường (mục 9).
+2. Bản đồ nền vẫn là Google qua HTTP, chỉ hợp để phát triển; cần nhà cung cấp hợp lệ khi phát hành (địa chỉ nền đã có sẵn trong `GET /v1/config`, app chưa đọc).
+3. Chưa thử bộ cài trên máy Windows sạch, chưa chạy Docker Compose và script VPS trên Ubuntu thật, chưa chạy CI trên GitHub.
+4. Dữ liệu: lớp ẩm thực chưa có; 4 điểm ngoài ranh tỉnh; 1 xã có đỉnh lỗi; 16 điểm cách đường hơn 150 m (xem `db/README.md`).
+5. Bảng tìm đường trong app gợi ý 4 điểm cố định (Đại Nội, Thiên Mụ, Lăng Tự Đức, Lăng Khải Định); API đã hỗ trợ đến 12 điểm bất kỳ.
+
 ## 1. Kiến trúc chốt
 
 ```
