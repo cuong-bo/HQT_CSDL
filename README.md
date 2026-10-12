@@ -61,7 +61,7 @@ Tài khoản quản trị đầu tiên: đăng ký trong app rồi cấp quyền
 
 ## Nguồn và ghi công
 
-- Bản đồ nền: Google (tạm thời, dùng cho phát triển; cần nhà cung cấp hợp lệ khi phát hành rộng rãi, ví dụ MapTiler hoặc Esri).
+- Bản đồ nền: Google (tạm thời, dùng cho phát triển; cần nhà cung cấp hợp lệ khi phát hành rộng rãi, ví dụ MapTiler hoặc Esri). Máy chủ có thể thông báo địa chỉ tile khác cho app, không cần phát hành lại: xem `deploy/README.md`, mục "Bản đồ nền".
 - Dữ liệu đường và sông: © OpenStreetMap contributors (ODbL).
 - Thời tiết: [Open-Meteo](https://open-meteo.com) (CC BY 4.0, phi thương mại).
 - Bản đồ và hình học: [MapWinGIS](https://mapwingis.github.io/) (MPL).

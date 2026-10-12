@@ -6,7 +6,11 @@ người dùng, dữ liệu và xử lý nằm trên VPS Ubuntu". Không dùng t
 ## 0. Tình trạng thực hiện (cập nhật 13/10/2026)
 
 Đã làm xong và kiểm tra trên máy dựng (PostgreSQL 17 + PostGIS + pgRouting thật): **56 test API** (gồm test tích hợp với CSDL thật),
-**168 kiểm tra phía app**, dựng CSDL từ rỗng trong khoảng 18 giây, chạy lại nhiều lần vẫn đúng.
+**179 kiểm tra phía app**, dựng CSDL từ rỗng trong khoảng 18 giây, chạy lại nhiều lần vẫn đúng.
+Bộ Docker Compose đã chạy thật trên Docker Desktop (Windows): dựng ảnh, nạp dữ liệu, `/healthz`, địa điểm, tìm đường, chữ ký phản hồi
+(app kiểm tra bằng khóa tạo từ `gen-signing-key.sh`), sao lưu, khôi phục thử và khôi phục thay thế, quay lui API; trong lúc thử đã sửa
+hai lỗi thật (ảnh CSDL dựng trên Debian cũ không cài được pgRouting; `backup.sh` thoát lỗi vào mọi ngày không phải Chủ nhật).
+Bộ cài đã dựng được bằng Inno Setup (19 MB).
 
 | Giai đoạn | Trạng thái | Ghi chú |
 |---|---|---|
@@ -15,8 +19,8 @@ người dùng, dữ liệu và xử lý nằm trên VPS Ubuntu". Không dùng t
 | 3. pgRouting | Xong | ma trận 8 điểm 0,24 giây; tuyến Ga Huế đến Đại Nội 2,9 km |
 | 4. API (.NET 8) | Xong | đăng nhập, địa điểm, tìm đường, ba vai trò (R1 đến R4), nhật ký kiểm toán; đã rà soát bảo mật và sửa |
 | 5. App trực tuyến | Xong | tài khoản, địa điểm từ máy chủ có lưu tạm, tìm đường bộ thật vẽ lên bản đồ, thời tiết và tên xã từ máy chủ, giao diện người dùng / chủ quản / quản trị |
-| 6. Bộ cài | Có script, chưa thử | `installer/CoDoGIS.iss` cần máy có MapWinGIS để dựng; chưa thử trên máy sạch |
-| 7. Triển khai VPS | Có file, chưa chạy thật | Docker Compose, Caddy (HTTP), script cài VPS, sao lưu, khôi phục; máy dựng không chạy Docker nên chưa thử |
+| 6. Bộ cài | Dựng được, chưa cài thử | `installer/CoDoGIS.iss` biên dịch thành công; chưa cài trên máy Windows sạch (cài thật sẽ đăng ký lại MapWinGIS.ocx của máy dựng nên không thử ở đây) |
+| 7. Triển khai VPS | Đã chạy thật bằng Docker Desktop | Compose, Caddy (HTTP), sao lưu, khôi phục, quay lui đã thử; `setup-vps.sh` (cài Docker, tường lửa) chưa chạy trên Ubuntu thật |
 | 8. CI/CD, tài liệu | Có file, chưa chạy trên GitHub | `.github/workflows`, README, từ điển dữ liệu |
 
 **Các quyết định đã chốt (không còn là câu hỏi mở của mục 10.8):**
@@ -26,10 +30,11 @@ chưa làm tải ảnh lên; nên có ít nhất 2 quản trị viên; dùng HTT
 
 **Chưa làm hoặc còn rủi ro** (đã biết, chưa che hết):
 1. HTTP: mật khẩu và token đi dạng chữ thường (không che được bằng chữ ký). Phản hồi đã được ký ECDSA P-256 và app kiểm tra, nên dữ liệu bị sửa giữa đường sẽ bị từ chối; cần tạo cặp khóa và đặt khóa công khai vào app (`deploy/README.md`).
-2. Bản đồ nền vẫn là Google qua HTTP, chỉ hợp để phát triển; cần nhà cung cấp hợp lệ khi phát hành (địa chỉ nền đã có sẵn trong `GET /v1/config`, app chưa đọc).
-3. Chưa thử bộ cài trên máy Windows sạch, chưa chạy Docker Compose và script VPS trên Ubuntu thật, chưa chạy CI trên GitHub.
+2. Bản đồ nền mặc định vẫn là Google qua HTTP, chỉ hợp để phát triển. Khi có nhà cung cấp hợp lệ, điền `TILE_URL_*` trong `deploy/.env`: app đọc địa chỉ từ `GET /v1/config` lúc khởi động, không cần phát hành lại (`deploy/README.md`). Chưa có nhà cung cấp nào được chọn.
+3. Chưa cài bộ cài trên máy Windows sạch, chưa chạy `setup-vps.sh` trên Ubuntu thật, chưa chạy CI trên GitHub (các bước của CI đã được chạy lại bằng tay: dựng ảnh CSDL và áp 7 migration lên CSDL rỗng, test API, test app).
 4. Dữ liệu: lớp ẩm thực chưa có; 4 điểm ngoài ranh tỉnh; 1 xã có đỉnh lỗi; 16 điểm cách đường hơn 150 m (xem `db/README.md`).
-5. Bảng tìm đường trong app gợi ý 4 điểm cố định (Đại Nội, Thiên Mụ, Lăng Tự Đức, Lăng Khải Định); API đã hỗ trợ đến 12 điểm bất kỳ.
+5. Bảng tìm đường trong app có 4 hàng; nút "Thêm vào lộ trình" của một địa điểm bất kỳ đưa địa điểm đó vào hàng chưa chọn đầu tiên (hàng cuối nếu đã chọn hết). API hỗ trợ đến 12 điểm, bảng chưa cho thêm hàng thứ 5.
+6. Phiên bản pgRouting trong ảnh Docker là 4.0.1 (máy dựng dùng 3.8); nạp dữ liệu và tìm đường cho kết quả giống nhau (Ga Huế đến Đại Nội 273 giây).
 
 ## 1. Kiến trúc chốt
 

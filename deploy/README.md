@@ -55,6 +55,14 @@ deploy/scripts/gen-signing-key.sh
   (bộ cài có ô nhập), hoặc biến `HUE_API_PUBLIC_KEY`. Khi app có khóa công khai, nó **từ chối** mọi phản hồi thiếu chữ ký hoặc sai chữ ký.
 - Chữ ký không che nội dung: mật khẩu và token vẫn đi dạng chữ thường. Đổi khóa thì phải phát hành lại khóa công khai cho mọi máy.
 
+### Bản đồ nền (nhà cung cấp tile hợp lệ)
+
+App mang sẵn địa chỉ tile của Google chỉ để phát triển. Khi có nhà cung cấp hợp lệ (MapTiler, Esri, máy chủ tile riêng), điền các dòng
+`TILE_URL_ROADMAP`, `TILE_URL_SATELLITE`, `TILE_URL_HYBRID`, `TILE_URL_TERRAIN` và `TILE_ATTRIBUTION` trong `deploy/.env`
+rồi `deploy/scripts/deploy.sh up`. App đọc `GET /v1/config` lúc khởi động và đổi sang địa chỉ mới, không cần phát hành lại.
+Địa chỉ phải là http(s) và chứa `{x}`, `{y}`, `{zoom}`; địa chỉ sai bị bỏ qua và app giữ địa chỉ có sẵn.
+Khóa của nhà cung cấp nằm trong địa chỉ này, nên ai chạy app đều thấy được; chọn loại khóa giới hạn theo tên miền hoặc theo mức dùng.
+
 ## 3. Cập nhật và quay lui
 
 ```bash
