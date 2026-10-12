@@ -23,6 +23,7 @@ namespace Hue_travel.Services.Online
     {
         private readonly ApiClient api;
         private readonly TokenStore store;
+        private int generation;   // grows with every sign-in, so a slow "restore" cannot overwrite a newer one
 
         public AuthService(ApiClient api, TokenStore store)
         {
@@ -31,6 +32,7 @@ namespace Hue_travel.Services.Online
             api.SessionExpired += (s, e) =>
             {
                 CurrentUser = null;
+                MustChangePassword = false;
                 Changed?.Invoke(this, EventArgs.Empty);
             };
         }
@@ -59,6 +61,7 @@ namespace Hue_travel.Services.Online
             UserInfo user = ToUser(JsonHelper.Obj(r.Object, "user"));
             if (access == null || refresh == null || user == null) return "Máy chủ trả về dữ liệu không hợp lệ.";
 
+            generation++;
             api.SetTokens(access, refresh, remember);
             CurrentUser = user;
             MustChangePassword = JsonHelper.Bool(r.Object, "mustChangePassword");
@@ -71,14 +74,13 @@ namespace Hue_travel.Services.Online
         {
             string access, refresh;
             if (!store.TryLoad(out access, out refresh)) return false;
+            int started = generation;
             api.SetTokens(access, refresh, true);
             ApiResponse r = await api.GetAsync("/v1/me").ConfigureAwait(true);
-            if (!r.IsSuccess)
-            {
-                if (!r.IsNetworkError) api.ClearTokens();
-                return false;
-            }
+            if (started != generation) return CurrentUser != null;   // someone signed in meanwhile: that wins
+            if (!r.IsSuccess) return false;   // a refused refresh token was already cleared by the client; a network error keeps it
             CurrentUser = ToUser(r.Object);
+            MustChangePassword = JsonHelper.Bool(r.Object, "mustChangePassword");
             Changed?.Invoke(this, EventArgs.Empty);
             return CurrentUser != null;
         }

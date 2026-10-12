@@ -14,7 +14,7 @@ namespace Hue_travel.Services.Online
         public const string EnvironmentVariable = "HUE_API_URL";
 
         private static readonly Lazy<string> Current = new Lazy<string>(() => Resolve(
-            Environment.GetEnvironmentVariable(EnvironmentVariable), ReadServerFile(), ConfigurationManager.AppSettings["ApiBaseUrl"]));
+            Environment.GetEnvironmentVariable(EnvironmentVariable), ReadServerFile(), ReadSetting("ApiBaseUrl")));
 
         public static string BaseUrl => Current.Value;
 
@@ -25,7 +25,7 @@ namespace Hue_travel.Services.Online
         public static string PublicKey => PublicKeyValue.Value;
 
         private static readonly Lazy<string> PublicKeyValue = new Lazy<string>(() => FirstNonEmpty(
-            Environment.GetEnvironmentVariable("HUE_API_PUBLIC_KEY"), ReadCommonFile("public.key"), ConfigurationManager.AppSettings["ApiPublicKey"]));
+            Environment.GetEnvironmentVariable("HUE_API_PUBLIC_KEY"), ReadCommonFile("public.key"), ReadSetting("ApiPublicKey")));
 
         private static string FirstNonEmpty(params string[] values)
         {
@@ -58,6 +58,18 @@ namespace Hue_travel.Services.Online
         }
 
         private static string ReadServerFile() => ReadCommonFile("server.txt");
+
+        private static string ReadSetting(string key)
+        {
+            try
+            {
+                return ConfigurationManager.AppSettings[key];
+            }
+            catch (ConfigurationErrorsException)
+            {
+                return null;   // a damaged .config file means "not set", never a crash at start-up
+            }
+        }
 
         private static string ReadCommonFile(string name)
         {

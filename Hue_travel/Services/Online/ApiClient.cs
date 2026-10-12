@@ -37,6 +37,13 @@ namespace Hue_travel.Services.Online
     {
         public const string Unreachable = "Không kết nối được máy chủ. Hãy kiểm tra mạng hoặc dùng chế độ ngoại tuyến.";
 
+        static ApiClient()
+        {
+            // .NET Framework allows only 2 connections per host by default: weather, area, routes and lists would queue behind each other.
+            System.Net.ServicePointManager.DefaultConnectionLimit = 8;
+            System.Net.ServicePointManager.Expect100Continue = false;
+        }
+
         private readonly HttpClient http;
         private readonly string baseUrl;
         private readonly TokenStore store;
@@ -111,7 +118,8 @@ namespace Hue_travel.Services.Online
                     SetTokens(access, refresh, persistSession);
                     return true;
                 }
-                if (!r.IsNetworkError)
+                // Only a definite refusal ends the session. A busy or restarting server (429, 5xx) or a lost network keeps the tokens.
+                if (r.StatusCode == 400 || r.StatusCode == 401)
                 {
                     ClearTokens();
                     SessionExpired?.Invoke(this, EventArgs.Empty);

@@ -70,6 +70,13 @@ namespace Hue_travel.Services.Online
             Path = ParsePath(JsonHelper.Obj(d, "geometryUtm")),
         };
 
+        private static bool TryNumber(object value, out double number)
+        {
+            number = 0;
+            return value != null && double.TryParse(Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture),
+                System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out number);
+        }
+
         /// <summary>The points of a GeoJSON LineString (or the parts of a MultiLineString joined end to end).</summary>
         public static IReadOnlyList<MapXY> ParsePath(IDictionary<string, object> geometry)
         {
@@ -84,7 +91,8 @@ namespace Hue_travel.Services.Online
                 foreach (object pair in line)
                 {
                     IList<object> xy = JsonHelper.AsList(pair);
-                    if (xy != null && xy.Count >= 2) points.Add(new MapXY(Convert.ToDouble(xy[0]), Convert.ToDouble(xy[1])));
+                    double x, y;
+                    if (xy != null && xy.Count >= 2 && TryNumber(xy[0], out x) && TryNumber(xy[1], out y)) points.Add(new MapXY(x, y));
                 }
             }
             return points;

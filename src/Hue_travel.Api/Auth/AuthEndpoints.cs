@@ -88,7 +88,7 @@ public static class AuthEndpoints
         AppUser? user = long.TryParse(sub, out long id) ? await users.FindByIdAsync(id, ct) : null;
         return user == null
             ? Results.Problem(detail: "Tài khoản không còn tồn tại.", statusCode: StatusCodes.Status401Unauthorized)
-            : Results.Ok(new UserDto(user.Id, user.Username, user.DisplayName, user.Role));
+            : Results.Ok(new MeDto(user.Id, user.Username, user.DisplayName, user.Role, user.Status == "must_change_password"));
     }
 
     private static async Task<AuthResponse> IssueAsync(AppUser user, UserRepository users, TokenService tokens, CancellationToken ct)

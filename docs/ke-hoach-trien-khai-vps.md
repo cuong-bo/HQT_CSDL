@@ -5,8 +5,8 @@ người dùng, dữ liệu và xử lý nằm trên VPS Ubuntu". Không dùng t
 
 ## 0. Tình trạng thực hiện (cập nhật 13/10/2026)
 
-Đã làm xong và kiểm tra trên máy dựng (PostgreSQL 17 + PostGIS + pgRouting thật): **52 test API** (gồm test tích hợp với CSDL thật),
-**153 kiểm tra phía app**, dựng CSDL từ rỗng trong khoảng 18 giây, chạy lại nhiều lần vẫn đúng.
+Đã làm xong và kiểm tra trên máy dựng (PostgreSQL 17 + PostGIS + pgRouting thật): **56 test API** (gồm test tích hợp với CSDL thật),
+**168 kiểm tra phía app**, dựng CSDL từ rỗng trong khoảng 18 giây, chạy lại nhiều lần vẫn đúng.
 
 | Giai đoạn | Trạng thái | Ghi chú |
 |---|---|---|
@@ -25,7 +25,7 @@ rồi được duyệt, hoặc quản trị viên tạo sẵn); một địa đi
 chưa làm tải ảnh lên; nên có ít nhất 2 quản trị viên; dùng HTTP, không HTTPS, không đăng nhập Google, không OTP.
 
 **Chưa làm hoặc còn rủi ro** (đã biết, chưa che hết):
-1. HTTP: mật khẩu và token đi dạng chữ thường; chưa ký phản hồi chống sửa giữa đường (mục 9).
+1. HTTP: mật khẩu và token đi dạng chữ thường (không che được bằng chữ ký). Phản hồi đã được ký ECDSA P-256 và app kiểm tra, nên dữ liệu bị sửa giữa đường sẽ bị từ chối; cần tạo cặp khóa và đặt khóa công khai vào app (`deploy/README.md`).
 2. Bản đồ nền vẫn là Google qua HTTP, chỉ hợp để phát triển; cần nhà cung cấp hợp lệ khi phát hành (địa chỉ nền đã có sẵn trong `GET /v1/config`, app chưa đọc).
 3. Chưa thử bộ cài trên máy Windows sạch, chưa chạy Docker Compose và script VPS trên Ubuntu thật, chưa chạy CI trên GitHub.
 4. Dữ liệu: lớp ẩm thực chưa có; 4 điểm ngoài ranh tỉnh; 1 xã có đỉnh lỗi; 16 điểm cách đường hơn 150 m (xem `db/README.md`).

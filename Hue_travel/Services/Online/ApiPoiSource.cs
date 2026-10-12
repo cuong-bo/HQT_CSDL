@@ -36,13 +36,14 @@ namespace Hue_travel.Services.Online
     {
         private static string DefaultPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CoDoGIS", "pois.json");
 
-        public static void TrySave(IReadOnlyList<Poi> pois, string path = null)
+        public static void TrySave(IReadOnlyList<Poi> pois, string server, string path = null)
         {
             path = path ?? DefaultPath;
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(path));
-                File.WriteAllText(path, JsonHelper.Serialize(pois.Select(PoiJson.ToDictionary).ToList()));
+                var file = new Dictionary<string, object> { { "server", server }, { "items", pois.Select(PoiJson.ToDictionary).ToList() } };
+                File.WriteAllText(path, JsonHelper.Serialize(file));
             }
             catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
             {
@@ -50,14 +51,16 @@ namespace Hue_travel.Services.Online
             }
         }
 
-        /// <summary>The cached places, or null when there is no usable cache.</summary>
-        public static IReadOnlyList<Poi> TryLoad(string path = null)
+        /// <summary>The cached places of this server, or null when there is no usable cache (or it came from another server).</summary>
+        public static IReadOnlyList<Poi> TryLoad(string server, string path = null)
         {
             path = path ?? DefaultPath;
             try
             {
                 if (!File.Exists(path)) return null;
-                IList<object> items = JsonHelper.AsList(JsonHelper.Parse(File.ReadAllText(path)));
+                var file = JsonHelper.Parse(File.ReadAllText(path)) as IDictionary<string, object>;
+                if (file == null || JsonHelper.Str(file, "server") != server) return null;
+                IList<object> items = JsonHelper.List(file, "items");
                 if (items == null) return null;
                 List<Poi> pois = items.OfType<IDictionary<string, object>>().Select(PoiJson.ToPoi).Where(p => p.Id.Length > 0).ToList();
                 return pois.Count > 0 ? pois : null;

@@ -12,6 +12,8 @@ public sealed record AppUser(
 
 public sealed record UserState(string Role, string Status);
 
+public sealed record MeDto(long Id, string Username, string DisplayName, string Role, bool MustChangePassword);
+
 public sealed record UserDto(long Id, string Username, string DisplayName, string Role);
 
 public sealed record RegisterRequest(string? Username, string? Password, string? DisplayName);

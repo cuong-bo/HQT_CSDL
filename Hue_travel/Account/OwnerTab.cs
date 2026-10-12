@@ -41,11 +41,12 @@ namespace Hue_travel.Account
 
         public override async Task LoadAsync()
         {
+            owned.Clear();
+            places.Items.Clear();
+            claims.Items.Clear();
             ApiResponse mine = await Api.GetAsync("/v1/owner/places");
             if (Check(mine))
             {
-                owned.Clear();
-                places.Items.Clear();
                 foreach (IDictionary<string, object> d in (JsonHelper.AsList(mine.Json) ?? new List<object>()).OfType<IDictionary<string, object>>())
                 {
                     Poi p = PoiJson.ToPoi(d);
@@ -55,7 +56,6 @@ namespace Hue_travel.Account
             }
             ApiResponse requested = await Api.GetAsync("/v1/owner/claims");
             if (!Check(requested)) return;
-            claims.Items.Clear();
             foreach (IDictionary<string, object> d in (JsonHelper.AsList(requested.Json) ?? new List<object>()).OfType<IDictionary<string, object>>())
                 claims.Items.Add(new ListViewItem(new[] { JsonHelper.Str(d, "poiName"), AccountUi.ClaimStatus(JsonHelper.Str(d, "status")) }));
         }

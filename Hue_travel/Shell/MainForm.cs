@@ -152,6 +152,7 @@ namespace Hue_travel.Shell
                 searchPoiPanel.ReloadPois();
             };
             routeOptimizerPanel.Api = api;
+            routeOptimizerPanel.RouteInvalidated += (s, e) => mapHost.ClearRoute();
             routeOptimizerPanel.RouteComputed += (s, route) => mapHost.ShowRoute(route.Legs.Select(l => l.Path).ToList());
             poiIdentifyCard.AddToRouteRequested += (s, poi) =>
             {
@@ -221,7 +222,7 @@ namespace Hue_travel.Shell
             accountPanel.SetRouteSource(() => routeOptimizerPanel.CurrentStopIds);
             accountPanel.CloseRequested += (s, e) => accountPanel.Visible = false;
             accountPanel.ShowOnMapRequested += (s, poi) => ShowOnMap(poi);
-            accountPanel.FavoritesChanged += async (s, e) => await LoadFavoritesAsync();
+            accountPanel.FavoritesChanged += (s, e) => Safe(LoadFavoritesAsync());
             accountPanel.LoggedOut += (s, e) =>
             {
                 accountPanel.Visible = false;
@@ -234,9 +235,9 @@ namespace Hue_travel.Shell
             registerPanel.Registered += (s, e) => OnSignedIn(registerPanel);
             auth.Changed += (s, e) => UpdateAccountUi();
 
-            poiIdentifyCard.FavoriteToggled += async (s, poi) => await ToggleFavoriteAsync(poi);
-            poiIdentifyCard.ClaimRequested += async (s, poi) => await ClaimAsync(poi);
-            poiIdentifyCard.ReportRequested += async (s, poi) => await ReportAsync(poi);
+            poiIdentifyCard.FavoriteToggled += (s, poi) => Safe(ToggleFavoriteAsync(poi));
+            poiIdentifyCard.ClaimRequested += (s, poi) => Safe(ClaimAsync(poi));
+            poiIdentifyCard.ReportRequested += (s, poi) => Safe(ReportAsync(poi));
         }
 
         private void OnAccountButton()
@@ -248,15 +249,15 @@ namespace Hue_travel.Shell
             }
             if (auth.CurrentUser == null) ToggleAuth();
             else if (accountPanel.Visible) accountPanel.Visible = false;
-            else _ = accountPanel.OpenAsync();
+            else Safe(accountPanel.OpenAsync());
         }
 
         private void OnSignedIn(FloatingPanelForm card)
         {
             card.Visible = false;
             toast.ShowMessage("Xin chào " + auth.CurrentUser.DisplayName, ToastKind.Success);
-            _ = accountPanel.OpenAsync();
-            _ = LoadFavoritesAsync();
+            Safe(accountPanel.OpenAsync());
+            Safe(LoadFavoritesAsync());
         }
 
         private void UpdateAccountUi()
@@ -264,14 +265,36 @@ namespace Hue_travel.Shell
             UserInfo user = auth.CurrentUser;
             titleBar.SetUser(user == null ? null : user.DisplayName);
             poiIdentifyCard.SignedIn = user != null;
-            if (user == null) favoriteIds.Clear();
+            if (user == null)
+            {
+                favoriteIds.Clear();
+                accountPanel.Visible = false;   // signed out, or the session ended
+            }
             poiIdentifyCard.RefreshAccountButtons();
+        }
+
+        // Runs a task nobody awaits (a button handler, an event) and turns its failure into a message instead of a crash.
+        private async void Safe(Task task)
+        {
+            try
+            {
+                await task;
+            }
+            catch (OperationCanceledException)
+            {
+                // the window was closed
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Safe: " + ex);
+                toast.ShowMessage("Có lỗi: " + ex.Message, ToastKind.Error);
+            }
         }
 
         private async Task LoadFavoritesAsync()
         {
             ApiResponse r = await api.GetAsync("/v1/favorites", lifetime.Token);
-            if (!r.IsSuccess) return;
+            if (!r.IsSuccess || auth.CurrentUser == null) return;   // an answer for someone who has signed out is dropped
             favoriteIds.Clear();
             foreach (var d in (JsonHelper.AsList(r.Json) ?? new List<object>()).OfType<IDictionary<string, object>>()) favoriteIds.Add(JsonHelper.Str(d, "id"));
             poiIdentifyCard.RefreshAccountButtons();
@@ -317,14 +340,14 @@ namespace Hue_travel.Shell
         {
             try
             {
-                IReadOnlyList<Poi> cached = PoiCache.TryLoad();
+                IReadOnlyList<Poi> cached = PoiCache.TryLoad(ServerSettings.BaseUrl);
                 if (cached != null) PoiCatalog.Replace(cached);
                 if (await auth.RestoreAsync()) await LoadFavoritesAsync();
 
                 IReadOnlyList<Poi> fresh = await ApiPoiSource.FetchAllAsync(api, lifetime.Token);
                 if (fresh.Count == 0) return;
                 PoiCatalog.Replace(fresh);
-                PoiCache.TrySave(fresh);
+                PoiCache.TrySave(fresh, ServerSettings.BaseUrl);
             }
             catch (ApiException ex)
             {

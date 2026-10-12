@@ -20,6 +20,8 @@ namespace Hue_travel.Services.Online
         private readonly Dictionary<string, string> cache = new Dictionary<string, string>();
         private string lastKnown;
         private bool fetching;
+        private string pendingKey;
+        private double pendingLongitude, pendingLatitude;
 
         public ApiAreaLocator(ApiClient api, IAreaLocator fallback)
         {
@@ -42,15 +44,22 @@ namespace Hue_travel.Services.Online
         // Fire and forget by design (it feeds a status-bar label); every failure is absorbed here.
         private async void Fetch(string key, double longitude, double latitude)
         {
-            if (fetching) return;
+            if (fetching)
+            {
+                pendingKey = key;   // fetch it as soon as the current call ends
+                pendingLongitude = longitude;
+                pendingLatitude = latitude;
+                return;
+            }
             fetching = true;
             try
             {
                 ApiResponse r = await api.GetAsync(string.Format(CultureInfo.InvariantCulture, "/v1/area?lon={0}&lat={1}", longitude, latitude)).ConfigureAwait(true);
-                if (r.IsNetworkError) return;
                 string name = r.IsSuccess ? JsonHelper.Str(r.Object, "name") : null;
+                if (name == null && r.StatusCode != 404) return;   // unreachable or a server error: do not remember it, try again later
                 if (cache.Count >= MaxCached) cache.Clear();
                 cache[key] = name ?? fallback.Locate(longitude, latitude);
+                fetching = false;
                 Updated?.Invoke(this, EventArgs.Empty);
             }
             catch (Exception ex)
@@ -60,6 +69,9 @@ namespace Hue_travel.Services.Online
             finally
             {
                 fetching = false;
+                string next = pendingKey;
+                pendingKey = null;
+                if (next != null && !cache.ContainsKey(next)) Fetch(next, pendingLongitude, pendingLatitude);
             }
         }
     }

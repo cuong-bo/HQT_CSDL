@@ -21,11 +21,14 @@ namespace Hue_travel.Panels.RouteOptimizer
     {
         // The real place behind each row of the stop list, found by name in the current places.
         private static readonly string[] StopNames = { "Đại Nội", "Thiên Mụ", "Tự Đức", "Khải Định" };
+        private static readonly string[] StopIds = { "DL021", "DL024", "DL029", "DL033" };   // looked up first; the name is the fallback
 
         private readonly Poi[] stopPois = new Poi[4];
         private IList<Poi> startPois = new List<Poi>();
         private ApiRouteService routeService;
         private int planVersion;
+        private System.Threading.CancellationTokenSource planCts;
+        private bool routeShown;
 
         /// <summary>The route panel talks to the server for road routes when this is set (otherwise it estimates).</summary>
         public ApiClient Api
@@ -35,6 +38,19 @@ namespace Hue_travel.Panels.RouteOptimizer
 
         /// <summary>Raised with the road route computed by the server, to draw it on the map.</summary>
         public event EventHandler<OnlineRoute> RouteComputed;
+
+        /// <summary>Raised when the drawn route no longer matches the selection (a stop or the start changed).</summary>
+        public event EventHandler RouteInvalidated;
+
+        // Any change of selection makes an answer that is still on its way (or already drawn) obsolete.
+        private void InvalidateOnlineRoute()
+        {
+            planVersion++;
+            if (planCts != null) planCts.Cancel();
+            if (!routeShown) return;
+            routeShown = false;
+            RouteInvalidated?.Invoke(this, EventArgs.Empty);
+        }
 
         /// <summary>Place ids of the ticked stops in visiting order, for saving the itinerary to the account.</summary>
         public IReadOnlyList<string> CurrentStopIds
@@ -158,7 +174,7 @@ namespace Hue_travel.Panels.RouteOptimizer
         {
             for (int i = 0; i < stops.Length; i++)
             {
-                Poi poi = FindByName(PoiCatalog.All.Where(p => p.HasLocation), StopNames[i]);
+                Poi poi = PoiCatalog.All.FirstOrDefault(p => p.Id == StopIds[i] && p.HasLocation) ?? FindByName(PoiCatalog.All.Where(p => p.HasLocation), StopNames[i]);
                 stopPois[i] = poi;
                 stops[i].Visible = poi != null;
                 if (poi == null) continue;
@@ -193,6 +209,7 @@ namespace Hue_travel.Panels.RouteOptimizer
         /// </summary>
         private void UpdatePlan()
         {
+            InvalidateOnlineRoute();
             var selected = new List<int>();
             var points = new List<GeoPoint>();
             for (int i = 0; i < stops.Length; i++)
@@ -252,21 +269,32 @@ namespace Hue_travel.Panels.RouteOptimizer
 
             var stopIds = new List<string>();
             for (int i = 0; i < stops.Length; i++) if (stops[i].Checked && stopPois[i] != null) stopIds.Add(stopPois[i].Id);
-            int version = ++planVersion;
+            int version = planVersion;
+            planCts = new System.Threading.CancellationTokenSource();
+            System.Threading.CancellationToken token = planCts.Token;
             btnFindRoute.Enabled = false;
             try
             {
-                ApiResult<OnlineRoute> best = await routeService.PlanAsync(startPoi.Id, stopIds, true, System.Threading.CancellationToken.None);
-                ApiResult<OnlineRoute> listed = await routeService.PlanAsync(startPoi.Id, stopIds, false, System.Threading.CancellationToken.None);
-                if (version != planVersion) return;
+                // The order as listed is only asked for to show how many minutes the best order saves.
+                System.Threading.Tasks.Task<ApiResult<OnlineRoute>> bestCall = routeService.PlanAsync(startPoi.Id, stopIds, true, token);
+                System.Threading.Tasks.Task<ApiResult<OnlineRoute>> listedCall = routeService.PlanAsync(startPoi.Id, stopIds, false, token);
+                await System.Threading.Tasks.Task.WhenAll(bestCall, listedCall);
+                ApiResult<OnlineRoute> best = bestCall.Result;
+                ApiResult<OnlineRoute> listed = listedCall.Result;
+                if (version != planVersion) return;   // the selection changed while the server was working
                 if (!best.Ok)
                 {
                     Notify(best.Error + " Đang hiển thị số liệu ước tính.", ToastKind.Error);
                     return;
                 }
                 ShowOnlineRoute(startPoi, best.Value, listed.Ok ? listed.Value : null);
+                routeShown = true;
                 RouteComputed?.Invoke(this, best.Value);
                 Notify($"Đã tìm đường theo đường bộ: {FormatKm(best.Value.TotalMeters / 1000)}, {FormatMinutes((int)Math.Round(best.Value.TotalSeconds / 60))}", ToastKind.Success);
+            }
+            catch (OperationCanceledException)
+            {
+                // the selection changed: the answer is not wanted any more
             }
             finally
             {

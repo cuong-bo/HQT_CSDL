@@ -274,11 +274,12 @@ $cacheT = GetT ($online + 'PoiCache')
 $cachePath = [string](Join-Path ([IO.Path]::GetTempPath()) ('pois-' + [guid]::NewGuid().ToString('N') + '.json'))
 $cacheList = [Activator]::CreateInstance($listT)
 $cacheList.Add($place)
-[void]$cacheT.GetMethod('TrySave').Invoke($null, @($cacheList, $cachePath))
-$back = $cacheT.GetMethod('TryLoad').Invoke($null, @($cachePath))
+[void]$cacheT.GetMethod('TrySave').Invoke($null, @($cacheList, 'http://one.test', $cachePath))
+$back = $cacheT.GetMethod('TryLoad').Invoke($null, @('http://one.test', $cachePath))
 Check 'cache: round trip count' $back.Count '1'
 Check 'cache: round trip content' "$($back[0].Id)|$($back[0].X)" 'DL001|780000.5'
-Check 'cache: missing file gives null' ($cacheT.GetMethod('TryLoad').Invoke($null, @($cachePath + '.none')) -eq $null) 'True'
+Check 'cache: missing file gives null' ($cacheT.GetMethod('TryLoad').Invoke($null, @('http://one.test', ($cachePath + '.none'))) -eq $null) 'True'
+Check 'cache: another server gets no cache' ($cacheT.GetMethod('TryLoad').Invoke($null, @('http://two.test', $cachePath)) -eq $null) 'True'
 Remove-Item $cachePath -ErrorAction SilentlyContinue
 
 $routeT = GetT ($online + 'RouteJson')
@@ -397,6 +398,25 @@ $hs = New-Object FakeHandler
 $hs.Responses.Enqueue([object[]]@(200, '{"ok":true}', $timeText, $sig))
 $signed = Await ((New-SignedApi $hs $verifier).GetAsync('/v1/config', $none))
 Check 'signature: a signed reply is accepted by the client' "$($signed.StatusCode)" '200'
+
+# a busy server must not end the session
+$h7 = New-Object FakeHandler
+$h7.Responses.Enqueue([object[]]@(401, '{}'))
+$h7.Responses.Enqueue([object[]]@(503, '{"title":"busy"}'))
+$api7 = New-Api $h7
+$api7.SetTokens('OLD', 'R1', $false)
+$busy = Await ($api7.GetAsync('/v1/me', $none))
+Check 'api: a 503 during refresh keeps the session' ([string]::IsNullOrEmpty($api7.RefreshToken)) 'False'
+
+# restoring a saved session remembers that the password is temporary
+$h8 = New-Object FakeHandler
+$h8.Responses.Enqueue([object[]]@(200, '{"id":7,"username":"nguoi","displayName":"Nguoi","role":"user","mustChangePassword":true}'))
+$store8 = [Activator]::CreateInstance($storeT, @($sessionPath))
+$store8.Save('A8', 'R8')
+$api8 = $apiT.GetConstructors()[0].Invoke([object[]]@('http://test.local', $store8, [System.Net.Http.HttpMessageHandler]$h8, $null))
+$auth8 = [Activator]::CreateInstance($authT, [object[]]@($api8, $store8))
+Check 'auth: restore succeeds' (Await ($auth8.RestoreAsync())) 'True'
+Check 'auth: restore knows the password is temporary' "$($auth8.MustChangePassword)" 'True'
 Remove-Item $sessionPath -ErrorAction SilentlyContinue
 
 Write-Host "passed=$script:pass failed=$script:fail"

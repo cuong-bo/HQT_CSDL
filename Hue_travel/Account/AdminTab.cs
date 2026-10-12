@@ -33,6 +33,7 @@ namespace Hue_travel.Account
         private readonly IconButton hide = AccountUi.Button("Ẩn đánh giá", false, 110);
         private readonly List<Section> all;
         private List<IDictionary<string, object>> rows = new List<IDictionary<string, object>>();
+        private Section loaded;   // the section the list on screen really belongs to
 
         public AdminTab(ApiClient api) : base(api)
         {
@@ -97,7 +98,9 @@ namespace Hue_travel.Account
             Section section = Current;
             if (section == null) return;
             ApiResponse r = await Api.GetAsync(section.Path);
+            if (!ReferenceEquals(section, Current)) return;   // another section was chosen while this one loaded
             if (!Check(r)) return;
+            loaded = section;
 
             list.BeginUpdate();
             list.Columns.Clear();
@@ -117,8 +120,8 @@ namespace Hue_travel.Account
         private async Task DecideAsync(bool yes)
         {
             string key = SelectedTag(list);
-            if (key == null) return;
-            string path = Current.Path.EndsWith("claims") ? "/v1/admin/claims/" + key + "/decision" : "/v1/admin/edit-requests/" + key + "/decision";
+            if (key == null || loaded == null) return;
+            string path = loaded.Path.EndsWith("claims") ? "/v1/admin/claims/" + key + "/decision" : "/v1/admin/edit-requests/" + key + "/decision";
             string note = null;
             if (!yes)
             {
@@ -158,9 +161,9 @@ namespace Hue_travel.Account
             if (MessageBox.Show(FindForm(), "Đặt lại mật khẩu của " + Str(row, "username") + "? Mật khẩu tạm chỉ hiện một lần.", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
             ApiResponse r = await Api.PostAsync("/v1/admin/users/" + Str(row, "id") + "/reset-password", null);
             if (!Check(r)) return;
-            string temp = JsonHelper.Str(r.Object, "temporaryPassword");
-            Clipboard.SetText(temp);
-            MessageBox.Show(FindForm(), "Mật khẩu tạm của " + Str(row, "username") + ":\n\n" + temp + "\n\n(Đã chép vào bộ nhớ tạm. Người dùng phải đổi ngay khi đăng nhập.)", "Mật khẩu tạm", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            string temp = JsonHelper.Str(r.Object, "temporaryPassword") ?? "(máy chủ không trả về mật khẩu, hãy đặt lại lần nữa)";
+            // Shown, not copied: the clipboard history of Windows would keep it.
+            MessageBox.Show(FindForm(), "Mật khẩu tạm của " + Str(row, "username") + ":\n\n" + temp + "\n\nChỉ hiện một lần. Người dùng phải đổi ngay khi đăng nhập.", "Mật khẩu tạm", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private async Task ChangeRoleAsync()

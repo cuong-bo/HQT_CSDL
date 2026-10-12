@@ -44,7 +44,8 @@ public static class RouteEndpoints
             legs.Add(await routes.LegAsync(previous, next, ct));
             previous = next;
         }
-        if (user.Identity?.IsAuthenticated == true) await routes.CountRouteAddsAsync(stops, ct);   // signed-in use only
+        // Counted for signed-in use of a real plan only; the app also asks for the order as listed, just to show the saving.
+        if (user.Identity?.IsAuthenticated == true && (request.Optimize ?? true)) await routes.CountRouteAddsAsync(stops, ct);
         return Results.Ok(new RouteResponse(order, legs, legs.Sum(l => l.Meters), legs.Sum(l => l.Seconds)));
     }
 }

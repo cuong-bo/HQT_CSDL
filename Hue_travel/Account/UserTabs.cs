@@ -32,10 +32,10 @@ namespace Hue_travel.Account
 
         public override async Task LoadAsync()
         {
+            pois.Clear();
+            list.Items.Clear();   // never show what the previous account had
             ApiResponse r = await Api.GetAsync("/v1/favorites");
             if (!Check(r)) return;
-            pois.Clear();
-            list.Items.Clear();
             foreach (IDictionary<string, object> d in (JsonHelper.AsList(r.Json) ?? new List<object>()).OfType<IDictionary<string, object>>())
             {
                 Poi p = PoiJson.ToPoi(d);
@@ -74,10 +74,10 @@ namespace Hue_travel.Account
 
         public override async Task LoadAsync()
         {
-            ApiResponse r = await Api.GetAsync("/v1/itineraries");
-            if (!Check(r)) return;
             ids.Clear();
             list.Items.Clear();
+            ApiResponse r = await Api.GetAsync("/v1/itineraries");
+            if (!Check(r)) return;
             foreach (IDictionary<string, object> d in (JsonHelper.AsList(r.Json) ?? new List<object>()).OfType<IDictionary<string, object>>())
             {
                 ids.Add(JsonHelper.Long(d, "id"));
