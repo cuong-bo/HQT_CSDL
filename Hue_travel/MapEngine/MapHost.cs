@@ -138,6 +138,7 @@ namespace Hue_travel.MapEngine
         /// </summary>
         public void LoadPois(IReadOnlyList<Poi> pois)
         {
+            Extents keptView = CopyOfView();   // MapWinGIS zooms to the new layer when the map was empty
             foreach (int handle in poiLayers.Handles.ToList()) axMap.RemoveLayer(handle);
             poiLayers.Clear();
             markers.Clear();
@@ -149,7 +150,17 @@ namespace Hue_travel.MapEngine
                 markers.AddRange(group.Select(p => new PoiMarker(p, handle)));
                 AddPoiLayer(group.Key, handle);
             }
+            if (keptView != null) axMap.Extents = keptView;
             axMap.Redraw();
+        }
+
+        private Extents CopyOfView()
+        {
+            Extents view = axMap.Extents;
+            if (view == null || view.xMax <= view.xMin) return null;
+            var copy = new Extents();
+            copy.SetBounds(view.xMin, view.yMin, 0, view.xMax, view.yMax, 0);
+            return copy;
         }
 
         private int AddMarkerLayer(PoiCategory category, IReadOnlyList<Poi> pois)
