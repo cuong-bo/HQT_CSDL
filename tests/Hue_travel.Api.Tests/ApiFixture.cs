@@ -27,6 +27,7 @@ public sealed class ApiFixture : IDisposable
             builder.UseSetting("Jwt:Key", JwtKey);
             builder.UseSetting("RateLimit:AuthPerMinute", "1000");
             builder.UseSetting("RateLimit:GlobalPerMinute", "100000");
+            builder.UseSetting("RateLimit:HeavyPerMinute", "1000");
         });
     }
 

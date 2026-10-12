@@ -10,13 +10,18 @@ using Hue_travel.Api.Pois;
 using Hue_travel.Api.Routing;
 using Hue_travel.Api.Social;
 using Hue_travel.Api.Weather;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+// Every body this API reads is small JSON; refuse anything bigger before it is parsed.
+builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 64 * 1024);
 
 // Settings are read when the services are first used, so tests and the environment can override them.
 builder.Services.AddSingleton(sp =>
@@ -58,6 +63,7 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
         NameClaimType = "name",
         RoleClaimType = "role",
     };
+    options.Events = new JwtBearerEvents { OnTokenValidated = Program.CheckAccountStillAllowedAsync };
 });
 builder.Services.AddAuthorization(options => options.AddPolicy("admin", policy => policy.RequireRole("admin")));
 
@@ -72,15 +78,26 @@ builder.Services.AddOptions<RateLimiterOptions>().Configure<IConfiguration>((opt
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(
         context => RateLimitPartition.GetFixedWindowLimiter(Client(context), _ => Window(limits.GlobalPerMinute)));
     options.AddPolicy("auth", context => RateLimitPartition.GetFixedWindowLimiter(Client(context), _ => Window(limits.AuthPerMinute)));
+    options.AddPolicy("heavy", context => RateLimitPartition.GetFixedWindowLimiter(Client(context), _ => Window(limits.HeavyPerMinute)));
 });
 
 WebApplication app = builder.Build();
 app.Services.GetRequiredService<JwtOptions>();   // fail at start-up, not at the first request, when the key is missing
 
-// The API is only reachable through the reverse proxy on the internal network, so its forwarded address is trusted.
+// The client address comes from X-Forwarded-For only when the request arrives from a configured proxy network
+// (Proxy:KnownNetworks, e.g. "172.30.0.0/24" for Caddy); otherwise only loopback is trusted, so the header cannot be forged.
 var forwarded = new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto };
-forwarded.KnownNetworks.Clear();
-forwarded.KnownProxies.Clear();
+string[] proxyNetworks = app.Configuration.GetSection("Proxy:KnownNetworks").Get<string[]>() ?? [];
+if (proxyNetworks.Length > 0)
+{
+    forwarded.KnownNetworks.Clear();
+    forwarded.KnownProxies.Clear();
+    foreach (string cidr in proxyNetworks)
+    {
+        string[] parts = cidr.Split('/');
+        forwarded.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(System.Net.IPAddress.Parse(parts[0]), int.Parse(parts[1])));
+    }
+}
 app.UseForwardedHeaders(forwarded);
 
 app.UseExceptionHandler();
@@ -108,4 +125,29 @@ app.MapAdminEndpoints();
 
 app.Run();
 
-public partial class Program;
+public partial class Program
+{
+    private static readonly string[] PasswordChangePaths = ["/v1/me", "/v1/me/password"];
+
+    /// <summary>
+    /// A token is only as good as the account behind it: a locked account, a demoted admin, or an account that still has
+    /// a temporary password (it may only change it) is refused even while the token itself has not expired.
+    /// The answer is cached for 20 seconds so this does not cost a query per request.
+    /// </summary>
+    internal static async Task CheckAccountStillAllowedAsync(TokenValidatedContext context)
+    {
+        if (!long.TryParse(context.Principal?.FindFirstValue("sub"), out long id)) { context.Fail("bad subject"); return; }
+        UserRepository users = context.HttpContext.RequestServices.GetRequiredService<UserRepository>();
+        IMemoryCache cache = context.HttpContext.RequestServices.GetRequiredService<IMemoryCache>();
+        UserState? state = await cache.GetOrCreateAsync($"user-state:{id}", async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(20);
+            return await users.GetStateAsync(id, context.HttpContext.RequestAborted);
+        });
+
+        if (state == null || state.Status == "locked") { context.Fail("account not allowed"); return; }
+        if (context.Principal!.FindFirstValue("role") == "admin" && state.Role != "admin") { context.Fail("no longer an admin"); return; }
+        if (state.Status == "must_change_password" && !PasswordChangePaths.Contains(context.HttpContext.Request.Path.Value))
+            context.Fail("password change required");
+    }
+}

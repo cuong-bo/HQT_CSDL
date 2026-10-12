@@ -200,6 +200,8 @@ public class RolesTests(ApiFixture fixture)
         Assert.True(login.GetProperty("mustChangePassword").GetBoolean());
 
         http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", login.GetProperty("accessToken").GetString());
+        // With a temporary password the token may only be used to change it.
+        Assert.Equal(HttpStatusCode.Unauthorized, (await http.GetAsync("/v1/favorites")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await http.PostAsJsonAsync("/v1/me/password", new { currentPassword = "sai-sai-sai", newPassword = "mat-khau-moi-123" })).StatusCode);
         Assert.Equal(HttpStatusCode.NoContent, (await http.PostAsJsonAsync("/v1/me/password", new { currentPassword = temporary, newPassword = "mat-khau-moi-123" })).StatusCode);
         JsonElement again = await Json(await fixture.CreateClient().PostAsJsonAsync("/v1/auth/login", new { username, password = "mat-khau-moi-123" }));
@@ -253,5 +255,79 @@ public class RolesTests(ApiFixture fixture)
         JsonElement reports = await Json(await admin.GetAsync("/v1/admin/reports"));
         long reportId = reports.EnumerateArray().First(r => r.GetProperty("poiId").GetString() == place).GetProperty("id").GetInt64();
         Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsync($"/v1/admin/reports/{reportId}/resolve", null)).StatusCode);
+    }
+}
+
+[Collection("api")]
+public class HardeningTests(ApiFixture fixture)
+{
+    private const string Password = "matkhau-dai-123";
+
+    private static string NewName() => "t" + Guid.NewGuid().ToString("N")[..12];
+
+    private static async Task<JsonElement> Json(HttpResponseMessage response) => (await response.Content.ReadFromJsonAsync<JsonElement>())!;
+
+    private async Task<(HttpClient Http, long Id)> UserAsync(string role = "user")
+    {
+        HttpClient http = fixture.CreateClient();
+        string name = NewName();
+        long id = (await Json(await http.PostAsJsonAsync("/v1/auth/register", new { username = name, password = Password }))).GetProperty("user").GetProperty("id").GetInt64();
+        if (role != "user")
+        {
+            await using NpgsqlDataSource db = NpgsqlDataSource.Create(ApiFixture.ConnectionString!);
+            await using NpgsqlCommand cmd = db.CreateCommand("update app_user set role = @r where id = @i");
+            cmd.Parameters.AddWithValue("r", role);
+            cmd.Parameters.AddWithValue("i", id);
+            await cmd.ExecuteNonQueryAsync();
+        }
+        JsonElement login = await Json(await http.PostAsJsonAsync("/v1/auth/login", new { username = name, password = Password }));
+        http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", login.GetProperty("accessToken").GetString());
+        return (http, id);
+    }
+
+    [RequiresDbFact]
+    public async Task ADemotedAdmin_LosesAccessAtOnce_NotWhenTheTokenExpires()
+    {
+        (HttpClient boss, _) = await UserAsync("admin");
+        (HttpClient other, long otherId) = await UserAsync("admin");
+        Assert.Equal(HttpStatusCode.NoContent, (await boss.PutAsJsonAsync($"/v1/admin/users/{otherId}", new { role = "user" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await other.GetAsync("/v1/admin/users")).StatusCode);
+    }
+
+    [RequiresDbFact]
+    public async Task ParallelLoginGuesses_CannotSlipPastTheLimit()
+    {
+        HttpClient http = fixture.CreateClient();
+        string name = NewName();
+        await http.PostAsJsonAsync("/v1/auth/register", new { username = name, password = Password });
+        HttpResponseMessage[] results = await Task.WhenAll(Enumerable.Range(0, 12)
+            .Select(_ => http.PostAsJsonAsync("/v1/auth/login", new { username = name, password = "sai-mat-khau-1" })));
+        Assert.Equal(5, results.Count(r => r.StatusCode == HttpStatusCode.Unauthorized));
+        Assert.Equal(7, results.Count(r => r.StatusCode == (HttpStatusCode)423));
+    }
+
+    [RequiresDbFact]
+    public async Task OwnerWebsite_MustBeAnHttpAddress()
+    {
+        (HttpClient admin, _) = await UserAsync("admin");
+        string place = "T" + Guid.NewGuid().ToString("N")[..12];
+        await admin.PostAsJsonAsync("/v1/admin/pois", new { id = place, group = "service", name = "Thử website", lon = 107.5786, lat = 16.4698 });
+        (HttpClient owner, long ownerId) = await UserAsync();
+        await owner.PostAsJsonAsync("/v1/owner/claims", new { poiId = place });
+        await admin.PostAsJsonAsync($"/v1/admin/claims/{ownerId}/{place}/decision", new { approve = true });
+
+        foreach (string bad in new[] { "javascript:alert(1)", "file:///C:/Windows/System32/calc.exe" })
+            Assert.Equal(HttpStatusCode.BadRequest, (await owner.PostAsJsonAsync($"/v1/owner/places/{place}/edit-requests", new { changes = new { website = bad } })).StatusCode);
+        Assert.Equal(HttpStatusCode.Created, (await owner.PostAsJsonAsync($"/v1/owner/places/{place}/edit-requests", new { changes = new { website = "https://example.com" } })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await admin.PostAsJsonAsync("/v1/admin/pois", new { id = place + "x", group = "service", name = "Xấu", lon = 107.5, lat = 16.4, website = "javascript:alert(1)" })).StatusCode);
+    }
+
+    [RequiresDbFact]
+    public async Task AdminCanWritePriceTextWithAHugeNumber_WithoutAServerError()
+    {
+        (HttpClient admin, _) = await UserAsync("admin");
+        string place = "T" + Guid.NewGuid().ToString("N")[..12];
+        HttpResponseMessage created = await admin.PostAsJsonAsync("/v1/admin/pois", new { id = place, group = "service", name = "Giá lớn", lon = 107.5786, lat = 16.4698, priceText = new string('9', 30) });
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
     }
 }

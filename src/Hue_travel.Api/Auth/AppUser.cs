@@ -10,6 +10,8 @@ public sealed record AppUser(
     int FailedLogins,
     DateTimeOffset? LockedUntil);
 
+public sealed record UserState(string Role, string Status);
+
 public sealed record UserDto(long Id, string Username, string DisplayName, string Role);
 
 public sealed record RegisterRequest(string? Username, string? Password, string? DisplayName);

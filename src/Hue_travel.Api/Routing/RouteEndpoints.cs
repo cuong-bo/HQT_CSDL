@@ -1,14 +1,16 @@
+using System.Security.Claims;
+
 namespace Hue_travel.Api.Routing;
 
 public static class RouteEndpoints
 {
     public static void MapRouteEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/v1/route", PlanAsync);
+        app.MapPost("/v1/route", PlanAsync).RequireRateLimiting("heavy");
     }
 
     /// <summary>Visits the stops from the start: in the cheapest order by default, or in the order given when optimize is false.</summary>
-    private static async Task<IResult> PlanAsync(RouteRequest request, RouteRepository routes, CancellationToken ct)
+    private static async Task<IResult> PlanAsync(RouteRequest request, RouteRepository routes, ClaimsPrincipal user, CancellationToken ct)
     {
         string? start = request.StartId?.Trim();
         string[] stops = (request.StopIds ?? []).Select(s => s.Trim()).ToArray();
@@ -42,7 +44,7 @@ public static class RouteEndpoints
             legs.Add(await routes.LegAsync(previous, next, ct));
             previous = next;
         }
-        await routes.CountRouteAddsAsync(stops, ct);
+        if (user.Identity?.IsAuthenticated == true) await routes.CountRouteAddsAsync(stops, ct);   // signed-in use only
         return Results.Ok(new RouteResponse(order, legs, legs.Sum(l => l.Meters), legs.Sum(l => l.Seconds)));
     }
 }

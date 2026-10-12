@@ -34,6 +34,7 @@ public static class OwnerEndpoints
 
     private const int MaxPendingPerPlace = 5;
     private const int MaxReplyLength = 1000;
+    private const int MaxActiveAnnouncements = 10;
 
     private static IResult Bad(string detail) => Results.Problem(detail: detail, statusCode: StatusCodes.Status400BadRequest);
 
@@ -86,6 +87,7 @@ public static class OwnerEndpoints
             if (!Editable.TryGetValue(key, out (string Column, int Max) rule))
                 return Bad($"Không được sửa trường '{key}'. Được sửa: {string.Join(", ", Editable.Keys)}.");
             if (value == null || value.Length > rule.Max) return Bad($"Giá trị của '{key}' phải có và tối đa {rule.Max} ký tự.");
+            if (key == "website" && !InputRules.IsHttpUrlOrEmpty(value)) return Bad("Website phải là địa chỉ http:// hoặc https://.");
             columns[rule.Column] = value.Trim();
         }
         if ((long)(await db.ScalarAsync("select count(*) from poi_edit_request where poi_id = @p and user_id = @u and status = 'pending'", ct, ("p", poiId), ("u", userId)))! >= MaxPendingPerPlace)
@@ -105,6 +107,8 @@ public static class OwnerEndpoints
         if (title.Length is < 1 or > 120) return Bad("Tiêu đề từ 1 đến 120 ký tự.");
         if (text.Length is < 1 or > 2000) return Bad("Nội dung từ 1 đến 2000 ký tự.");
         if (request.EndsAt is { } end && end <= DateTimeOffset.UtcNow) return Bad("Thời điểm kết thúc phải ở tương lai.");
+        if ((long)(await db.ScalarAsync("select count(*) from announcement where poi_id = @p and (ends_at is null or ends_at > now())", ct, ("p", poiId)))! >= MaxActiveAnnouncements)
+            return Bad($"Mỗi địa điểm có tối đa {MaxActiveAnnouncements} thông báo đang hiệu lực.");
 
         object? id = await db.ScalarAsync("insert into announcement (poi_id, title, body, ends_at, created_by) values (@p, @t, @b, @e, @u) returning id", ct,
             ("p", poiId), ("t", title), ("b", text), ("e", request.EndsAt), ("u", userId));

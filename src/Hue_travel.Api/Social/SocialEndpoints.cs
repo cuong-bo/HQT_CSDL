@@ -23,6 +23,7 @@ public static class SocialEndpoints
     private const int MaxItineraries = 20;
     private const int MaxItineraryItems = 30;
     private const int MaxComment = 1000;
+    private const int MaxOpenReports = 20;
     private static readonly HashSet<string> ReportKinds = ["wrong_info", "closed", "wrong_location", "other"];
 
     private static IResult Bad(string detail) => Results.Problem(detail: detail, statusCode: StatusCodes.Status400BadRequest);
@@ -33,7 +34,7 @@ public static class SocialEndpoints
     {
         RouteGroupBuilder me = app.MapGroup("/v1").RequireAuthorization();
         me.MapPut("/me", UpdateProfileAsync);
-        me.MapPost("/me/password", ChangePasswordAsync);
+        me.MapPost("/me/password", ChangePasswordAsync).RequireRateLimiting("auth");
         me.MapGet("/favorites", ListFavoritesAsync);
         me.MapPut("/favorites/{poiId}", AddFavoriteAsync);
         me.MapDelete("/favorites/{poiId}", RemoveFavoriteAsync);
@@ -62,7 +63,10 @@ public static class SocialEndpoints
         AppUser? user = await users.FindByIdAsync(principal.UserId(), ct);
         if (user == null) return NotFound("Tài khoản không còn tồn tại.");
         if (string.IsNullOrEmpty(request.CurrentPassword) || !PasswordHasher.Verify(request.CurrentPassword, user.PasswordHash))
+        {
+            await users.RecordFailedLoginAsync(user.Id, 5, 15, ct);   // guessing the current password counts like a failed login
             return Results.Problem(detail: "Mật khẩu hiện tại không đúng.", statusCode: StatusCodes.Status403Forbidden);
+        }
         string? problem = AuthValidation.ValidateRegistration(user.Username, request.NewPassword, null);
         if (problem != null) return Bad(problem);
 
@@ -153,6 +157,8 @@ public static class SocialEndpoints
         if (request.Kind == null || !ReportKinds.Contains(request.Kind)) return Bad("kind phải là: " + string.Join(", ", ReportKinds));
         if (request.Content is { Length: > MaxComment }) return Bad($"Nội dung tối đa {MaxComment} ký tự.");
         if (!await PoiExistsAsync(db, poiId, ct)) return NotFound("Không tìm thấy địa điểm.");
+        if ((long)(await db.ScalarAsync("select count(*) from report where user_id = @u and status = 'open'", ct, ("u", user.UserId())))! >= MaxOpenReports)
+            return Bad($"Bạn đang có {MaxOpenReports} báo cáo chưa được xử lý.");
         await db.ExecAsync("insert into report (user_id, poi_id, kind, content) values (@u, @p, @k, @c)", ct,
             ("u", user.UserId()), ("p", poiId), ("k", request.Kind), ("c", request.Content?.Trim()));
         return Results.Json(new { status = "received" }, statusCode: StatusCodes.Status201Created);

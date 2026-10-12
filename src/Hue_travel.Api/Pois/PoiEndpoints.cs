@@ -1,4 +1,5 @@
 using System.Globalization;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Hue_travel.Api.Pois;
 
@@ -34,11 +35,17 @@ public static class PoiEndpoints
         return Results.Ok(await pois.SearchAsync(new PoiQuery(groups, text, box, page, pageSize), ct));
     }
 
-    private static async Task<IResult> GetAsync(string id, PoiRepository pois, CancellationToken ct)
+    private static async Task<IResult> GetAsync(string id, PoiRepository pois, IMemoryCache cache, HttpContext http, CancellationToken ct)
     {
         PoiDto? poi = await pois.FindAsync(id, ct);
         if (poi == null) return Results.Problem(detail: "Không tìm thấy địa điểm.", statusCode: StatusCodes.Status404NotFound);
-        await pois.CountViewAsync(id, ct);
+        // One view per visitor address, place and hour: an unauthenticated caller cannot inflate the owner's numbers.
+        string viewKey = $"view:{http.Connection.RemoteIpAddress}:{id}";
+        if (!cache.TryGetValue(viewKey, out _))
+        {
+            cache.Set(viewKey, true, TimeSpan.FromHours(1));
+            await pois.CountViewAsync(id, ct);
+        }
         return Results.Ok(poi);
     }
 

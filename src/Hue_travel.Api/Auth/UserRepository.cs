@@ -42,6 +42,31 @@ public sealed class UserRepository(NpgsqlDataSource db)
         }
     }
 
+    public async Task<UserState?> GetStateAsync(long id, CancellationToken ct)
+    {
+        await using NpgsqlCommand cmd = db.CreateCommand("select role, status from app_user where id = @id");
+        cmd.Parameters.AddWithValue("id", id);
+        await using NpgsqlDataReader r = await cmd.ExecuteReaderAsync(ct);
+        return await r.ReadAsync(ct) ? new UserState(r.GetString(0), r.GetString(1)) : null;
+    }
+
+    /// <summary>
+    /// Counts a login attempt BEFORE the password is checked, in one atomic statement, so a burst of parallel guesses cannot
+    /// slip past the limit. Returns false when the account is locked; the fifth attempt in a row locks it.
+    /// </summary>
+    public async Task<bool> TryReserveAttemptAsync(long id, int maxAttempts, int lockMinutes, CancellationToken ct)
+    {
+        await using NpgsqlCommand cmd = db.CreateCommand(
+            "update app_user set " +
+            "locked_until = case when failed_logins + 1 >= @max then now() + make_interval(mins => @mins) else locked_until end, " +
+            "failed_logins = case when failed_logins + 1 >= @max then 0 else failed_logins + 1 end " +
+            "where id = @id and (locked_until is null or locked_until <= now()) returning true");
+        cmd.Parameters.AddWithValue("max", maxAttempts);
+        cmd.Parameters.AddWithValue("mins", lockMinutes);
+        cmd.Parameters.AddWithValue("id", id);
+        return await cmd.ExecuteScalarAsync(ct) is true;
+    }
+
     /// <summary>Counts a wrong password; after <paramref name="maxFailures"/> of them the account is locked for a while.</summary>
     public async Task RecordFailedLoginAsync(long id, int maxFailures, int lockMinutes, CancellationToken ct)
     {
@@ -87,7 +112,10 @@ public sealed class UserRepository(NpgsqlDataSource db)
     public async Task StoreRefreshTokenAsync(long userId, byte[] hash, DateTimeOffset expiresAt, CancellationToken ct)
     {
         await using NpgsqlCommand cmd = db.CreateCommand(
-            "insert into refresh_token (user_id, token_hash, expires_at) values (@u, @h, @e)");
+            "insert into refresh_token (user_id, token_hash, expires_at) values (@u, @h, @e); " +
+            // keep only the newest ten tokens per user, so logging in over and over cannot fill the table
+            "delete from refresh_token where user_id = @u and id not in " +
+            "(select id from refresh_token where user_id = @u order by id desc limit 10)");
         cmd.Parameters.AddWithValue("u", userId);
         cmd.Parameters.AddWithValue("h", hash);
         cmd.Parameters.AddWithValue("e", expiresAt);

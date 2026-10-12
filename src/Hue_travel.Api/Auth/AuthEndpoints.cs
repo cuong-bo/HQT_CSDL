@@ -31,7 +31,7 @@ public static class AuthEndpoints
         return Results.Json(await IssueAsync(user, users, tokens, ct), statusCode: StatusCodes.Status201Created);
     }
 
-    private static async Task<IResult> LoginAsync(LoginRequest request, UserRepository users, TokenService tokens, TimeProvider clock, CancellationToken ct)
+    private static async Task<IResult> LoginAsync(LoginRequest request, UserRepository users, TokenService tokens, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrEmpty(request.Password))
             return Results.Problem(detail: BadLogin, statusCode: StatusCodes.Status401Unauthorized);
@@ -42,16 +42,19 @@ public static class AuthEndpoints
             PasswordHasher.SpendTimeLikeAVerification();
             return Results.Problem(detail: BadLogin, statusCode: StatusCodes.Status401Unauthorized);
         }
+
+        // The attempt is counted first, atomically; while the account is locked the password is not even checked.
+        if (!await users.TryReserveAttemptAsync(user.Id, MaxFailedLogins, LockMinutes, ct))
+        {
+            PasswordHasher.SpendTimeLikeAVerification();
+            return Results.Problem(detail: "Đăng nhập sai nhiều lần, tài khoản tạm khóa. Hãy thử lại sau.", statusCode: StatusCodes.Status423Locked);
+        }
+        if (!PasswordHasher.Verify(request.Password, user.PasswordHash))
+            return Results.Problem(detail: BadLogin, statusCode: StatusCodes.Status401Unauthorized);
+
+        // Only someone who knows the password learns that an admin locked the account.
         if (user.Status == "locked")
             return Results.Problem(detail: "Tài khoản đã bị khóa. Hãy liên hệ quản trị viên.", statusCode: StatusCodes.Status403Forbidden);
-        if (user.LockedUntil is { } until && until > clock.GetUtcNow())
-            return Results.Problem(detail: "Đăng nhập sai nhiều lần, tài khoản tạm khóa. Hãy thử lại sau.", statusCode: StatusCodes.Status423Locked);
-
-        if (!PasswordHasher.Verify(request.Password, user.PasswordHash))
-        {
-            await users.RecordFailedLoginAsync(user.Id, MaxFailedLogins, LockMinutes, ct);
-            return Results.Problem(detail: BadLogin, statusCode: StatusCodes.Status401Unauthorized);
-        }
 
         await users.RecordLoginSuccessAsync(user.Id, ct);
         return Results.Ok(await IssueAsync(user, users, tokens, ct));

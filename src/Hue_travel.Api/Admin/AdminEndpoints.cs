@@ -236,6 +236,7 @@ public static partial class AdminEndpoints
         if (request.Id == null || !PoiIdPattern().IsMatch(request.Id)) return Bad("id gồm 2 đến 20 ký tự: chữ, số, gạch ngang hoặc gạch dưới.");
         if (request.Group == null || !Groups.Contains(request.Group)) return Bad("group không hợp lệ.");
         if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length > 200) return Bad("Tên từ 1 đến 200 ký tự.");
+        if (!InputRules.IsHttpUrlOrEmpty(request.Website)) return Bad("Website phải là địa chỉ http:// hoặc https://.");
         if (request.Lon is not { } lon || request.Lat is not { } lat || lon is < 100 or > 112 || lat is < 8 or > 24)
             return Bad("lon và lat (độ) phải nằm trong lãnh thổ Việt Nam.");
 
@@ -257,6 +258,7 @@ public static partial class AdminEndpoints
         if (patch.Group != null && !Groups.Contains(patch.Group)) return Bad("group không hợp lệ.");
         if (patch.Status != null && !PoiStatuses.Contains(patch.Status)) return Bad("status phải là visible, hidden hoặc closed.");
         if (patch.Name != null && (patch.Name.Trim().Length is < 1 or > 200)) return Bad("Tên từ 1 đến 200 ký tự.");
+        if (!InputRules.IsHttpUrlOrEmpty(patch.Website)) return Bad("Website phải là địa chỉ http:// hoặc https://.");
         if ((patch.Lon == null) != (patch.Lat == null)) return Bad("Cần cả lon và lat để đổi vị trí.");
         if (patch.Lon is < 100 or > 112 || patch.Lat is < 8 or > 24) return Bad("lon và lat (độ) phải nằm trong lãnh thổ Việt Nam.");
 
