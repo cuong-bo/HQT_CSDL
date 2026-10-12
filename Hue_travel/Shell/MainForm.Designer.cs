@@ -81,7 +81,7 @@ namespace Hue_travel.Shell
             this.searchPoiPanel.AttachTo(this, new System.Drawing.Point(348, 144), System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left);
             this.routeOptimizerPanel.AttachTo(this, new System.Drawing.Point(1136, 144), System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right);
             this.travelGuidePanel.AttachTo(this, new System.Drawing.Point(1136, 272), System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right);
-            this.poiIdentifyCard.AttachTo(this, new System.Drawing.Point(522, 618), System.Windows.Forms.AnchorStyles.Bottom);
+            this.poiIdentifyCard.AttachTo(this, new System.Drawing.Point(522, 584), System.Windows.Forms.AnchorStyles.Bottom);
 
             // Auth cards share one spot (top-16, centred over the map); only one is visible at a time.
             this.authModal.AttachTo(this, new System.Drawing.Point(582, 160), System.Windows.Forms.AnchorStyles.Top);

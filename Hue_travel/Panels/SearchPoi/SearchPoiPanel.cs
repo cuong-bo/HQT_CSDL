@@ -56,6 +56,19 @@ namespace Hue_travel.Panels.SearchPoi
             RefreshResults();
         }
 
+        /// <summary>Rebuilds the result cards from the current places (the server's list replaced the bundled one).</summary>
+        public void ReloadPois()
+        {
+            foreach (KeyValuePair<PoiResultCard, Poi> pair in cards)
+            {
+                panelBody.Controls.Remove(pair.Key);
+                pair.Key.Dispose();
+            }
+            cards.Clear();
+            foreach (Poi poi in PoiCatalog.All) AddCard(poi);
+            RefreshResults();
+        }
+
         private void AddCard(Poi poi)
         {
             var card = new PoiResultCard

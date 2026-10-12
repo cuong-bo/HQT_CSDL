@@ -6,6 +6,7 @@ using AxInterop.MapWinGIS;
 using Hue_travel.Models;
 using Hue_travel.Services;
 using Hue_travel.Services.Area;
+using Hue_travel.Services.Online;
 using Hue_travel.Theme;
 using Interop.MapWinGIS;
 
@@ -32,6 +33,7 @@ namespace Hue_travel.MapEngine
         private int lastPixelWidth = -1;
         private readonly List<PoiMarker> markers = new List<PoiMarker>();
         private readonly LeftPressFilter pressFilter = new LeftPressFilter();
+        private int routeHandle = -1;
         private int pressX = int.MinValue, pressY = int.MinValue;   // MinValue = no press seen since the last release
 
         /// <summary>Raised after the visible extent (or the control width) changed: new centre and scale.</summary>
@@ -236,6 +238,52 @@ namespace Hue_travel.MapEngine
 
             public Poi Poi { get; }
             public int LayerHandle { get; }
+        }
+
+        /// <summary>Draws the route (one line per leg, in map metres) above the base map and below the markers, and zooms to it.</summary>
+        public void ShowRoute(IReadOnlyList<IReadOnlyList<MapXY>> lines)
+        {
+            ClearRoute();
+            var layer = new Shapefile();
+            if (!layer.CreateNew(string.Empty, ShpfileType.SHP_POLYLINE)) return;
+
+            double minX = double.MaxValue, minY = double.MaxValue, maxX = double.MinValue, maxY = double.MinValue;
+            foreach (IReadOnlyList<MapXY> line in lines)
+            {
+                if (line.Count < 2) continue;
+                var shape = new Shape();
+                int part = 0;
+                if (!shape.Create(ShpfileType.SHP_POLYLINE) || !shape.InsertPart(0, ref part)) continue;
+                foreach (MapXY p in line)
+                {
+                    shape.AddPoint(p.X, p.Y);
+                    minX = Math.Min(minX, p.X); maxX = Math.Max(maxX, p.X);
+                    minY = Math.Min(minY, p.Y); maxY = Math.Max(maxY, p.Y);
+                }
+                layer.EditAddShape(shape);
+            }
+            if (layer.NumShapes == 0) return;
+
+            ShapeDrawingOptions style = layer.DefaultDrawingOptions;
+            style.LineColor = (uint)System.Drawing.ColorTranslator.ToOle(ThemeColors.Primary);
+            style.LineWidth = Ui.S(5);
+            style.LineVisible = true;
+            style.FillVisible = false;
+            routeHandle = axMap.AddLayer(layer, true);
+            foreach (int handle in poiLayers.Handles) axMap.MoveLayerTop(handle);   // markers stay on top of the line
+
+            double padX = Math.Max((maxX - minX) * 0.15, 300), padY = Math.Max((maxY - minY) * 0.15, 300);
+            var view = new Extents();
+            view.SetBounds(minX - padX, minY - padY, 0, maxX + padX, maxY + padY, 0);
+            axMap.Extents = view;
+        }
+
+        public void ClearRoute()
+        {
+            if (routeHandle < 0) return;
+            axMap.RemoveLayer(routeHandle);
+            routeHandle = -1;
+            axMap.Redraw();
         }
 
         public void PanMode(bool enabled)

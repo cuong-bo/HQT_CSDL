@@ -8,7 +8,10 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using Hue_travel.Models;
 using Hue_travel.Services.Area;
+using Hue_travel.Services.Data;
+using Hue_travel.Services.Online;
 using Hue_travel.Services.Routing;
 using Hue_travel.Theme;
 
@@ -16,8 +19,49 @@ namespace Hue_travel.Panels.RouteOptimizer
 {
     public partial class RouteOptimizerPanel : FloatingPanelForm
     {
-        // Sample POI behind each row of the stop list, in row order.
-        private static readonly string[] StopPoiIds = { "dai-noi", "thien-mu", "bun-bo-mu-roi", "khai-dinh" };
+        // The real place behind each row of the stop list, found by name in the current places.
+        private static readonly string[] StopNames = { "Đại Nội", "Thiên Mụ", "Tự Đức", "Khải Định" };
+
+        private readonly Poi[] stopPois = new Poi[4];
+        private IList<Poi> startPois = new List<Poi>();
+        private ApiRouteService routeService;
+        private int planVersion;
+
+        /// <summary>The route panel talks to the server for road routes when this is set (otherwise it estimates).</summary>
+        public ApiClient Api
+        {
+            set { routeService = value == null ? null : new ApiRouteService(value); }
+        }
+
+        /// <summary>Raised with the road route computed by the server, to draw it on the map.</summary>
+        public event EventHandler<OnlineRoute> RouteComputed;
+
+        /// <summary>Place ids of the ticked stops in visiting order, for saving the itinerary to the account.</summary>
+        public IReadOnlyList<string> CurrentStopIds
+        {
+            get
+            {
+                var ids = new List<string>();
+                foreach (RouteStopRow row in stops.Where(s => s.Checked).OrderBy(s => s.Order))
+                {
+                    Poi poi = stopPois[Array.IndexOf(stops, row)];
+                    if (poi != null) ids.Add(poi.Id);
+                }
+                return ids;
+            }
+        }
+
+        /// <summary>Ticks the row that shows this place; false when the place is not one of the suggested stops.</summary>
+        public bool TrySelectStop(Poi poi)
+        {
+            for (int i = 0; i < stopPois.Length; i++)
+            {
+                if (stopPois[i] == null || stopPois[i].Id != poi.Id) continue;
+                stops[i].Checked = true;
+                return true;
+            }
+            return false;
+        }
 
         private readonly RouteStopRow[] stops;
         private readonly RoundedPanel[] legBoxes;
@@ -29,8 +73,8 @@ namespace Hue_travel.Panels.RouteOptimizer
         {
             InitializeComponent();
 
-            cboStartPoint.Items.AddRange(DemoPlaces.StartPoints.Select(p => p.Name).ToArray());
             stops = new[] { stopDaiNoi, stopThienMu, stopBunBo, stopKhaiDinh };
+            ResolvePlaces();
             legBoxes = new[] { boxLeg1, boxLeg2, boxLeg3, boxLeg4 };
             legTexts = new[] { textLeg1, textLeg2, textLeg3, textLeg4 };
             legValues = new[] { lblLeg1Value, lblLeg2Value, lblLeg3Value, lblLeg4Value };
@@ -40,7 +84,8 @@ namespace Hue_travel.Panels.RouteOptimizer
 
             btnSave.Click += (s, e) => SaveItinerary();
             btnPrint.Click += (s, e) => PrintItinerary();
-            btnFindRoute.Click += (s, e) => AnnouncePlan();
+            btnFindRoute.Click += async (s, e) => await FindRouteAsync();
+            PoiCatalog.Changed += (s, e) => { ResolvePlaces(); UpdatePlan(); };
         }
 
         /// <summary>The itinerary as plain text, in the planned visiting order.</summary>
@@ -68,7 +113,7 @@ namespace Hue_travel.Panels.RouteOptimizer
                 if (legBoxes[i].Visible) text.AppendLine(legTexts[i].Text.Replace("**", "") + " - " + legValues[i].Text);
             }
             text.AppendLine();
-            text.AppendLine("(Quãng đường ước tính theo đường chim bay nhân hệ số 1,3; thời gian tính ở tốc độ trung bình 25 km/h.)");
+            text.AppendLine(routeService == null ? "(Quãng đường ước tính theo đường chim bay nhân hệ số 1,3; thời gian tính ở tốc độ trung bình 25 km/h.)" : "(Quãng đường và thời gian tính theo đường bộ thật từ máy chủ khi đã bấm tìm đường.)");
             return text.ToString();
         }
 
@@ -105,6 +150,31 @@ namespace Hue_travel.Panels.RouteOptimizer
             }
         }
 
+        private static Poi FindByName(IEnumerable<Poi> pois, string key) =>
+            pois.FirstOrDefault(p => p.Name != null && CultureInfo.CurrentCulture.CompareInfo.IndexOf(p.Name, key, CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace) >= 0);
+
+        // Rows and the start list follow the places currently loaded (bundled data, then the server's).
+        private void ResolvePlaces()
+        {
+            for (int i = 0; i < stops.Length; i++)
+            {
+                Poi poi = FindByName(PoiCatalog.All.Where(p => p.HasLocation), StopNames[i]);
+                stopPois[i] = poi;
+                stops[i].Visible = poi != null;
+                if (poi == null) continue;
+                stops[i].Text = (i + 1) + ". " + poi.Name;
+                stops[i].Subtitle = string.IsNullOrEmpty(poi.TypeLabel) ? poi.Address : poi.TypeLabel;
+            }
+            string previous = cboStartPoint.Text;
+            startPois = PoiCatalog.All.Where(p => p.Category == PoiCategory.Transport && p.HasLocation).ToList();
+            cboStartPoint.Items.Clear();
+            cboStartPoint.Items.AddRange(startPois.Select(p => p.Name).ToArray());
+            Poi keep = startPois.FirstOrDefault(p => p.Name == previous) ?? FindByName(startPois, "Ga Huế") ?? startPois.FirstOrDefault();
+            cboStartPoint.Text = keep != null ? keep.Name : "";
+        }
+
+        private Poi StartPoi() => startPois.FirstOrDefault(p => p.Name == cboStartPoint.Text);
+
         private void header_CloseClicked(object sender, EventArgs e) => RaiseCloseRequested();
 
         private static string StopName(RouteStopRow stop) => Regex.Replace(stop.Text, @"^\d+\.\s*", "");
@@ -127,14 +197,13 @@ namespace Hue_travel.Panels.RouteOptimizer
             var points = new List<GeoPoint>();
             for (int i = 0; i < stops.Length; i++)
             {
-                GeoPoint place;
-                if (!stops[i].Checked || !DemoPlaces.TryGetPoi(StopPoiIds[i], out place)) continue;
+                if (!stops[i].Checked || stopPois[i] == null) continue;
                 selected.Add(i);
-                points.Add(place);
+                points.Add(new GeoPoint(stopPois[i].Longitude, stopPois[i].Latitude));
             }
 
-            int startIndex = cboStartPoint.Items.IndexOf(cboStartPoint.Text);
-            NamedPlace start = startIndex >= 0 ? DemoPlaces.StartPoints[startIndex] : null;
+            Poi startPoi = StartPoi();
+            NamedPlace start = startPoi == null ? null : new NamedPlace(startPoi.Name, new GeoPoint(startPoi.Longitude, startPoi.Latitude));
             bool hasStart = start != null && start.Location.HasValue;
             currentPlan = RoutePlanner.Plan(hasStart ? start.Location : null, points);
 
@@ -162,7 +231,11 @@ namespace Hue_travel.Panels.RouteOptimizer
             }
         }
 
-        private void AnnouncePlan()
+        /// <summary>
+        /// Online: asks the server for the road route (and for the visiting order as listed, to show the saving) and fills the
+        /// figures and legs from it. Offline: keeps the estimate computed by <see cref="UpdatePlan"/>.
+        /// </summary>
+        private async System.Threading.Tasks.Task FindRouteAsync()
         {
             UpdatePlan();
             if (currentPlan.Order.Count == 0)
@@ -170,6 +243,66 @@ namespace Hue_travel.Panels.RouteOptimizer
                 Notify("Hãy chọn ít nhất một điểm muốn đến", ToastKind.Info);
                 return;
             }
+            Poi startPoi = StartPoi();
+            if (routeService == null || startPoi == null)
+            {
+                AnnouncePlan();
+                return;
+            }
+
+            var stopIds = new List<string>();
+            for (int i = 0; i < stops.Length; i++) if (stops[i].Checked && stopPois[i] != null) stopIds.Add(stopPois[i].Id);
+            int version = ++planVersion;
+            btnFindRoute.Enabled = false;
+            try
+            {
+                ApiResult<OnlineRoute> best = await routeService.PlanAsync(startPoi.Id, stopIds, true, System.Threading.CancellationToken.None);
+                ApiResult<OnlineRoute> listed = await routeService.PlanAsync(startPoi.Id, stopIds, false, System.Threading.CancellationToken.None);
+                if (version != planVersion) return;
+                if (!best.Ok)
+                {
+                    Notify(best.Error + " Đang hiển thị số liệu ước tính.", ToastKind.Error);
+                    return;
+                }
+                ShowOnlineRoute(startPoi, best.Value, listed.Ok ? listed.Value : null);
+                RouteComputed?.Invoke(this, best.Value);
+                Notify($"Đã tìm đường theo đường bộ: {FormatKm(best.Value.TotalMeters / 1000)}, {FormatMinutes((int)Math.Round(best.Value.TotalSeconds / 60))}", ToastKind.Success);
+            }
+            finally
+            {
+                btnFindRoute.Enabled = true;
+            }
+        }
+
+        private void ShowOnlineRoute(Poi start, OnlineRoute route, OnlineRoute asListed)
+        {
+            // Number the rows in the server's order and fill the figures and legs from the road route.
+            for (int rank = 0; rank < route.Order.Count; rank++)
+            {
+                int row = Array.FindIndex(stopPois, p => p != null && p.Id == route.Order[rank]);
+                if (row >= 0) stops[row].Order = rank + 1;
+            }
+            lblDistanceValue.Text = FormatKm(route.TotalMeters / 1000);
+            lblDurationValue.Text = FormatMinutes((int)Math.Round(route.TotalSeconds / 60));
+            int saved = asListed == null ? 0 : (int)Math.Round((asListed.TotalSeconds - route.TotalSeconds) / 60);
+            lblSavingValue.Text = saved > 0 ? saved + " phút di chuyển" : "Đã là thứ tự tốt nhất";
+
+            string previous = ShortName(start.Name);
+            for (int leg = 0; leg < legBoxes.Length; leg++)
+            {
+                bool shown = leg < route.Legs.Count;
+                legBoxes[leg].Visible = shown;
+                if (!shown) continue;
+                Poi to = Array.Find(stopPois, p => p != null && p.Id == route.Legs[leg].ToId);
+                string name = to != null ? to.Name : route.Legs[leg].ToId;
+                legTexts[leg].Text = $"**Chặng {leg + 1}:** {previous} → {name}";
+                legValues[leg].Text = $"{FormatKm(route.Legs[leg].Meters / 1000)} (khoảng {(int)Math.Round(route.Legs[leg].Seconds / 60)} phút)";
+                previous = name;
+            }
+        }
+
+        private void AnnouncePlan()
+        {
             Notify($"Đã sắp xếp {currentPlan.Order.Count} điểm: khoảng {FormatKm(currentPlan.TotalKm)}, {FormatMinutes(currentPlan.TravelMinutes)} (ước tính)", ToastKind.Success);
         }
     }

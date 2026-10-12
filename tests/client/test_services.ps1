@@ -227,5 +227,138 @@ Check 'catalog loads real data' $poiCat.Count '109'
 $poiMissing = (GetT 'Hue_travel.Services.Data.PoiCatalog').GetMethod('Load').Invoke($null, @('Z:\missing\dir'))
 Check 'catalog falls back to samples' ([int]($poiMissing.Count -gt 0 -and $poiMissing.Count -lt 109)) '1'
 
+
+# ---- Online services (server settings, JSON, place mapping, route parsing, tokens, API client, sign-in)
+Add-Type -AssemblyName System.Net.Http
+Add-Type -ReferencedAssemblies 'System.Net.Http' -TypeDefinition @'
+using System; using System.Collections.Generic; using System.Net; using System.Net.Http; using System.Text; using System.Threading; using System.Threading.Tasks;
+public class FakeHandler : HttpMessageHandler {
+  public Queue<object[]> Responses = new Queue<object[]>();
+  public List<string> Seen = new List<string>();
+  protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct) {
+    Seen.Add(request.Method + " " + request.RequestUri.AbsolutePath + " auth=" + (request.Headers.Authorization != null ? request.Headers.Authorization.Parameter : ""));
+    object[] r = Responses.Dequeue();
+    if (r[0] == null) { throw new HttpRequestException("network down"); }
+    HttpResponseMessage m = new HttpResponseMessage((HttpStatusCode)(int)r[0]);
+    m.Content = new StringContent((string)r[1], Encoding.UTF8, "application/json");
+    return Task.FromResult(m);
+  }
+}
+'@
+$online = 'Hue_travel.Services.Online.'
+$ssT = GetT ($online + 'ServerSettings')
+function Resolve-Server([string[]]$c) { $ssT.GetMethod('Resolve').Invoke($null, @(, $c)) }
+Check 'server: first valid address wins, trailing slash removed' (Resolve-Server @('', 'ftp://x', ' http://host:5000/ ', 'http://other')) 'http://host:5000'
+Check 'server: nothing valid means offline' (Resolve-Server @('', $null, 'not a url')) ''
+Check 'server: https is accepted' (Resolve-Server @('https://a.example/')) 'https://a.example'
+
+$jsonT = GetT ($online + 'JsonHelper')
+$parsed = $jsonT.GetMethod('Parse').Invoke($null, @('{"a":{"b":[1,2,3]},"n":2.5,"t":true,"s":"x"}'))
+Check 'json: dictionary parsed' $parsed.Count '4'
+Check 'json: bad text gives null' ($jsonT.GetMethod('Parse').Invoke($null, @('{oops')) -eq $null) 'True'
+Check 'json: number read as double' ($jsonT.GetMethod('Dbl').Invoke($null, @($parsed, 'n'))) '2.5'
+
+$poiJsonT = GetT ($online + 'PoiJson')
+$placeJson = '{"id":"DL001","group":"scenery","type":"Cảnh quan - hồ nước","name":"Hồ Tuần","address":"Huế","openingHours":"07:00-17:00","priceText":"Miễn phí","phone":"0234","website":"https://x.vn","summary":"Mô tả","lon":107.5,"lat":16.4,"x":780000.5,"y":1820000.25}'
+$place = $poiJsonT.GetMethod('ToPoi').Invoke($null, @($jsonT.GetMethod('Parse').Invoke($null, @($placeJson))))
+Check 'place json: id' $place.Id 'DL001'
+Check 'place json: group becomes category' "$($place.Category)" 'Scenery'
+Check 'place json: name keeps Vietnamese' $place.Name ('H' + [char]0x1ED3 + ' Tu' + [char]0x1EA7 + 'n')
+Check 'place json: map position' "$($place.X)|$($place.Y)" '780000.5|1820000.25'
+Check 'place json: has location' "$($place.HasLocation)" 'True'
+Check 'place json: price text' $place.TicketPrice ('Mi' + [char]0x1EC5 + 'n ph' + [char]0x00ED)
+Check 'place json: unknown group falls back to heritage' "$(($poiJsonT.GetMethod('ToCategory')).Invoke($null, @('zzz')))" 'Heritage'
+
+$cacheT = GetT ($online + 'PoiCache')
+$cachePath = [string](Join-Path ([IO.Path]::GetTempPath()) ('pois-' + [guid]::NewGuid().ToString('N') + '.json'))
+$cacheList = [Activator]::CreateInstance($listT)
+$cacheList.Add($place)
+[void]$cacheT.GetMethod('TrySave').Invoke($null, @($cacheList, $cachePath))
+$back = $cacheT.GetMethod('TryLoad').Invoke($null, @($cachePath))
+Check 'cache: round trip count' $back.Count '1'
+Check 'cache: round trip content' "$($back[0].Id)|$($back[0].X)" 'DL001|780000.5'
+Check 'cache: missing file gives null' ($cacheT.GetMethod('TryLoad').Invoke($null, @($cachePath + '.none')) -eq $null) 'True'
+Remove-Item $cachePath -ErrorAction SilentlyContinue
+
+$routeT = GetT ($online + 'RouteJson')
+$routeJson = '{"order":["DL021","DL024"],"legs":[{"fromId":"GT002","toId":"DL021","meters":2912.5,"seconds":273,"geometryUtm":{"type":"LineString","coordinates":[[775000,1821000],[775100,1821100]]}},{"fromId":"DL021","toId":"DL024","meters":4000,"seconds":420,"geometryUtm":{"type":"MultiLineString","coordinates":[[[775100,1821100],[775200,1821200]],[[775200,1821200],[775300,1821300]]]}}],"totalMeters":6912.5,"totalSeconds":693}'
+$route = $routeT.GetMethod('Parse').Invoke($null, @($jsonT.GetMethod('Parse').Invoke($null, @($routeJson))))
+Check 'route: order' ($route.Order -join ',') 'DL021,DL024'
+Check 'route: totals' "$($route.TotalMeters)|$($route.TotalSeconds)" '6912.5|693'
+Check 'route: line leg has two points' $route.Legs[0].Path.Count '2'
+Check 'route: multi-line leg is joined' $route.Legs[1].Path.Count '4'
+Check 'route: first point x' $route.Legs[0].Path[0].X '775000'
+Check 'route: missing geometry gives no points' ($routeT.GetMethod('ParsePath').Invoke($null, @($null))).Count '0'
+
+$storeT = GetT ($online + 'TokenStore')
+$sessionPath = [string](Join-Path ([IO.Path]::GetTempPath()) ('session-' + [guid]::NewGuid().ToString('N') + '.dat'))
+$store = [Activator]::CreateInstance($storeT, @($sessionPath))
+$store.Save('access-1', 'refresh-1')
+Check 'tokens: file is not plain text' ([int][Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($sessionPath)).Contains('refresh-1')) '0'
+$tl = $storeT.GetMethod('TryLoad')
+$loadArgs = [object[]]@($null, $null)
+Check 'tokens: load finds the session' ($tl.Invoke($store, $loadArgs)) 'True'
+Check 'tokens: values survive' "$($loadArgs[0])|$($loadArgs[1])" 'access-1|refresh-1'
+$store.Delete()
+Check 'tokens: removed' ($tl.Invoke($store, [object[]]@($null, $null))) 'False'
+
+$apiT = GetT ($online + 'ApiClient')
+$none = [Threading.CancellationToken]::None
+function New-Api($handler) { $s = [Activator]::CreateInstance($storeT, @($sessionPath)); $ctor = $apiT.GetConstructors()[0]; $ctor.Invoke([object[]]@('http://test.local', $s, [System.Net.Http.HttpMessageHandler]$handler)) }
+function Await($task) { $task.Wait(); $task.Result }
+
+# 401 -> refresh once -> repeat the request with the new token
+$h = New-Object FakeHandler
+$h.Responses.Enqueue([object[]]@(401, '{"title":"x"}'))
+$h.Responses.Enqueue([object[]]@(200, '{"accessToken":"NEW","refreshToken":"R2","expiresIn":900}'))
+$h.Responses.Enqueue([object[]]@(200, '{"a":1}'))
+$api = New-Api $h
+$api.SetTokens('OLD', 'R1', $false)
+$resp = Await ($api.GetAsync('/v1/me', $none))
+Check 'api: request succeeds after a refresh' "$($resp.StatusCode)" '200'
+Check 'api: three calls were made' $h.Seen.Count '3'
+Check 'api: the repeat uses the new token' $h.Seen[2] 'GET /v1/me auth=NEW'
+Check 'api: the refresh token was replaced' $api.RefreshToken 'R2'
+
+# a refresh token that no longer works ends the session
+$h2 = New-Object FakeHandler
+$h2.Responses.Enqueue([object[]]@(401, '{}'))
+$h2.Responses.Enqueue([object[]]@(401, '{"detail":"expired"}'))
+$api2 = New-Api $h2
+$api2.SetTokens('OLD', 'R1', $false)
+$expired = Await ($api2.GetAsync('/v1/me', $none))
+Check 'api: still 401 when the refresh fails' "$($expired.StatusCode)" '401'
+Check 'api: tokens are cleared when the session expired' ([string]::IsNullOrEmpty($api2.RefreshToken)) 'True'
+
+# server unreachable
+$h3 = New-Object FakeHandler
+$h3.Responses.Enqueue([object[]]@($null, ''))
+$down = Await ((New-Api $h3).GetAsync('/v1/pois', $none))
+Check 'api: network failure is status 0 with a message' "$($down.StatusCode)|$([int]($down.Error.Length -gt 10))" '0|1'
+
+# ProblemDetails message is shown to the user
+$h4 = New-Object FakeHandler
+$h4.Responses.Enqueue([object[]]@(409, '{"title":"Conflict","detail":"Ten dang nhap da co nguoi dung."}'))
+$conflict = Await ((New-Api $h4).PostAsync('/v1/auth/register', @{ username = 'a' }, $none))
+Check 'api: error text comes from the problem details' $conflict.Error 'Ten dang nhap da co nguoi dung.'
+
+# signing in
+$authT = GetT ($online + 'AuthService')
+$h5 = New-Object FakeHandler
+$h5.Responses.Enqueue([object[]]@(200, '{"accessToken":"A","refreshToken":"R","expiresIn":900,"user":{"id":7,"username":"nguoi","displayName":"Nguoi Dung","role":"owner"},"mustChangePassword":true}'))
+$api5 = New-Api $h5
+$auth = [Activator]::CreateInstance($authT, [object[]]@($api5, [Activator]::CreateInstance($storeT, @($sessionPath))))
+$failure = Await ($auth.LoginAsync('nguoi', 'pw', $false))
+Check 'auth: success returns no error' ($failure -eq $null) 'True'
+Check 'auth: the user is known' "$($auth.CurrentUser.Username)|$($auth.CurrentUser.Role)|$($auth.CurrentUser.IsOwner)" 'nguoi|owner|True'
+Check 'auth: temporary password flag' "$($auth.MustChangePassword)" 'True'
+Check 'auth: the access token is used afterwards' $api5.AccessToken 'A'
+$h6 = New-Object FakeHandler
+$h6.Responses.Enqueue([object[]]@(401, '{"detail":"Sai ten dang nhap hoac mat khau."}'))
+$auth6 = [Activator]::CreateInstance($authT, [object[]]@((New-Api $h6), [Activator]::CreateInstance($storeT, @($sessionPath))))
+Check 'auth: a refusal returns the message' (Await ($auth6.LoginAsync('nguoi', 'bad', $false))) 'Sai ten dang nhap hoac mat khau.'
+Check 'auth: nobody is signed in after a refusal' ($auth6.CurrentUser -eq $null) 'True'
+Remove-Item $sessionPath -ErrorAction SilentlyContinue
+
 Write-Host "passed=$script:pass failed=$script:fail"
 if ($script:fail -gt 0) { exit 1 }

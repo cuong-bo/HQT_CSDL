@@ -39,7 +39,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Security" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -120,6 +122,23 @@
     <Compile Include="SampleData\SampleTours.cs" />
     <Compile Include="MapEngine\MapViewChangedEventArgs.cs" />
     <Compile Include="Services\MapScale.cs" />
+    <Compile Include="Services\Online\ServerSettings.cs" />
+    <Compile Include="Services\Online\JsonHelper.cs" />
+    <Compile Include="Services\Online\TokenStore.cs" />
+    <Compile Include="Services\Online\ApiClient.cs" />
+    <Compile Include="Services\Online\AuthService.cs" />
+    <Compile Include="Services\Online\PoiJson.cs" />
+    <Compile Include="Services\Online\ApiPoiSource.cs" />
+    <Compile Include="Services\Online\ApiRouteService.cs" />
+    <Compile Include="Services\Online\ApiAreaLocator.cs" />
+    <Compile Include="Services\Online\ApiWeatherService.cs" />
+    <Compile Include="Account\AccountUi.cs" />
+    <Compile Include="Account\Dialogs.cs" />
+    <Compile Include="Account\AccountTab.cs" />
+    <Compile Include="Account\UserTabs.cs" />
+    <Compile Include="Account\OwnerTab.cs" />
+    <Compile Include="Account\AdminTab.cs" />
+    <Compile Include="Account\AccountPanel.cs" />
     <Compile Include="Services\Data\ShapefilePointReader.cs" />
     <Compile Include="Services\Data\TourismGrouping.cs" />
     <Compile Include="Services\Data\ShapefilePoiRepository.cs" />

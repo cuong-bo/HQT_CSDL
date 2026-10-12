@@ -49,13 +49,15 @@ public sealed class RouteRepository(NpgsqlDataSource db)
     {
         await using NpgsqlCommand cmd = db.CreateCommand(
             "select coalesce(sum(length_m), 0), coalesce(sum(seconds), 0), " +
-            "st_asgeojson(st_transform(st_linemerge(st_collect(geom order by seq)), 4326), 6) " +
+            "st_asgeojson(st_transform(st_linemerge(st_collect(geom order by seq)), 4326), 6), " +
+            "st_asgeojson(st_linemerge(st_collect(geom order by seq)), 1) " +
             "from route_path(@f, @t)");
         cmd.Parameters.AddWithValue("f", fromId);
         cmd.Parameters.AddWithValue("t", toId);
         await using NpgsqlDataReader r = await cmd.ExecuteReaderAsync(ct);
         await r.ReadAsync(ct);
         JsonElement? geometry = r.IsDBNull(2) ? null : JsonDocument.Parse(r.GetString(2)).RootElement.Clone();
-        return new RouteLeg(fromId, toId, r.GetDouble(0), r.GetDouble(1), geometry);
+        JsonElement? geometryUtm = r.IsDBNull(3) ? null : JsonDocument.Parse(r.GetString(3)).RootElement.Clone();
+        return new RouteLeg(fromId, toId, r.GetDouble(0), r.GetDouble(1), geometry, geometryUtm);
     }
 }

@@ -64,26 +64,26 @@ namespace Hue_travel.Auth
             this.lblFullName.ForeColor = ThemeColors.Slate700;
             this.lblFullName.AutoSize = true;
             this.lblFullName.Location = new Point(16, 96);
-            this.txtFullName.Text = "Nguyễn Văn An";
+            this.txtFullName.Text = "";
             this.txtFullName.Size = new Size(388, 32);
             this.txtFullName.Location = new Point(16, 118);
 
-            this.lblEmail.Text = "Email:";
+            this.lblEmail.Text = "Tên đăng nhập (chữ, số, _ hoặc .):";
             this.lblEmail.Font = ThemeFonts.Medium(12);
             this.lblEmail.ForeColor = ThemeColors.Slate700;
             this.lblEmail.AutoSize = true;
             this.lblEmail.Location = new Point(16, 158);
-            this.txtEmail.Text = "name@example.com";
+            this.txtEmail.Text = "";
             this.txtEmail.Size = new Size(388, 32);
             this.txtEmail.Location = new Point(16, 180);
 
-            this.lblPassword.Text = "Mật khẩu mới:";
+            this.lblPassword.Text = "Mật khẩu mới (tối thiểu 8 ký tự):";
             this.lblPassword.Font = ThemeFonts.Medium(12);
             this.lblPassword.ForeColor = ThemeColors.Slate700;
             this.lblPassword.AutoSize = true;
             this.lblPassword.Location = new Point(16, 220);
             this.txtPassword.IsPassword = true;
-            this.txtPassword.Text = "matkhau123";
+            this.txtPassword.Text = "";
             this.txtPassword.Size = new Size(388, 32);
             this.txtPassword.Location = new Point(16, 242);
 

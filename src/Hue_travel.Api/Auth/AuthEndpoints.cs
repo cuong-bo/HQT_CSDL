@@ -14,6 +14,7 @@ public static class AuthEndpoints
         auth.MapPost("/register", RegisterAsync);
         auth.MapPost("/login", LoginAsync);
         auth.MapPost("/refresh", RefreshAsync);
+        auth.MapPost("/logout", LogoutAsync);
 
         app.MapGet("/v1/me", MeAsync).RequireAuthorization();
     }
@@ -71,6 +72,14 @@ public static class AuthEndpoints
             return Results.Problem(detail: "Phiên đăng nhập đã hết hạn, hãy đăng nhập lại.", statusCode: StatusCodes.Status401Unauthorized);
 
         return Results.Ok(await IssueAsync(user, users, tokens, ct));
+    }
+
+    /// <summary>Ends a session: the refresh token can no longer be used. Always succeeds, so the app can sign out while offline-ish.</summary>
+    private static async Task<IResult> LogoutAsync(RefreshRequest request, UserRepository users, CancellationToken ct)
+    {
+        if (!string.IsNullOrWhiteSpace(request.RefreshToken))
+            await users.ConsumeRefreshTokenAsync(TokenService.HashRefreshToken(request.RefreshToken), ct);
+        return Results.NoContent();
     }
 
     private static async Task<IResult> MeAsync(ClaimsPrincipal principal, UserRepository users, CancellationToken ct)

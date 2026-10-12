@@ -331,3 +331,28 @@ public class HardeningTests(ApiFixture fixture)
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
     }
 }
+
+[Collection("api")]
+public class ClientSupportTests(ApiFixture fixture)
+{
+    [RequiresDbFact]
+    public async Task Logout_EndsTheSession_SoTheRefreshTokenStopsWorking()
+    {
+        HttpClient http = fixture.CreateClient();
+        string name = "t" + Guid.NewGuid().ToString("N")[..12];
+        JsonElement tokens = await (await http.PostAsJsonAsync("/v1/auth/register", new { username = name, password = "matkhau-dai-123" })).Content.ReadFromJsonAsync<JsonElement>();
+        string refresh = tokens.GetProperty("refreshToken").GetString()!;
+        Assert.Equal(HttpStatusCode.NoContent, (await http.PostAsJsonAsync("/v1/auth/logout", new { refreshToken = refresh })).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await http.PostAsJsonAsync("/v1/auth/refresh", new { refreshToken = refresh })).StatusCode);
+    }
+
+    [RequiresDbFact]
+    public async Task Route_ReturnsTheLineInMapUnitsToo()
+    {
+        JsonElement route = await (await fixture.CreateClient().PostAsJsonAsync("/v1/route", new { startId = "GT002", stopIds = new[] { "DL021" } })).Content.ReadFromJsonAsync<JsonElement>();
+        JsonElement leg = route.GetProperty("legs")[0];
+        Assert.Equal("LineString", leg.GetProperty("geometryUtm").GetProperty("type").GetString());
+        double x = leg.GetProperty("geometryUtm").GetProperty("coordinates")[0][0].GetDouble();
+        Assert.InRange(x, 700000, 900000);
+    }
+}

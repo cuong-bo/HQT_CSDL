@@ -50,14 +50,14 @@ namespace Hue_travel.Auth
             this.tabs.Location = new Point(16, 48);
             this.tabs.TabSelected += new System.EventHandler<int>(this.tabs_TabSelected);
 
-            this.lblLoginId.Text = "Email hoặc Số điện thoại:";
+            this.lblLoginId.Text = "Tên đăng nhập:";
             this.lblLoginId.Font = ThemeFonts.Medium(12);
             this.lblLoginId.ForeColor = ThemeColors.Slate700;
             this.lblLoginId.AutoSize = true;
             this.lblLoginId.Location = new Point(16, 96);
 
-            this.txtLoginId.IconName = "mail";
-            this.txtLoginId.Text = "dukhach@huegis.vn";
+            this.txtLoginId.IconName = "account_circle";
+            this.txtLoginId.Text = "";
             this.txtLoginId.Size = new Size(388, 32);
             this.txtLoginId.Location = new Point(16, 118);
 
@@ -70,7 +70,7 @@ namespace Hue_travel.Auth
 
             this.txtLoginPassword.IconName = "lock";
             this.txtLoginPassword.IsPassword = true;
-            this.txtLoginPassword.Text = "Huetravel2025";
+            this.txtLoginPassword.Text = "";
             this.txtLoginPassword.Size = new Size(388, 32);
             this.txtLoginPassword.Location = new Point(16, 184);
 

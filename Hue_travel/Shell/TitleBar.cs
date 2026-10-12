@@ -35,6 +35,15 @@ namespace Hue_travel.Shell
             picLogo.DoubleClick += toggleMaximize;
         }
 
+        /// <summary>The text of the account button: the signed-in name, or the invitation to sign in when null.</summary>
+        public void SetUser(string text)
+        {
+            string shown = string.IsNullOrWhiteSpace(text) ? "Đăng nhập / Đăng ký" : (text.Length > 22 ? text.Substring(0, 21) + "…" : text);
+            btnAuth.AutoWidth = true;
+            btnAuth.Text = shown;
+            LayoutRightGroup();
+        }
+
         /// <summary>Shows the "restore" icon while the window is maximised, "maximise" otherwise.</summary>
         public void SetMaximized(bool isMaximized)
         {
