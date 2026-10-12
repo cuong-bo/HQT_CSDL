@@ -4,3 +4,8 @@ obj/
 .vs/
 .superpowers/
 .claude/
+
+# secrets and local settings
+.env
+appsettings.Development.json
+appsettings.Local.json
