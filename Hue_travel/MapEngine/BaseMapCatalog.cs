@@ -44,10 +44,10 @@ namespace Hue_travel.MapEngine
 
         public static IReadOnlyList<BaseMapInfo> All { get; } = new List<BaseMapInfo>
         {
-            new BaseMapInfo("roadmap", "Đường phố", "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={zoom}", FirstProviderId, GoogleCredit),
-            new BaseMapInfo("satellite", "Vệ tinh", "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={zoom}", FirstProviderId + 1, GoogleCredit),
-            new BaseMapInfo("hybrid", "Lai", "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={zoom}", FirstProviderId + 2, GoogleCredit),
-            new BaseMapInfo("terrain", "Địa hình", "https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={zoom}", FirstProviderId + 3, GoogleCredit),
+            new BaseMapInfo("roadmap", "Đường phố", "http://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={zoom}", FirstProviderId, GoogleCredit),
+            new BaseMapInfo("satellite", "Vệ tinh", "http://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={zoom}", FirstProviderId + 1, GoogleCredit),
+            new BaseMapInfo("hybrid", "Lai", "http://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={zoom}", FirstProviderId + 2, GoogleCredit),
+            new BaseMapInfo("terrain", "Địa hình", "http://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={zoom}", FirstProviderId + 3, GoogleCredit),
         }.AsReadOnly();
 
         /// <summary>The base map with this id, or null.</summary>

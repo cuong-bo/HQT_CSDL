@@ -120,6 +120,10 @@
     <Compile Include="SampleData\SampleTours.cs" />
     <Compile Include="MapEngine\MapViewChangedEventArgs.cs" />
     <Compile Include="Services\MapScale.cs" />
+    <Compile Include="Services\Data\ShapefilePointReader.cs" />
+    <Compile Include="Services\Data\TourismGrouping.cs" />
+    <Compile Include="Services\Data\ShapefilePoiRepository.cs" />
+    <Compile Include="Services\Data\PoiCatalog.cs" />
     <Compile Include="Services\CoordinateFormatter.cs" />
     <Compile Include="MapEngine\MeasureKind.cs" />
     <Compile Include="MapEngine\MapCursorEventArgs.cs" />
@@ -131,6 +135,7 @@
     <Compile Include="Services\Routing\RoutePlanner.cs" />
     <Compile Include="MapEngine\MapCrs.cs" />
     <Compile Include="MapEngine\PoiLayerFilter.cs" />
+    <Compile Include="MapEngine\PoiMarkerStyle.cs" />
     <Compile Include="MapEngine\BaseMapCatalog.cs" />
     <Compile Include="Services\Area\DemoAreaLocator.cs" />
     <Compile Include="Services\Area\IAreaLocator.cs" />
@@ -268,6 +273,68 @@
       <LogicalName>Hue_travel.Resources.logo.jpg</LogicalName>
     </EmbeddedResource>
     <None Include="Resources\LICENSES.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Data\diemDuLich.shp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\diemDuLich.shx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\diemDuLich.dbf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\diemDuLich.prj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\diemDuLich.cpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\diemLuuTru.shp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\diemLuuTru.shx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\diemLuuTru.dbf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\diemLuuTru.prj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\diemLuuTru.cpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\diemDVDuLich.shp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\diemDVDuLich.shx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\diemDVDuLich.dbf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\diemDVDuLich.prj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\diemDVDuLich.cpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\diemDMGiaoThong.shp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\diemDMGiaoThong.shx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\diemDMGiaoThong.dbf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\diemDMGiaoThong.prj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\diemDMGiaoThong.cpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

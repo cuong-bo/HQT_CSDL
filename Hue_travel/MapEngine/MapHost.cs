@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
 using AxInterop.MapWinGIS;
 using Hue_travel.Models;
@@ -15,6 +17,10 @@ namespace Hue_travel.MapEngine
         private const int RightMargin = 16;   // right-4
         private const int ColumnTop = 64;     // top-16
         private const int StackGap = 6;       // gap-1.5
+        private const double CityHalfWidthMetres = 5000;
+        private const int ClickSlopPixels = 4;    // a press and release this close together is a click, not a drag
+        private const int LeftButton = 1;
+        private const int HitRadius = 10;         // design pixels around a marker that count as hitting it
 
         // Order of the icons in the vertical base map switch.
         private static readonly string[] BaseMapIds = { "roadmap", "satellite", "hybrid", "terrain" };
@@ -24,12 +30,18 @@ namespace Hue_travel.MapEngine
         private readonly PoiLayerFilter poiLayers = new PoiLayerFilter();
         private double lastXMin, lastXMax, lastYMin, lastYMax;
         private int lastPixelWidth = -1;
+        private readonly List<PoiMarker> markers = new List<PoiMarker>();
+        private readonly LeftPressFilter pressFilter = new LeftPressFilter();
+        private int pressX = int.MinValue, pressY = int.MinValue;   // MinValue = no press seen since the last release
 
         /// <summary>Raised after the visible extent (or the control width) changed: new centre and scale.</summary>
         public event EventHandler<MapViewChangedEventArgs> ViewChanged;
 
         /// <summary>Raised while the pointer moves over the map, with its coordinates.</summary>
         public event EventHandler<MapCursorEventArgs> CursorMoved;
+
+        /// <summary>Raised when the user clicks (not drags) a point of interest on the map.</summary>
+        public event EventHandler<Poi> PoiClicked;
 
         public MapHost()
         {
@@ -43,7 +55,11 @@ namespace Hue_travel.MapEngine
             LayoutOverlays();
             Resize += (s, e) => LayoutOverlays();
             new ToolTip().SetToolTip(compass, "Khôi phục hướng Bắc");
-            Disposed += (s, e) => viewTracker.Dispose();
+            Disposed += (s, e) =>
+            {
+                viewTracker.Dispose();
+                Application.RemoveMessageFilter(pressFilter);
+            };
         }
 
         protected override void OnLoad(EventArgs e)
@@ -71,13 +87,14 @@ namespace Hue_travel.MapEngine
 
         public void ZoomOut() => axMap.ZoomOut(0.5);
 
-        /// <summary>Shows the whole demo area (about 3.2 x 1.8 km around the Imperial City).</summary>
+        /// <summary>Shows the city (about 10 x 5.6 km around the Imperial City); before data is loaded, the 3.2 x 1.8 km demo scene.</summary>
         public void ZoomToFull()
         {
+            double halfWidth = markers.Count > 0 ? CityHalfWidthMetres : SceneGeoreference.CanvasWidth * SceneGeoreference.MetresPerCanvasUnit / 2;
+            double halfHeight = halfWidth * SceneGeoreference.CanvasHeight / SceneGeoreference.CanvasWidth;
+            double centerX = SceneGeoreference.X(SceneGeoreference.CanvasWidth / 2), centerY = SceneGeoreference.Y(SceneGeoreference.CanvasHeight / 2);
             var view = new Extents();
-            view.SetBounds(
-                SceneGeoreference.X(0), SceneGeoreference.Y(SceneGeoreference.CanvasHeight), 0,
-                SceneGeoreference.X(SceneGeoreference.CanvasWidth), SceneGeoreference.Y(0), 0);
+            view.SetBounds(centerX - halfWidth, centerY - halfHeight, 0, centerX + halfWidth, centerY + halfHeight, 0);
             axMap.Extents = view;
         }
 
@@ -86,6 +103,12 @@ namespace Hue_travel.MapEngine
         {
             double easting = 0, northing = 0;
             if (!axMap.DegreesToProj(longitude, latitude, ref easting, ref northing)) return;
+            ZoomToProjected(easting, northing);
+        }
+
+        /// <summary>Centres the map on a position in the map's own units (metres) at street level.</summary>
+        public void ZoomToProjected(double easting, double northing)
+        {
             double halfWidth = 260 * SceneGeoreference.MetresPerCanvasUnit, halfHeight = 146 * SceneGeoreference.MetresPerCanvasUnit;
             var view = new Extents();
             view.SetBounds(easting - halfWidth, northing - halfHeight, 0, easting + halfWidth, northing + halfHeight, 0);
@@ -105,6 +128,114 @@ namespace Hue_travel.MapEngine
             poiLayers.ShowOnly(category);
             foreach (int handle in poiLayers.Handles) axMap.set_LayerVisible(handle, poiLayers.IsVisible(handle));
             axMap.Redraw();
+        }
+
+        /// <summary>
+        /// Draws the points of interest: one in-memory MapWinGIS point layer per group (so the rail can show or
+        /// hide a whole group), coloured like the rail icons. Points without a projected position are skipped.
+        /// </summary>
+        public void LoadPois(IReadOnlyList<Poi> pois)
+        {
+            foreach (int handle in poiLayers.Handles.ToList()) axMap.RemoveLayer(handle);
+            poiLayers.Clear();
+            markers.Clear();
+
+            foreach (IGrouping<PoiCategory, Poi> group in pois.Where(p => p.X != 0 || p.Y != 0).GroupBy(p => p.Category))
+            {
+                int handle = AddMarkerLayer(group.Key, group.ToList());
+                if (handle < 0) continue;
+                markers.AddRange(group.Select(p => new PoiMarker(p, handle)));
+                AddPoiLayer(group.Key, handle);
+            }
+            axMap.Redraw();
+        }
+
+        private int AddMarkerLayer(PoiCategory category, IReadOnlyList<Poi> pois)
+        {
+            var layer = new Shapefile();
+            if (!layer.CreateNew(string.Empty, ShpfileType.SHP_POINT)) return -1;
+            foreach (Poi poi in pois)
+            {
+                var point = new Shape();
+                if (!point.Create(ShpfileType.SHP_POINT)) continue;
+                point.AddPoint(poi.X, poi.Y);
+                layer.EditAddShape(point);
+            }
+
+            ShapeDrawingOptions style = layer.DefaultDrawingOptions;
+            style.PointShape = tkPointShapeType.ptShapeCircle;
+            style.PointSize = Ui.S(PoiMarkerStyle.DiameterPixels);
+            style.FillColor = (uint)System.Drawing.ColorTranslator.ToOle(PoiMarkerStyle.ColorOf(category));
+            style.LineColor = (uint)System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.White);
+            style.LineVisible = true;
+            style.LineWidth = 1.5f;
+
+            int handle = axMap.AddLayer(layer, true);
+            if (handle >= 0) axMap.set_LayerName(handle, category.ToString());
+            return handle;
+        }
+
+        // The nearest visible marker within HitRadius of a pixel, or null.
+        private Poi FindPoiAt(int pixelX, int pixelY)
+        {
+            Poi best = null;
+            double bestSquared = Math.Pow(Ui.S(HitRadius), 2);
+            foreach (PoiMarker marker in markers)
+            {
+                if (!poiLayers.IsVisible(marker.LayerHandle)) continue;
+                double px = 0, py = 0;
+                axMap.ProjToPixel(marker.Poi.X, marker.Poi.Y, ref px, ref py);
+                double squared = (px - pixelX) * (px - pixelX) + (py - pixelY) * (py - pixelY);
+                if (squared > bestSquared) continue;
+                bestSquared = squared;
+                best = marker.Poi;
+            }
+            return best;
+        }
+
+        // MapWinGIS sends no mouse-down event while panning, so a message filter notes where the left button went down.
+        private void NotePress(System.Drawing.Point screen)
+        {
+            System.Drawing.Point press = axMap.PointToClient(screen);
+            pressX = press.X;
+            pressY = press.Y;
+        }
+
+        private void OnMapMouseUp(int button, int pixelX, int pixelY)
+        {
+            int downX = pressX, downY = pressY;
+            pressX = pressY = int.MinValue;
+            if (button != LeftButton || axMap.CursorMode != tkCursorMode.cmPan) return;
+            if (downX == int.MinValue) return;   // no press was seen: do not guess
+            if (Math.Abs(pixelX - downX) > ClickSlopPixels || Math.Abs(pixelY - downY) > ClickSlopPixels) return;
+            Poi hit = FindPoiAt(pixelX, pixelY);
+            if (hit != null) PoiClicked?.Invoke(this, hit);
+        }
+
+        // Sees every left-button press of the application (the ActiveX map swallows its own mouse-down).
+        private sealed class LeftPressFilter : IMessageFilter
+        {
+            private const int WmLButtonDown = 0x0201;
+
+            public event EventHandler<System.Drawing.Point> Pressed;
+
+            public bool PreFilterMessage(ref Message m)
+            {
+                if (m.Msg == WmLButtonDown) Pressed?.Invoke(this, Control.MousePosition);
+                return false;
+            }
+        }
+
+        private sealed class PoiMarker
+        {
+            public PoiMarker(Poi poi, int layerHandle)
+            {
+                Poi = poi;
+                LayerHandle = layerHandle;
+            }
+
+            public Poi Poi { get; }
+            public int LayerHandle { get; }
         }
 
         public void PanMode(bool enabled)
@@ -194,11 +325,15 @@ namespace Hue_travel.MapEngine
             axMap.CursorMode = tkCursorMode.cmPan;
             axMap.InertiaOnPanning = tkCustomState.csTrue;   // the map glides after a drag
             axMap.SendMouseMove = true;
+            axMap.SendMouseUp = true;
             axMap.BackColor = System.Drawing.ColorTranslator.FromHtml("#E2E8F0");
             MapCrs.Apply(axMap);
             viewTracker.Tick += (s, e) => PublishViewIfChanged();
             viewTracker.Start();
             axMap.MouseMoveEvent += (s, e) => PublishCursor(e.x, e.y);
+            pressFilter.Pressed += (s, screen) => NotePress(screen);
+            Application.AddMessageFilter(pressFilter);
+            axMap.MouseUpEvent += (s, e) => OnMapMouseUp(e.button, e.x, e.y);
             ApplyTiles(BaseMapCatalog.Find(baseMapId));
             ZoomToFull();
         }

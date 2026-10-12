@@ -100,7 +100,7 @@ namespace Hue_travel.Panels.SearchPoi
             this.txtKeyword.BackColor = ThemeColors.Slate50;
             this.txtKeyword.ForeColor = ThemeColors.Slate800;
             this.txtKeyword.Font = ThemeFonts.Regular(12);
-            this.txtKeyword.Text = "Bún bò";
+            this.txtKeyword.Text = string.Empty;
             this.txtKeyword.Size = new Size(296, 18);
             this.txtKeyword.Location = new Point(32, 8);
             this.txtKeyword.TextChanged += new System.EventHandler(this.txtKeyword_TextChanged);

@@ -5,7 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Windows.Forms;
 using Hue_travel.Models;
-using Hue_travel.SampleData;
+using Hue_travel.Services.Data;
 using Hue_travel.Theme;
 
 namespace Hue_travel.Panels.SearchPoi
@@ -46,7 +46,7 @@ namespace Hue_travel.Panels.SearchPoi
                 new KeyValuePair<IconButton, PoiCategory?>(chipTransport, PoiCategory.Transport),
             };
 
-            foreach (Poi poi in SamplePois.All) AddCard(poi);
+            foreach (Poi poi in PoiCatalog.All) AddCard(poi);
             foreach (KeyValuePair<IconButton, PoiCategory?> pair in chips)
             {
                 PoiCategory? category = pair.Value;
@@ -76,9 +76,10 @@ namespace Hue_travel.Panels.SearchPoi
             cards.Add(new KeyValuePair<PoiResultCard, Poi>(card, poi));
         }
 
-        // "Cách bạn 1.2 km • 35k - 50k": food adds its price; the line is short because the card also holds two buttons.
+        // The real data has no distance from the user, so its cards show the type; the samples keep "Cách bạn 1.2 km".
         private static string DistanceLine(Poi poi)
         {
+            if (!string.IsNullOrEmpty(poi.TypeLabel)) return poi.TypeLabel;
             string distance = poi.DistanceKm > 0
                 ? "Cách bạn " + poi.DistanceKm.ToString("0.0", CultureInfo.InvariantCulture) + " km"
                 : "Điểm xuất phát";

@@ -20,6 +20,12 @@ namespace Hue_travel.MapEngine
             categoryByLayer[layerHandle] = category;
         }
 
+        /// <summary>Forgets every registered layer (the caller removes them from the map).</summary>
+        public void Clear()
+        {
+            categoryByLayer.Clear();
+        }
+
         /// <summary>Shows only the layers of this category; null shows all of them.</summary>
         public void ShowOnly(PoiCategory? category)
         {

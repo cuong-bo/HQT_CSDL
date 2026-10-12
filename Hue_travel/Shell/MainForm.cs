@@ -6,6 +6,7 @@ using Hue_travel.Models;
 using Hue_travel.SampleData;
 using Hue_travel.Services;
 using Hue_travel.Services.Area;
+using Hue_travel.Services.Data;
 using Hue_travel.Services.Routing;
 using Hue_travel.Services.Weather;
 using Hue_travel.Theme;
@@ -36,6 +37,10 @@ namespace Hue_travel.Shell
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
+            mapHost.LoadPois(PoiCatalog.All);
+            if (PoiCatalog.LastError != null)
+                toast.ShowMessage("Không đọc được dữ liệu địa điểm, đang dùng dữ liệu mẫu: " + PoiCatalog.LastError, ToastKind.Error);
+            mapHost.ZoomToFull();
             weatherUpdater.Start();
         }
 
@@ -84,10 +89,13 @@ namespace Hue_travel.Shell
             registerPanel.LoginRequested += (s, e) => ShowAuthCard(authModal);
 
             searchPoiPanel.PoiSelected += (s, poi) => ShowPoiCard(poi);
+            mapHost.PoiClicked += (s, poi) => ShowPoiCard(poi);
             searchPoiPanel.ShowOnMapRequested += (s, poi) =>
             {
                 GeoPoint place;
-                if (DemoPlaces.TryGetPoi(poi.Id, out place)) mapHost.ZoomTo(place.Longitude, place.Latitude);
+                if (poi.X != 0 || poi.Y != 0) mapHost.ZoomToProjected(poi.X, poi.Y);
+                else if (poi.HasLocation) mapHost.ZoomTo(poi.Longitude, poi.Latitude);
+                else if (DemoPlaces.TryGetPoi(poi.Id, out place)) mapHost.ZoomTo(place.Longitude, place.Latitude);
             };
 
             // Status bar: live scale and area from the map view, weather from Open-Meteo (no fixed placeholder text).
