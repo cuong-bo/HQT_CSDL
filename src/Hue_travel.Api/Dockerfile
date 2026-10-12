@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY src/Hue_travel.Api/Hue_travel.Api.csproj src/Hue_travel.Api/
 RUN dotnet restore src/Hue_travel.Api/Hue_travel.Api.csproj
