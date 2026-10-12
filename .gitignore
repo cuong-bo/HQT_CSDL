@@ -6,6 +6,12 @@ installer/output/
 .superpowers/
 .claude/
 
+# tài liệu nháp, mẫu thiết kế và bản nén trùng dữ liệu: giữ trên máy, không đưa lên GitHub
+GiaoDien/
+docs/previews/
+docs/superpowers/
+DuLieu.zip
+
 # secrets and local settings
 .env
 appsettings.Development.json

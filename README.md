@@ -30,9 +30,7 @@ Hệ tọa độ thống nhất: **VN-2000 / UTM 48N (EPSG:3405)**, đơn vị m
 | `deploy/` | Docker Compose, Caddy (HTTP), script cài VPS / cập nhật / sao lưu — xem `deploy/README.md` |
 | `installer/` | bộ cài Inno Setup — xem `installer/README.md` |
 | `docs/` | kế hoạch (`ke-hoach-trien-khai-vps.md`) và từ điển dữ liệu (`tai-lieu-du-lieu.md`) |
-| `GiaoDien/` | bản thiết kế giao diện tham chiếu |
-
-`DuLieu/` (dữ liệu gốc, 64 MB) không nằm trong Git thông thường.
+| `DuLieu/DuLieu/` | dữ liệu gốc dạng shapefile (khoảng 64 MB, lưu thẳng trong Git, không dùng Git LFS) |
 
 ## Chạy thử nhanh
 
