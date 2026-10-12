@@ -179,6 +179,7 @@ public class ApiTests(ApiFixture fixture)
         JsonElement config = await Json(await fixture.CreateClient().GetAsync("/v1/config"));
         Assert.False(string.IsNullOrEmpty(config.GetProperty("tileUrl").GetString()));
         Assert.False(string.IsNullOrEmpty(config.GetProperty("minimumClientVersion").GetString()));
+        Assert.Equal(JsonValueKind.Object, config.GetProperty("tileUrls").ValueKind);   // empty unless the operator set per-map addresses
     }
 
     [RequiresDbFact]

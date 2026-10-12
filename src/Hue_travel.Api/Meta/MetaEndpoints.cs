@@ -4,7 +4,8 @@ using Npgsql;
 
 namespace Hue_travel.Api.Meta;
 
-public sealed record ClientConfigDto(string ApiVersion, string MinimumClientVersion, string TileUrl, string TileAttribution);
+public sealed record ClientConfigDto(
+    string ApiVersion, string MinimumClientVersion, string TileUrl, string TileAttribution, IReadOnlyDictionary<string, string> TileUrls);
 
 public static class MetaEndpoints
 {
@@ -20,6 +21,6 @@ public static class MetaEndpoints
         });
 
         app.MapGet("/v1/config", (IOptions<ClientSettings> client) =>
-            Results.Ok(new ClientConfigDto(ApiVersion, client.Value.MinimumVersion, client.Value.TileUrl, client.Value.TileAttribution)));
+            Results.Ok(new ClientConfigDto(ApiVersion, client.Value.MinimumVersion, client.Value.TileUrl, client.Value.TileAttribution, client.Value.TileUrls)));
     }
 }

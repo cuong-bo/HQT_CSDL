@@ -419,5 +419,35 @@ Check 'auth: restore succeeds' (Await ($auth8.RestoreAsync())) 'True'
 Check 'auth: restore knows the password is temporary' "$($auth8.MustChangePassword)" 'True'
 Remove-Item $sessionPath -ErrorAction SilentlyContinue
 
+# server-announced tile addresses
+$cfgT = GetT ($online + 'ApiConfigSource')
+$h9 = New-Object FakeHandler
+$h9.Responses.Enqueue([object[]]@(200, '{"apiVersion":"1.0","tileUrl":"x","tileAttribution":"Map credit","tileUrls":{"roadmap":"https://tiles.example/{zoom}/{x}/{y}.png","satellite":"ftp://bad/{x}/{y}/{zoom}","hybrid":"https://no-placeholders.example/t.png"}}'))
+$api9 = $apiT.GetConstructors()[0].Invoke([object[]]@('http://test.local', [Activator]::CreateInstance($storeT, @($sessionPath)), [System.Net.Http.HttpMessageHandler]$h9, $null))
+$cfg = Await ($cfgT.GetMethod('FetchAsync').Invoke($null, [object[]]@($api9, $none)))
+Check 'config: tile addresses are read' $cfg.TileUrls.Count '3'
+Check 'config: credit line is read' $cfg.TileAttribution 'Map credit'
+$h10 = New-Object FakeHandler
+$h10.Responses.Enqueue([object[]]@(500, '{}'))
+$api10 = $apiT.GetConstructors()[0].Invoke([object[]]@('http://test.local', [Activator]::CreateInstance($storeT, @($sessionPath)), [System.Net.Http.HttpMessageHandler]$h10, $null))
+Check 'config: a server error gives empty settings' ((Await ($cfgT.GetMethod('FetchAsync').Invoke($null, [object[]]@($api10, $none)))).TileUrls.Count) '0'
+
+$catT = GetT 'Hue_travel.MapEngine.BaseMapCatalog'
+$apply = $catT.GetMethod('ApplyOverrides')
+Check 'tiles: no addresses means no change' ($apply.Invoke($null, [object[]]@($null, ''))) 'False'
+Check 'tiles: an empty list means no change' ($apply.Invoke($null, [object[]]@(([System.Collections.Generic.Dictionary[string,string]]::new()), ''))) 'False'
+$cfgUrls = New-Object 'System.Collections.Generic.Dictionary[string,string]'
+$cfgUrls['roadmap'] = 'https://tiles.example/{zoom}/{x}/{y}.png'
+$cfgUrls['satellite'] = 'ftp://bad/{x}/{y}/{zoom}'
+$cfgUrls['hybrid'] = 'https://no-placeholders.example/t.png'
+Check 'tiles: a valid address is applied' ($apply.Invoke($null, [object[]]@([System.Collections.Generic.Dictionary[string,string]]$cfgUrls, 'Map credit'))) 'True'
+$maps = $catT.GetProperty('All').GetValue($null)
+Check 'tiles: roadmap uses the new address' (($maps | Where-Object { $_.Id -eq 'roadmap' }).TileUrl) 'https://tiles.example/{zoom}/{x}/{y}.png'
+Check 'tiles: roadmap shows the new credit' (($maps | Where-Object { $_.Id -eq 'roadmap' }).Attribution) 'Map credit'
+Check 'tiles: invalid address keeps the built-in satellite' (($maps | Where-Object { $_.Id -eq 'satellite' }).TileUrl -like 'http://mt1.google.com/*') 'True'
+Check 'tiles: address without placeholders keeps the built-in hybrid' (($maps | Where-Object { $_.Id -eq 'hybrid' }).TileUrl -like 'http://mt1.google.com/*') 'True'
+Check 'tiles: the changed map gets a fresh provider id' ((($maps | Where-Object { $_.Id -eq 'roadmap' }).ProviderId) -ne 10001) 'True'
+Remove-Item $sessionPath -ErrorAction SilentlyContinue
+
 Write-Host "passed=$script:pass failed=$script:fail"
 if ($script:fail -gt 0) { exit 1 }

@@ -24,6 +24,7 @@ namespace Hue_travel.Panels.RouteOptimizer
         private static readonly string[] StopIds = { "DL021", "DL024", "DL029", "DL033" };   // looked up first; the name is the fallback
 
         private readonly Poi[] stopPois = new Poi[4];
+        private readonly Poi[] chosenPois = new Poi[4];   // places the visitor put into a row instead of the suggested one
         private IList<Poi> startPois = new List<Poi>();
         private ApiRouteService routeService;
         private int planVersion;
@@ -67,16 +68,28 @@ namespace Hue_travel.Panels.RouteOptimizer
             }
         }
 
-        /// <summary>Ticks the row that shows this place; false when the place is not one of the suggested stops.</summary>
+        /// <summary>
+        /// Ticks the row that shows this place. A place that is not among the suggested stops takes over the first row
+        /// that is not ticked (the last row when all are ticked); false when the place has no position on the map.
+        /// </summary>
         public bool TrySelectStop(Poi poi)
         {
+            if (poi == null || !poi.HasLocation) return false;
             for (int i = 0; i < stopPois.Length; i++)
             {
                 if (stopPois[i] == null || stopPois[i].Id != poi.Id) continue;
                 stops[i].Checked = true;
                 return true;
             }
-            return false;
+
+            int slot = Array.FindIndex(stops, s => !s.Checked);
+            if (slot < 0) slot = stops.Length - 1;
+            chosenPois[slot] = poi;
+            bool wasChecked = stops[slot].Checked;
+            ResolvePlaces();
+            if (wasChecked) UpdatePlan();   // the row kept its tick but now shows another place
+            else stops[slot].Checked = true;
+            return true;
         }
 
         private readonly RouteStopRow[] stops;
@@ -174,7 +187,9 @@ namespace Hue_travel.Panels.RouteOptimizer
         {
             for (int i = 0; i < stops.Length; i++)
             {
-                Poi poi = PoiCatalog.All.FirstOrDefault(p => p.Id == StopIds[i] && p.HasLocation) ?? FindByName(PoiCatalog.All.Where(p => p.HasLocation), StopNames[i]);
+                Poi chosen = chosenPois[i] == null ? null : PoiCatalog.All.FirstOrDefault(p => p.Id == chosenPois[i].Id && p.HasLocation);
+                chosenPois[i] = chosen;
+                Poi poi = chosen ?? PoiCatalog.All.FirstOrDefault(p => p.Id == StopIds[i] && p.HasLocation) ?? FindByName(PoiCatalog.All.Where(p => p.HasLocation), StopNames[i]);
                 stopPois[i] = poi;
                 stops[i].Visible = poi != null;
                 if (poi == null) continue;

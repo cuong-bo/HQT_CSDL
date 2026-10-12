@@ -158,7 +158,7 @@ namespace Hue_travel.Shell
             {
                 TogglePanel(routeOptimizerPanel, true);
                 if (routeOptimizerPanel.TrySelectStop(poi)) toast.ShowMessage("Đã thêm vào lộ trình: " + poi.Name, ToastKind.Success);
-                else toast.ShowMessage("Bảng lộ trình hiện gợi ý 4 điểm: Đại Nội, Thiên Mụ, Lăng Tự Đức, Lăng Khải Định", ToastKind.Info);
+                else toast.ShowMessage("Địa điểm này chưa có vị trí trên bản đồ nên chưa thêm được vào lộ trình", ToastKind.Info);
             };
 
         }
@@ -343,6 +343,9 @@ namespace Hue_travel.Shell
                 IReadOnlyList<Poi> cached = PoiCache.TryLoad(ServerSettings.BaseUrl);
                 if (cached != null) PoiCatalog.Replace(cached);
                 if (await auth.RestoreAsync()) await LoadFavoritesAsync();
+
+                ApiConfigSource config = await ApiConfigSource.FetchAsync(api, lifetime.Token);
+                if (BaseMapCatalog.ApplyOverrides(config.TileUrls, config.TileAttribution)) mapHost.ReloadBaseMap();
 
                 IReadOnlyList<Poi> fresh = await ApiPoiSource.FetchAllAsync(api, lifetime.Token);
                 if (fresh.Count == 0) return;

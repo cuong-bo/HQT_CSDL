@@ -133,6 +133,7 @@
     <Compile Include="Services\Online\ApiRouteService.cs" />
     <Compile Include="Services\Online\ApiAreaLocator.cs" />
     <Compile Include="Services\Online\ApiWeatherService.cs" />
+    <Compile Include="Services\Online\ApiConfigSource.cs" />
     <Compile Include="Account\AccountUi.cs" />
     <Compile Include="Account\Dialogs.cs" />
     <Compile Include="Account\AccountTab.cs" />

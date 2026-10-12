@@ -334,6 +334,13 @@ namespace Hue_travel.MapEngine
             ApplyTiles(info);
         }
 
+        /// <summary>Applies the current base map again, after the catalog got new tile addresses.</summary>
+        public void ReloadBaseMap()
+        {
+            BaseMapInfo info = BaseMapCatalog.Find(baseMapId);
+            if (info != null) ApplyTiles(info);
+        }
+
         // The base map is a web tile layer; MapWinGIS still does zoom, pan, measuring and the coordinate read-out.
         private void ApplyTiles(BaseMapInfo info)
         {
