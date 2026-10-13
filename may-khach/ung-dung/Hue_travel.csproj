@@ -96,9 +96,6 @@
     <Compile Include="Theme\InputField.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Panels\TravelGuide\TourCard.cs">
-      <SubType>Component</SubType>
-    </Compile>
     <Compile Include="Theme\NoAutoScrollPanel.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -111,9 +108,7 @@
     <Compile Include="Models\PoiCategory.cs" />
     <Compile Include="Models\Poi.cs" />
     <Compile Include="Models\RouteStep.cs" />
-    <Compile Include="Models\TourSuggestion.cs" />
     <Compile Include="SampleData\SamplePois.cs" />
-    <Compile Include="SampleData\SampleTours.cs" />
     <Compile Include="MapEngine\MapViewChangedEventArgs.cs" />
     <Compile Include="Services\MapScale.cs" />
     <Compile Include="Services\Online\ServerSettings.cs" />
@@ -239,9 +234,11 @@
     <Compile Include="Panels\TravelGuide\TravelGuidePanel.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Panels\TravelGuide\TravelGuidePanel.Designer.cs">
-      <DependentUpon>TravelGuidePanel.cs</DependentUpon>
+    <Compile Include="Panels\TravelGuide\GuideContent.cs" />
+    <Compile Include="Panels\TravelGuide\InfoRows.cs">
+      <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Panels\TravelGuide\TourList.cs" />
     <Compile Include="Panels\PoiIdentify\PoiIdentifyCard.cs">
       <SubType>Form</SubType>
     </Compile>

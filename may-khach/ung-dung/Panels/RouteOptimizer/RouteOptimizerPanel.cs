@@ -139,6 +139,19 @@ namespace Hue_travel.Panels.RouteOptimizer
             return true;
         }
 
+        /// <summary>
+        /// Fills the form with a tour from the guide (the first place is the start, the others are the stops, in order) and asks
+        /// the server for the road route straight away. When the route cannot be found the form stays filled, with the reason shown.
+        /// </summary>
+        public Task LoadTourAsync(IReadOnlyList<Poi> places)
+        {
+            ResetAll();
+            if (places == null || places.Count < 2) return Task.FromResult(0);
+            SetStart(FromPlace(places[0]));
+            foreach (Poi stop in places.Skip(1)) AddStop(stop);
+            return FindRouteAsync();
+        }
+
         /// <summary>Sets the start to a point picked on the map.</summary>
         public void SetStartFromMap(MapXY point, double longitude, double latitude)
         {

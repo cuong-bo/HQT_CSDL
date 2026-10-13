@@ -217,6 +217,11 @@ namespace Hue_travel.Shell
                 double longitude, latitude;
                 if (mapHost.TryToDegrees(point, out longitude, out latitude)) routeOptimizerPanel.SetStartFromMap(point, longitude, latitude);
             };
+            travelGuidePanel.TourChosen += (s, tour) =>
+            {
+                ShowSidePanel(NavRail.Route);                  // the form shows the tour, and the reason if the route cannot be found
+                Safe(routeOptimizerPanel.LoadTourAsync(tour.Places));
+            };
             poiIdentifyCard.AddToRouteRequested += (s, poi) =>
             {
                 ShowSidePanel(NavRail.Route);

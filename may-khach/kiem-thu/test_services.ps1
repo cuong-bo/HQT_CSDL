@@ -245,6 +245,18 @@ Check 'repo DL001 utm x plausible' ([int]($hv.X -gt 700000 -and $hv.X -lt 900000
 Check 'repo DL001 lat' ([math]::Round($hv.Latitude, 4)) '16.1908'
 $poiCat = (GetT 'Hue_travel.Services.Data.PoiCatalog').GetMethod('Load').Invoke($null, @([string]$dataDir))
 Check 'catalog loads real data' $poiCat.Count '190'
+# the guide's tours only name places that exist in the shipped data
+$guideT = GetT 'Hue_travel.Panels.TravelGuide.GuideContent'
+$guideTours = $guideT.GetField('Tours').GetValue($null)
+$knownIds = @{}
+foreach ($place in $poiCat) { $knownIds[[string]$place.Id] = $true }
+Check 'guide: has tours' ($guideTours.Count -ge 3) 'True'
+foreach ($tour in $guideTours) {
+    $missingIds = @($tour.PlaceIds | Where-Object { -not $knownIds.ContainsKey([string]$_) })
+    Check ('guide: tour places exist: ' + $tour.Title) ($missingIds -join ',') ''
+    Check ('guide: tour has at least two places: ' + $tour.Title) ($tour.PlaceIds.Count -ge 2) 'True'
+}
+Check 'guide: tips and contacts are filled' (($guideT.GetField('Tips').GetValue($null).Count -ge 3) -and ($guideT.GetField('Contacts').GetValue($null).Count -ge 1)) 'True'
 $poiMissing = (GetT 'Hue_travel.Services.Data.PoiCatalog').GetMethod('Load').Invoke($null, @('Z:\missing\dir'))
 Check 'catalog falls back to samples' ([int]($poiMissing.Count -gt 0 -and $poiMissing.Count -lt 190)) '1'
 
