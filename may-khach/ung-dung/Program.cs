@@ -26,6 +26,10 @@ namespace Hue_travel
 
             // Sign in first, then the main window. Signing out (or an ended session) comes back to the sign-in screen.
             AppSession session = AppSession.Create();
+
+            // The map data is downloaded from the server (the first time, and when a newer version is published) before anything uses it.
+            if (!BaseMapBootstrap.Run(session)) return;
+
             while (true)
             {
                 using (var login = new LoginForm(session))

@@ -42,7 +42,7 @@ Hai phần chỉ giao tiếp qua HTTP/JSON; mỗi phần dựng, kiểm thử v�
 
 | Mục | Nội dung |
 |---|---|
-| `ung-dung/` | ứng dụng WinForms (.NET Framework 4.7.2, x86) kèm `Data/shp` (bản đồ nền và địa điểm dự phòng, **không** có nút giao thông) |
+| `ung-dung/` | ứng dụng WinForms (.NET Framework 4.7.2, x86) tự tải dữ liệu bản đồ (`Data/shp`) từ máy chủ ở lần chạy đầu và khi có bản mới |
 | `Hue_travel.sln` | solution Visual Studio |
 | `bo-cai/` | bộ cài Inno Setup (`HueTravel.iss`) |
 | `kiem-thu/` | test dịch vụ của ứng dụng (PowerShell 32-bit) |

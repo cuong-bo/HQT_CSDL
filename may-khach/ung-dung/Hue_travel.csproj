@@ -42,6 +42,8 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Security" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -274,6 +276,10 @@
     </Compile>
     <Compile Include="Services\Data\PoiPhotos.cs" />
     <Compile Include="Services\Data\PhotoStore.cs" />
+    <Compile Include="Services\Data\BaseMapStore.cs" />
+    <Compile Include="Services\Online\BaseMapUpdater.cs" />
+    <Compile Include="Welcome\BaseMapDownloadForm.cs" />
+    <Compile Include="Welcome\BaseMapBootstrap.cs" />
     <Compile Include="Services\Online\PhotoSync.cs" />
     <Compile Include="Auth\AuthValidation.cs" />
     <Compile Include="Welcome\AuthField.cs">
@@ -344,9 +350,6 @@
     <None Include="Resources\LICENSES.md" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Data\shp\**\*.*" Exclude="Data\shp\NutMangGiaoThong.*;Data\shp\*.xml;Data\shp\*.sbn;Data\shp\*.sbx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="Data\Photos\README.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

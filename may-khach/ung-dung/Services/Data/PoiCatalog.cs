@@ -11,12 +11,12 @@ namespace Hue_travel.Services.Data
     {
         private static IReadOnlyList<Poi> current;
 
-        public static string DefaultDataDir => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "shp");
+        public static string DefaultDataDir => BaseMapStore.Folder;
 
         /// <summary>Why the real data could not be used (null when it loaded, or has not been tried).</summary>
         public static string LastError { get; private set; }
 
-        /// <summary>The places in use right now: the bundled data at first, replaced by the server's list when it arrives.</summary>
+        /// <summary>The places in use right now: the downloaded map data at first, replaced by the server's list when it arrives.</summary>
         public static IReadOnlyList<Poi> All => current ?? (current = Load(DefaultDataDir));
 
         /// <summary>Raised (on the UI thread) after <see cref="Replace"/>.</summary>

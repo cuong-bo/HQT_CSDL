@@ -68,6 +68,12 @@ scripts/deploy.sh rollback   # quay về bản trước theo ý mình
 
 Migration mới (`co-so-du-lieu/migrations/V00N__*.sql`) được áp dụng khi chạy `deploy.sh import`; dữ liệu đã sửa qua app không bị ghi đè.
 
+**Dữ liệu bản đồ cho máy khách.** Máy khách tự tải bản đồ nền từ máy chủ (gói nén khoảng 33 MB) ở lần mở đầu và khi có phiên bản mới, nên đổi dữ
+liệu trong `du-lieu/shp` hoặc `du-lieu/nen-ban-do` chỉ cần `deploy.sh import` (hoặc riêng `deploy.sh pack`); không phát hành lại bộ cài. Gói nằm trong
+volume Docker `basemap_dist` (giữ phiên bản mới nhất và một bản trước nó), Caddy phục vụ ở `/static/basemap/...`, bản kê ở `GET /v1/basemap/manifest`.
+Nếu quên chạy `pack`, máy khách chưa có bản đồ sẽ báo "Máy chủ chưa có dữ liệu bản đồ để tải". Bản kê đi qua `/v1` nên được ký như mọi phản hồi khác
+(mục "Ký phản hồi"): máy khách có khóa công khai sẽ từ chối bản kê bị sửa, và bản kê chứa sha256 của gói nên gói giả cũng bị từ chối.
+
 **Cập nhật máy chủ trước khi dùng bản máy khách mới.** Bảng quản trị, ảnh địa điểm và "Đánh giá của tôi" cần máy chủ có
 migration V010 và API mới: sau `git pull`, chạy `scripts/deploy.sh update` rồi `scripts/deploy.sh import`. Máy chủ cũ trả 404/405 cho các
 trang này; ứng dụng sẽ báo "Máy chủ đang chạy bản cũ" thay vì hiện danh sách trống.
@@ -121,4 +127,4 @@ scripts/restore.sh /var/backups/hue-travel/daily/huegis-YYYY-MM-DD.dump
 | Giả địa chỉ IP để né giới hạn tốc độ | API chỉ tin `X-Forwarded-For` từ mạng nội bộ của Caddy và không mở cổng ra ngoài |
 | Lộ khóa JWT hoặc mật khẩu CSDL | Chỉ ở `.env` (không vào Git), API dùng role CSDL giới hạn (`huegis_app`, không sửa được nhật ký kiểm toán) |
 | Mất dữ liệu | Sao lưu hằng đêm + bản ngoài VPS + diễn tập khôi phục |
-| Dịch vụ ngừng | `/healthz` được giám sát; `deploy.sh rollback`; app có chế độ ngoại tuyến đọc dữ liệu đi kèm |
+| Dịch vụ ngừng | `/healthz` được giám sát; `deploy.sh rollback`; app có chế độ ngoại tuyến đọc dữ liệu bản đồ đã tải về máy |

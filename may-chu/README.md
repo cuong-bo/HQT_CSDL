@@ -17,6 +17,8 @@ may-chu/
 ├── co-so-du-lieu/        migrations/, import/ (SQL dựng đường), run.sh (nạp shapefile)
 ├── docker-csdl/          Dockerfile PostgreSQL + PostGIS + pgRouting
 ├── du-lieu/shp/          shapefile máy chủ cần (địa điểm, mạng đường, nút giao thông, ranh giới)
+├── du-lieu/nen-ban-do/   lớp chỉ để vẽ bản đồ nền (biển, nước ngoài, sông, suối); không nạp vào CSDL
+├── scripts/pack-basemap.py  đóng gói dữ liệu bản đồ cho máy khách tự tải (chạy bằng `deploy.sh pack`)
 ├── scripts/              setup-vps.sh, deploy.sh, backup.sh, restore.sh, gen-signing-key.sh
 ├── kiem-thu/             test API (xUnit)
 ├── docker-compose.yml    db + api + caddy (+ job "tools" để nạp dữ liệu)

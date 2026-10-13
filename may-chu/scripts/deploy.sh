@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Day-to-day operations on the VPS.  Usage: scripts/deploy.sh <command>
 #   up        start everything (first time: also run "import")
-#   import    build / refresh the database from du-lieu/shp (safe to repeat; keeps edits made through the app)
+#   import    build / refresh the database from du-lieu/shp (safe to repeat; keeps edits made through the app),
+#             then pack the base map for the app to download
+#   pack      only pack the base map (du-lieu/shp + du-lieu/nen-ban-do) into the package the app downloads
 #   update    git pull, rebuild the API, restart it; goes back to the previous image if /healthz does not answer
 #   rollback  put the previous API image back
 #   status    containers and health
@@ -30,6 +32,10 @@ case "${1:-}" in
     import)
         "${compose[@]}" up -d db
         "${compose[@]}" --profile tools run --rm tools
+        "$0" pack
+        ;;
+    pack)
+        "${compose[@]}" --profile tools run --rm pack-basemap
         ;;
     update)
         git pull --ff-only
@@ -56,7 +62,7 @@ case "${1:-}" in
         "${compose[@]}" logs -f --tail=100
         ;;
     *)
-        sed -n '2,9p' "$0"
+        sed -n '2,11p' "$0"
         exit 1
         ;;
 esac

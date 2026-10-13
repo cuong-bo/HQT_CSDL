@@ -83,7 +83,7 @@ Mọi lệnh từ đây chạy trong thư mục `may-chu`:
 ```bash
 cd /opt/hue-travel/may-chu
 scripts/deploy.sh up        # dựng và khởi động 3 dịch vụ (lần đầu mất 5–10 phút để tải và dựng)
-scripts/deploy.sh import    # nạp dữ liệu, dựng đồ thị đường, kiểm tra
+scripts/deploy.sh import    # nạp dữ liệu, dựng đồ thị đường, kiểm tra, rồi đóng gói bản đồ cho máy khách tải
 scripts/deploy.sh status    # phải in {"status":"ok"}
 ```
 Nếu `deploy.sh` báo "Permission denied", chạy `bash scripts/deploy.sh up` (và tương tự cho các lệnh khác).
@@ -92,6 +92,11 @@ Nếu `deploy.sh` báo "Permission denied", chạy `bash scripts/deploy.sh up` (
 `du-lieu/shp`, dựng bảng địa điểm, dựng đồ thị đường từ `MangGiaoThong` và `NutMangGiaoThong`, gắn mỗi địa điểm vào đường
 gần nhất, rồi kiểm tra. Kết thúc phải thấy bảng số địa điểm theo nhóm và dòng `route Ga Hue -> Dai Noi: ... s`.
 Cảnh báo `WARNING: ... POI are more than 150 m from any road` là lỗi dữ liệu đã biết, không làm dừng cài đặt.
+
+**Đóng gói bản đồ cho máy khách (cuối `import`, hoặc chạy riêng `scripts/deploy.sh pack`):** gom các shapefile máy khách cần vẽ
+(`du-lieu/shp` trừ `NutMangGiaoThong`, cộng `du-lieu/nen-ban-do`) thành một gói nén khoảng 33 MB. Máy khách tự tải gói này ở lần mở
+đầu tiên và khi có phiên bản mới, nên **không cần phát hành lại bộ cài khi đổi dữ liệu**. Kết thúc phải thấy dòng
+`đã đóng gói phiên bản <16 ký tự>: 65 tệp, ... MB nén`. Kiểm tra: `curl http://IP/v1/basemap/manifest` in ra bản kê (không đóng gói thì 404).
 
 ## 6. Kiểm tra từ máy khác
 
@@ -150,6 +155,7 @@ scripts/deploy.sh update     # git pull, dựng lại API; tự quay về bản 
 scripts/deploy.sh import     # chỉ cần khi dữ liệu hoặc cấu trúc cơ sở dữ liệu đổi
 scripts/deploy.sh rollback   # (khi cần) quay về bản API trước
 ```
+Dữ liệu bản đồ nền đổi thì cũng chạy `import` (hoặc riêng `scripts/deploy.sh pack`): máy khách sẽ hỏi người dùng có tải bản mới không.
 `import` an toàn khi chạy lại: chỉnh sửa đã làm qua ứng dụng **không bị ghi đè**; địa điểm biến mất khỏi dữ liệu chỉ bị đánh dấu xóa mềm.
 Tệp `.env` không nằm trong Git nên `git pull` không đụng tới.
 

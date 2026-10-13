@@ -43,6 +43,10 @@ services:
       Signing__PrivateKeyPkcs8: ${SIGNING_KEY:-}
       # Only Caddy (inside this subnet) may tell the API the client address (X-Forwarded-For).
       Proxy__KnownNetworks__0: 172.30.0.0/24
+      # Bản kê dữ liệu bản đồ nền do "pack-basemap" ghi; GET /v1/basemap/manifest trả nguyên văn.
+      Basemap__Directory: /data/basemap
+    volumes:
+      - basemap_dist:/data/basemap:ro
     depends_on:
       db:
         condition: service_healthy
@@ -58,6 +62,7 @@ services:
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
+      - basemap_dist:/srv/basemap:ro
     depends_on:
       - api
     networks: [internal]
@@ -80,6 +85,19 @@ services:
         condition: service_healthy
     networks: [internal]
 
+  # One-off job: packs the base map (shapefiles the Windows app draws) for the app to download.
+  # Run with: docker compose --profile tools run --rm pack-basemap   (scripts/deploy.sh pack; "import" runs it too)
+  pack-basemap:
+    profiles: ["tools"]
+    image: python:3.12-slim
+    command: ["python", "/work/pack-basemap.py", "/work/shp", "/work/nen-ban-do", "/dist"]
+    network_mode: none
+    volumes:
+      - ./scripts/pack-basemap.py:/work/pack-basemap.py:ro
+      - ./du-lieu/shp:/work/shp:ro
+      - ./du-lieu/nen-ban-do:/work/nen-ban-do:ro
+      - basemap_dist:/dist
+
 networks:
   internal:
     ipam:
@@ -89,3 +107,4 @@ networks:
 volumes:
   pgdata: {}
   caddy_data: {}
+  basemap_dist: {}

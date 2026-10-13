@@ -10,15 +10,13 @@ using Hue_travel.Theme;
 namespace Hue_travel.MapEngine
 {
     /// <summary>
-    /// The base map drawn from the project's own Shapefiles (Data\shp) instead of web tiles. From the bottom: the sea, the land of the
+    /// The base map drawn from the project's own Shapefiles (downloaded from the server) instead of web tiles. From the bottom: the sea, the land of the
     /// neighbouring countries, the provinces, the communes, the water (lakes, rivers) and the roads (a wider casing under a narrower
     /// filling). The names of the sea, the countries and the provinces show when the map is zoomed out, those of the communes when
     /// it is zoomed in. Layers that are only for calculation (the road network's nodes) are left out.
     /// </summary>
     internal static class LocalBaseMap
     {
-        public const string FolderName = "shp";
-
         private const double ProvinceNamesFromScale = 120000;    // province names show once the map is at 1:120 000 or smaller
         private const double CountryNamesFromScale = 300000;
         private const double CommuneNamesUntilScale = 150000;
@@ -41,7 +39,8 @@ namespace Hue_travel.MapEngine
             "duong_chuyen_dung", "duong_chuyen_dung_cap_1", "duong_chuyen_dung_cap_2", "duong_chuyen_dung_cap_3", "duong_chuyen_dung_cap_4", "duong_chuyen_dung_cap_5",
         };
 
-        public static string Folder => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", FolderName);
+        /// <summary>Where the layers are read from: the data downloaded from the server (see <see cref="BaseMapStore"/>).</summary>
+        public static string Folder => BaseMapStore.Folder;
 
 
 

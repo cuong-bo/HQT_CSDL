@@ -20,10 +20,11 @@ Windows nhẹ, hiển thị bản đồ và gọi máy chủ khi cần.
 | Tìm đường (đường bộ thật, từng chặng) | ✔ (pgRouting) | chỉ gửi yêu cầu và vẽ kết quả |
 | Xếp thứ tự điểm đến ngắn nhất | ✔ (Held-Karp, tối đa 12 điểm) | chỉ bấm nút |
 | Gắn điểm bắt đầu chọn trên bản đồ vào đường; thời gian từng đoạn theo loại đường; nhớ tạm kết quả 5 phút | ✔ | xe chạy theo thời gian máy chủ trả về nên chậm trên đường nhỏ, nhanh trên đường lớn |
-| Danh sách địa điểm, tìm kiếm, nhóm | ✔ (nguồn chính) | hiển thị; có bản dữ liệu đi kèm để xem khi không có mạng |
+| Danh sách địa điểm, tìm kiếm, nhóm | ✔ (nguồn chính) | hiển thị; dùng bản dữ liệu đã tải về để xem khi không có mạng |
 | Tài khoản, đăng nhập, yêu thích, lịch trình đã lưu, báo sai, chủ quản | ✔ | giao diện |
 | Thời tiết, khu vực đang xem | ✔ (trung chuyển) | hiển thị |
-| Vẽ bản đồ nền (xã, tỉnh, sông, đường) | – | ✔ (từ dữ liệu đi kèm bộ cài) |
+| Cung cấp dữ liệu bản đồ nền (gói shapefile + bản kê phiên bản) | ✔ (`deploy.sh pack`, phục vụ qua Caddy) | tự tải ở lần chạy đầu và khi có bản mới |
+| Vẽ bản đồ nền (xã, tỉnh, sông, đường) | – | ✔ (từ dữ liệu đã tải về máy) |
 | Xe giả lập chạy trên tuyến | – | ✔ |
 
 > Khi **không có máy chủ**, ứng dụng vẫn mở được bản đồ và xem địa điểm, nhưng **không tìm được đường** (hiện thông báo
@@ -52,7 +53,7 @@ Cài đặt: `git clone` rồi làm theo [may-chu/HUONG-DAN-CAI-DAT.md](../may-c
 |---|---|
 | `Hue_travel.exe` và thư viện | Dựng bản Release, 32-bit, .NET Framework 4.7.2 |
 | **MapWinGIS** (kèm GDAL) | Bộ cài tự đăng ký `MapWinGIS.ocx`; máy khách không phải cài riêng |
-| `Data\shp\` (bản đồ nền + địa điểm dự phòng) | `NenBien`, `DL_Nc_Ngoai`, `rgXa`, `song_1n`, `song_2n`, `MangGiaoThong`, `DiaPhan_Tinh_2025`, `diem*`. **Không** có `NutMangGiaoThong` |
+| Dữ liệu bản đồ (không có trong bộ cài, **tự tải từ máy chủ**) | Lưu ở `%LocalAppData%\HueTravel\Data\shp\` (mỗi người dùng Windows một bản, vì thư mục cài đặt không ghi được). Gồm `NenBien`, `DL_Nc_Ngoai`, `rgXa`, `song_1n`, `song_2n`, `MangGiaoThong`, `DiaPhan_Tinh_2025`, `diem*` và tệp `version.txt`. **Không** có `NutMangGiaoThong` |
 | `Data\Photos\` | Ảnh địa điểm (nếu có), theo mã địa điểm |
 | Địa chỉ máy chủ | Bộ cài hỏi và lưu vào `%ProgramData%\HueTravel\server.txt` |
 | Khóa công khai (không bắt buộc) | Lưu vào `%ProgramData%\HueTravel\public.key` để kiểm tra phản hồi của máy chủ |
@@ -61,8 +62,15 @@ Tạo bộ cài: `powershell -ExecutionPolicy Bypass -File may-khach/dong-goi.ps
 
 ### Dùng chung, không đóng gói riêng
 
-Kho mã trên GitHub chứa cả hai phần. Dữ liệu shapefile có hai bản: `may-chu/du-lieu/shp/` (máy chủ, có nút giao thông) và `may-khach/ung-dung/Data/shp/` (bản đồ nền đi kèm bộ cài, không có nút giao thông); các lớp dùng chung phải giống nhau. Khi **cập nhật dữ liệu**
-cần làm cả hai việc: nạp lại vào máy chủ (`may-chu/scripts/deploy.sh import`) và phát hành lại bộ cài (dữ liệu bản đồ nền nằm trong bộ cài).
+Kho mã trên GitHub chứa cả hai phần. Dữ liệu shapefile chỉ có **một nguồn**, nằm ở máy chủ: `may-chu/du-lieu/shp/` (địa điểm, đường, nút giao thông, ranh giới, nạp vào PostgreSQL) và `may-chu/du-lieu/nen-ban-do/` (các lớp chỉ để vẽ bản đồ nền: biển, nước ngoài, sông, suối). Máy khách không giữ bản sao trong kho mã.
+
+### Tự tải dữ liệu bản đồ
+
+1. `may-chu/scripts/deploy.sh pack` (cũng chạy ở cuối `deploy.sh import`) gom các lớp máy khách cần (trừ `NutMangGiaoThong`) thành `package.zip`, ghi bản kê `manifest.json` (tên, kích thước, sha256 từng tệp) vào volume `basemap_dist`. Phiên bản = băm nội dung nên dữ liệu không đổi thì phiên bản không đổi.
+2. API trả bản kê ở `GET /v1/basemap/manifest` (có chữ ký như mọi phản hồi `/v1`); Caddy phục vụ gói ở `/static/basemap/<phiên bản>/package.zip` (tệp tĩnh, không qua API).
+3. Máy khách, trước màn hình đăng nhập: chưa có dữ liệu thì **bắt buộc tải** (hiện tiến độ, có nút thử lại); đã có thì hỏi máy chủ tối đa 4 giây, nếu phiên bản khác thì hỏi người dùng có tải ngay không. Tải về `basemap.download`, kiểm tra sha256 của gói và của từng tệp, giải nén vào `shp.new`, rồi đổi tên thư mục nguyên tử (`shp` cũ thành `shp.old`). Bản đang dùng không bị đụng tới cho tới khi bản mới đủ và đã kiểm tra; mất mạng, ổ đầy hay tắt app giữa chừng đều giữ nguyên bản cũ.
+
+Khi **cập nhật dữ liệu**: chỉ cần đưa dữ liệu mới vào `may-chu/du-lieu` và chạy `deploy.sh import` trên máy chủ. **Không cần** phát hành lại bộ cài.
 
 ## Phiên bản và tương thích
 

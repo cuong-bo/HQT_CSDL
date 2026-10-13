@@ -189,7 +189,8 @@ Check 'null set means all' (($apply.Invoke($null, @($pois, $null, $null))).Count
 
 
 # ---- Real tourism data (Phase 1): Shapefile reader, grouping, repository
-$dataDir = Join-Path $repoRoot 'ung-dung/Data/shp'
+# The map data is not in the client folder any more (the app downloads it); the server's copy is the same files.
+$dataDir = Join-Path (Split-Path -Parent $repoRoot) 'may-chu/du-lieu/shp'
 $reader = GetT 'Hue_travel.Services.Data.ShapefilePointReader'
 $stay = $reader.GetMethod('Read').Invoke($null, @([string](Join-Path $dataDir 'diemLuuTru.shp')))
 Check 'stay layer record count' $stay.Count '38'

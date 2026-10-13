@@ -1,16 +1,31 @@
-# Plain HTTP only: there is no domain name, so no certificate. Everything goes to the API.
+# Plain HTTP only: there is no domain name, so no certificate. Everything goes to the API, except the base map download below.
 {
     auto_https off
     admin off
 }
 
 :80 {
-    encode zstd gzip
     header -Server
 
-    reverse_proxy api:8080 {
-        health_uri /healthz
-        health_interval 30s
+    # Dữ liệu bản đồ nền cho máy khách tải về (do scripts/pack-basemap.py ghi). Phục vụ thẳng từ đĩa, không qua API, và
+    # không nén lại: tệp zip đã nén, còn Content-Length giúp máy khách hiện tiến độ. Mỗi phiên bản nằm ở một thư mục
+    # riêng nên không bao giờ đổi nội dung.
+    handle_path /static/basemap/* {
+        root * /srv/basemap
+        @versioned path /*/*
+        header @versioned Cache-Control "public, max-age=31536000, immutable"
+        @latest path /latest.json
+        header @latest Cache-Control "no-cache"
+        file_server
+    }
+
+    handle {
+        encode zstd gzip
+
+        reverse_proxy api:8080 {
+            health_uri /healthz
+            health_interval 30s
+        }
     }
 
     log {

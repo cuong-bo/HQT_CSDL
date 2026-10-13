@@ -62,7 +62,8 @@ else {
     if (-not (Test-Path (Join-Path $release "Hue_travel.exe"))) { throw "Không thấy Hue_travel.exe trong $release" }
 }
 
-# Dữ liệu chỉ để máy chủ tính toán không đi kèm máy khách (csproj đã loại). Kiểm tra lại cho chắc.
+# Dữ liệu bản đồ không đi kèm bộ cài: máy khách tự tải từ máy chủ ở lần chạy đầu. Riêng lớp chỉ để máy chủ tính đường
+# (NutMangGiaoThong) càng không được lọt vào bản máy khách; kiểm tra lại cho chắc (chỉ có nghĩa với bản chép từ máy cũ).
 $shp = Join-Path $release "Data\shp"
 foreach ($mustNot in @("NutMangGiaoThong.shp", "NutMangGiaoThong.dbf")) {
     if (-not $SourceDir -and (Test-Path (Join-Path $shp $mustNot))) { throw "$mustNot không được nằm trong bản máy khách (chỉ dành cho máy chủ)." }

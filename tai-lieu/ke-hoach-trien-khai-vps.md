@@ -73,13 +73,13 @@ may-chu/api               API .NET 8 chạy trên Linux
 may-chu/co-so-du-lieu     migrations/ (V001__..., V002__...), import/ (nạp shapefile, đồ thị đường), run.sh
 may-chu/du-lieu/shp       shapefile máy chủ cần (có NutMangGiaoThong)
 may-chu/docker-compose.yml, Caddyfile, .env.example, scripts/ (cài VPS, deploy, sao lưu), kiem-thu/ (xUnit)
-may-khach/ung-dung        client WinForms (kèm Data/shp bản đồ nền)
+may-khach/ung-dung        client WinForms (dữ liệu bản đồ tự tải từ máy chủ)
 may-khach/bo-cai          Inno Setup cho client
 may-khach/kiem-thu        test dịch vụ client
 tai-lieu/                 tài liệu chung
 ```
 
-Dữ liệu shapefile (khoảng 60 MB mỗi bản) nằm trong kho Git ở `may-chu/du-lieu/shp/` và `may-khach/ung-dung/Data/shp/`.
+Dữ liệu shapefile (khoảng 70 MB, nén thành gói tải khoảng 33 MB) chỉ nằm một nơi trong kho Git: `may-chu/du-lieu/shp/` và `may-chu/du-lieu/nen-ban-do/`; máy khách tự tải về từ máy chủ.
 
 ## 4. Các giai đoạn
 

@@ -13,7 +13,7 @@ Máy chủ cài riêng, xem [../may-chu/HUONG-DAN-CAI-DAT.md](../may-chu/HUONG-D
 | Hệ điều hành | Windows 10 hoặc 11 (64-bit; ứng dụng là 32-bit, vẫn chạy bình thường) |
 | .NET Framework | 4.7.2 trở lên (Windows 10/11 bản cập nhật gần đây đã có sẵn) |
 | Quyền | Quyền **quản trị** lúc cài (để đăng ký thành phần bản đồ) |
-| Mạng | Cần để đăng nhập và **tìm đường**; xem bản đồ và địa điểm không cần mạng |
+| Mạng | Cần để đăng nhập, **tìm đường** và **tải dữ liệu bản đồ lần đầu** (khoảng 33 MB, chỉ một lần); sau khi đã tải, xem bản đồ và địa điểm không cần mạng |
 | Màn hình | Từ 1280 × 720; hỗ trợ màn hình độ phân giải cao |
 
 ### A2. Cài đặt
@@ -94,8 +94,8 @@ Dùng Windows Sandbox hoặc máy ảo Windows 10/11 **chưa cài MapWinGIS**:
 ### B4. Phát hành phiên bản mới
 1. Tăng số phiên bản (`-Version`), dựng lại bộ cài.
 2. Nếu phiên bản cũ không còn tương thích với máy chủ, nâng `MIN_CLIENT_VERSION` trong `may-chu/.env` trên máy chủ để máy cũ được nhắc cập nhật.
-3. Khi đổi **dữ liệu bản đồ nền** (`may-khach/ung-dung/Data/shp`) phải phát hành lại bộ cài (dữ liệu nằm trong bộ cài); dữ liệu địa điểm và đường
-   thì nạp lại ở máy chủ (`may-chu/scripts/deploy.sh import`).
+3. Khi đổi **dữ liệu bản đồ** (nền, địa điểm, đường) **không cần** phát hành lại bộ cài: chỉ cần đưa dữ liệu mới vào `may-chu/du-lieu` và chạy
+   `may-chu/scripts/deploy.sh import` (hoặc `deploy.sh pack`) trên máy chủ. Lần mở app sau, máy khách thấy có bản mới và hỏi người dùng có tải về không.
 4. Bộ cài chưa ký số nên Windows SmartScreen cảnh báo; ký mã (code signing) khi có điều kiện.
 
 ### B5. Tệp ứng dụng ghi trên máy người dùng
