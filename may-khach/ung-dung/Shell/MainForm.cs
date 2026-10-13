@@ -299,6 +299,13 @@ namespace Hue_travel.Shell
             poiIdentifyCard.FavoriteIds = favoriteIds;
             mapHost.HighlightPoi(poi);   // the place the card is about is ringed on the map until the card is closed
             poiIdentifyCard.ShowPoi(poi);
+            if (api != null) Safe(SyncPhotosAsync(poi));
+        }
+
+        // The server's approved photos of the place come down in the background; the card shows them as soon as they are here.
+        private async Task SyncPhotosAsync(Poi poi)
+        {
+            if (await PhotoSync.SyncAsync(api, poi.Id, lifetime.Token)) poiIdentifyCard.ReloadPhotos(poi.Id);
         }
 
         private void ShowArea()
@@ -313,6 +320,15 @@ namespace Hue_travel.Shell
             accountPanel = new AccountPanel(api, auth);
             accountPanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
             accountPanel.SetRouteSource(() => routeOptimizerPanel.CurrentStopIds);
+            accountPanel.ItineraryRequested += (s, places) =>
+            {
+                ShowSidePanel(NavRail.Route);
+                Safe(routeOptimizerPanel.LoadTourAsync(places));
+            };
+            accountPanel.ReviewRequested += (s, poi) => ReviewsDialog.ShowFor(this, api, poi, auth.CurrentUser != null);
+            poiIdentifyCard.ReviewsAvailable = true;
+            poiIdentifyCard.ReviewsRequested += (s, poi) => ReviewsDialog.ShowFor(this, api, poi, auth.CurrentUser != null);
+            accountPanel.AdminRequested += (s, e) => Safe(OpenAdminConsoleAsync());
             accountPanel.ShowOnMapRequested += (s, poi) => ShowOnMap(poi);
             accountPanel.FavoritesChanged += (s, e) => Safe(LoadFavoritesAsync());
             accountPanel.LoggedOut += (s, e) => ReturnToSignIn(null);
@@ -386,12 +402,31 @@ namespace Hue_travel.Shell
         {
             string[] kinds = { "wrong_info", "closed", "wrong_location", "other" };
             string[] names = { "Sai thông tin", "Đã đóng cửa", "Sai vị trí", "Khác" };
-            int index = Dialogs.Pick(this, "Báo sai: " + poi.Name, new[] { "Loại báo cáo" }, names.Select(n => new[] { n }).ToList());
+            int index = Dialogs.Pick(this, "Báo sai: " + poi.Name, names.Select(n => new ListItem { Title = n, Icon = "campaign" }).ToList(), "Tiếp tục");
             if (index < 0) return;
-            string[] v = Dialogs.Ask(this, "Chi tiết (không bắt buộc)", new DialogField("Mô tả:", "", 3));
+            string[] v = Dialogs.Ask(this, "Chi tiết (không bắt buộc)", new DialogField("Mô tả", "", 3));
             if (v == null) return;
             ApiResponse r = await api.PostAsync("/v1/pois/" + Uri.EscapeDataString(poi.Id) + "/reports", new Dictionary<string, object> { { "kind", kinds[index] }, { "content", v[0] } });
             toast.ShowMessage(r.IsSuccess ? "Đã gửi báo cáo. Cảm ơn bạn" : r.Error, r.IsSuccess ? ToastKind.Success : ToastKind.Error);
+        }
+
+        // The console is a window of its own; when it closed after a place was changed, the map gets the fresh list of places.
+        private async Task OpenAdminConsoleAsync()
+        {
+            UserInfo admin = auth.CurrentUser;
+            if (admin == null || !admin.IsAdmin) return;
+            bool changed;
+            using (var console = new Admin.AdminConsole(api, admin))
+            {
+                console.ShowDialog(this);
+                changed = console.PlacesChanged;
+            }
+            if (!changed) return;
+            IReadOnlyList<Poi> fresh = await ApiPoiSource.FetchAllAsync(api, lifetime.Token);
+            if (fresh.Count == 0) return;
+            PoiCatalog.Replace(fresh);
+            PoiCache.TrySave(fresh, ServerSettings.BaseUrl);
+            toast.ShowMessage("Đã cập nhật danh sách địa điểm", ToastKind.Success);
         }
 
         private void ShowOnMap(Poi poi)

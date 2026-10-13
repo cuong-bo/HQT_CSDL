@@ -4,7 +4,11 @@ using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Collections.Generic;
+using System.Linq;
+using Hue_travel.Account;
 using Hue_travel.Auth;
+using Hue_travel.Models;
 using Hue_travel.Services.Online;
 using Hue_travel.Theme;
 
@@ -55,14 +59,22 @@ namespace Hue_travel.Welcome
         private readonly AuthField fieldUser = new AuthField();
         private readonly AuthField fieldPass = new AuthField();
         private readonly AuthField fieldPass2 = new AuthField();
+        private readonly IconButton btnTypeUser = new IconButton();
+        private readonly IconButton btnTypeOwner = new IconButton();
+        private readonly IconButton btnPlaces = new IconButton();
         private readonly IconButton btnPrimary = new IconButton();
         private readonly IconButton btnSecondary = new IconButton();
         private readonly IconButton btnMinimize = new IconButton();
         private readonly IconButton btnMaximize = new IconButton();
         private readonly IconButton btnClose = new IconButton();
 
+        private const int MaxOwnerPlaces = 5;
+
         private Mode mode;
         private bool busy;
+        private bool ownerAccount;                                       // registering as a place owner (needs places)
+        private IReadOnlyList<Poi> ownerPlaces = new List<Poi>();        // the places the owner asked to manage
+        private int registerDividerY = 724;                              // where "Đã có tài khoản?" is drawn (picture pixels)
         private float scale = 1f, offsetX, offsetY;
 
         private const int WmNcLButtonDown = 0xA1;
@@ -173,6 +185,12 @@ namespace Hue_travel.Welcome
 
             StyleButton(btnPrimary, true);
             StyleButton(btnSecondary, false);
+            StyleChoice(btnTypeUser, "Người dùng", "account_circle", true);
+            StyleChoice(btnTypeOwner, "Chủ quản địa điểm", "pin_drop", false);
+            StyleChoice(btnPlaces, "Chọn địa điểm bạn quản lý", "add", false);
+            btnTypeUser.Click += (s, e) => SetAccountType(false);
+            btnTypeOwner.Click += (s, e) => SetAccountType(true);
+            btnPlaces.Click += (s, e) => ChoosePlaces();
             btnPrimary.Click += async (s, e) => await PrimaryAsync();
             btnSecondary.Click += (s, e) => SetMode(mode == Mode.Login ? Mode.Register : Mode.Login);
 
@@ -187,7 +205,7 @@ namespace Hue_travel.Welcome
             Control[] all =
             {
                 lblTitle, lblSubtitle, lblFooter, lblMessage, lblInfo, lnkForgot, chkRemember, fieldName, fieldUser, fieldPass, fieldPass2,
-                btnPrimary, btnSecondary, btnMinimize, btnMaximize, btnClose,
+                btnTypeUser, btnTypeOwner, btnPlaces, btnPrimary, btnSecondary, btnMinimize, btnMaximize, btnClose,
             };
             foreach (Control c in all) Controls.Add(c);
         }
@@ -216,6 +234,54 @@ namespace Hue_travel.Welcome
                 button.HoverFillColor = ThemeColors.BrandPurpleLight;
                 button.BorderColor = ThemeColors.BrandPurple;
             }
+        }
+
+        // The two account types and the place button share one look: filled purple when chosen, white with a purple edge otherwise.
+        private static void StyleChoice(IconButton button, string text, string icon, bool selected)
+        {
+            button.AutoWidth = false;
+            button.Text = text;
+            button.IconName = icon;
+            button.IconSize = 20;
+            button.Gap = 8;
+            button.Radius = 12;
+            button.HorizontalPadding = 8;
+            button.ForeColor = selected ? Color.White : ThemeColors.BrandPurple;
+            button.IconColor = selected ? Color.White : ThemeColors.BrandPurple;
+            button.FillColor = selected ? ThemeColors.BrandPurple : Color.White;
+            button.HoverFillColor = selected ? Color.FromArgb(110, 54, 163) : ThemeColors.BrandPurpleLight;
+            button.BorderColor = ThemeColors.BrandPurple;
+        }
+
+        private void SetAccountType(bool owner)
+        {
+            ownerAccount = owner;
+            StyleChoice(btnTypeUser, "Người dùng", "account_circle", !owner);
+            StyleChoice(btnTypeOwner, "Chủ quản địa điểm", "pin_drop", owner);
+            lblSubtitle.Text = owner
+                ? "Chủ quản chọn địa điểm mình quản lý; quản trị viên sẽ xác minh rồi duyệt."
+                : "Tạo tài khoản để lưu lộ trình và đánh giá địa điểm";
+            ShowMessage(null, false);
+            ApplyModeLayout();
+            ApplyRegisterVisibility();
+            Invalidate();
+        }
+
+        private void ApplyRegisterVisibility()
+        {
+            bool register = mode == Mode.Register;
+            btnTypeUser.Visible = btnTypeOwner.Visible = register;
+            btnPlaces.Visible = register && ownerAccount;
+        }
+
+        private void ChoosePlaces()
+        {
+            IReadOnlyList<Poi> chosen = Dialogs.PickPlaces(this, "Địa điểm bạn quản lý", MaxOwnerPlaces, ownerPlaces.Select(p => p.Id), "Xong");
+            if (chosen == null) return;
+            ownerPlaces = chosen;
+            string text = chosen.Count == 0 ? "Chọn địa điểm bạn quản lý" : chosen.Count == 1 ? chosen[0].Name : "Đã chọn " + chosen.Count + " địa điểm";
+            StyleChoice(btnPlaces, text, chosen.Count == 0 ? "add" : "check", chosen.Count > 0);
+            ShowMessage(null, false);
         }
 
         private static void StyleWindowButton(IconButton button, string icon, bool isClose)
@@ -284,6 +350,7 @@ namespace Hue_travel.Welcome
             chkRemember.Font = ThemeFonts.Medium(FontPx(17));
             foreach (AuthField f in new[] { fieldName, fieldUser, fieldPass, fieldPass2 }) f.Font = field;
             btnPrimary.Font = btnSecondary.Font = button;
+            btnTypeUser.Font = btnTypeOwner.Font = btnPlaces.Font = ThemeFonts.SemiBold(FontPx(19));
             ApplyModeLayout();
         }
 
@@ -305,15 +372,31 @@ namespace Hue_travel.Welcome
             }
             else if (mode == Mode.Register)
             {
-                lblSubtitle.Bounds = R(1054, 232, 400, 60);
-                fieldName.Bounds = R(1054, 300, 392, 57);
-                fieldUser.Bounds = R(1054, 372, 392, 57);
-                fieldPass.Bounds = R(1054, 444, 392, 57);
-                fieldPass2.Bounds = R(1054, 516, 392, 57);
-                btnPrimary.Bounds = R(1054, 596, 392, 57);
-                btnSecondary.Bounds = R(1054, 746, 392, 54);
-                lblMessage.Bounds = R(1030, 658, 440, 44);
-                lblFooter.Bounds = R(1006, 812, 488, 28);
+                lblTitle.Bounds = R(1054, 146, 400, 62);
+                lblSubtitle.Bounds = R(1054, 208, 400, 62);
+                btnTypeUser.Bounds = R(1054, 276, 192, 50);
+                btnTypeOwner.Bounds = R(1254, 276, 192, 50);
+                fieldName.Bounds = R(1054, 338, 392, 54);
+                fieldUser.Bounds = R(1054, 398, 392, 54);
+                fieldPass.Bounds = R(1054, 458, 392, 54);
+                fieldPass2.Bounds = R(1054, 518, 392, 54);
+                if (ownerAccount)
+                {
+                    btnPlaces.Bounds = R(1054, 582, 392, 50);
+                    btnPrimary.Bounds = R(1054, 644, 392, 54);
+                    lblMessage.Bounds = R(1030, 700, 440, 40);
+                    registerDividerY = 752;
+                    btnSecondary.Bounds = R(1054, 764, 392, 48);
+                    lblFooter.Bounds = R(1006, 820, 488, 26);
+                }
+                else
+                {
+                    btnPrimary.Bounds = R(1054, 586, 392, 54);
+                    lblMessage.Bounds = R(1030, 646, 440, 44);
+                    registerDividerY = 724;
+                    btnSecondary.Bounds = R(1054, 746, 392, 54);
+                    lblFooter.Bounds = R(1006, 812, 488, 28);
+                }
             }
             else
             {
@@ -340,6 +423,8 @@ namespace Hue_travel.Welcome
             lblSubtitle.Visible = lblTitle.Visible = lblFooter.Visible = true;
             fieldUser.Visible = fieldPass.Visible = login || register;
             fieldName.Visible = fieldPass2.Visible = register;
+            if (!register) ownerAccount = false;
+            ApplyRegisterVisibility();
             chkRemember.Visible = lnkForgot.Visible = login;
             btnPrimary.Visible = true;
             btnSecondary.Visible = login || register;
@@ -357,7 +442,7 @@ namespace Hue_travel.Welcome
             else if (register)
             {
                 lblTitle.Text = "Đăng ký";
-                lblSubtitle.Text = "Tạo tài khoản để lưu lộ trình và địa điểm yêu thích";
+                lblSubtitle.Text = ownerAccount ? "Chủ quản chọn địa điểm mình quản lý; quản trị viên sẽ xác minh rồi duyệt." : "Tạo tài khoản để lưu lộ trình và đánh giá địa điểm";
                 fieldPass.Hint = "Mật khẩu (tối thiểu " + AuthValidation.MinPasswordLength + " ký tự)";
                 btnPrimary.IconName = ""; btnPrimary.Text = "Tạo tài khoản";
                 btnSecondary.Text = "Đăng nhập"; btnSecondary.IconName = "account_circle";
@@ -385,6 +470,7 @@ namespace Hue_travel.Welcome
             busy = value;
             foreach (AuthField f in new[] { fieldName, fieldUser, fieldPass, fieldPass2 }) f.Enabled = !value;
             chkRemember.Enabled = btnSecondary.Enabled = btnPrimary.Enabled = !value;
+            btnTypeUser.Enabled = btnTypeOwner.Enabled = btnPlaces.Enabled = !value;
             if (value) { btnPrimary.Text = text; btnPrimary.TrailingIconName = ""; }
             else
             {
@@ -459,11 +545,12 @@ namespace Hue_travel.Welcome
             if (fieldUser.HasError) { ShowMessage("Tên đăng nhập gồm 3 đến 40 ký tự: chữ, số, _ hoặc .", true); return; }
             if (fieldPass.HasError) { ShowMessage("Mật khẩu cần tối thiểu " + AuthValidation.MinPasswordLength + " ký tự", true); return; }
             if (fieldPass2.HasError) { ShowMessage("Hai mật khẩu chưa giống nhau", true); return; }
+            if (ownerAccount && ownerPlaces.Count == 0) { ShowMessage("Chủ quản cần chọn ít nhất một địa điểm mình quản lý", true); return; }
 
             ShowMessage(null, false);
             SetBusy(true, "Đang tạo tài khoản…");
             string error;
-            try { error = await session.Auth.RegisterAsync(fieldUser.Text.Trim(), fieldPass.Text, fieldName.Text.Trim(), true); }
+            try { error = await session.Auth.RegisterAsync(fieldUser.Text.Trim(), fieldPass.Text, fieldName.Text.Trim(), true, ownerAccount ? ownerPlaces.Select(p => p.Id) : null); }
             catch (Exception ex) { error = ex.Message; }
             if (IsDisposed) return;
             SetBusy(false);
@@ -569,7 +656,7 @@ namespace Hue_travel.Welcome
             }
             if (mode != Mode.Register) return;
 
-            Rectangle band = R(1054, 724, 392, 1);
+            Rectangle band = R(1054, registerDividerY, 392, 1);
             string text = "Đã có tài khoản?";
             Font font = ThemeFonts.Regular(FontPx(19));
             Size size = TextRenderer.MeasureText(text, font, Size.Empty, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);

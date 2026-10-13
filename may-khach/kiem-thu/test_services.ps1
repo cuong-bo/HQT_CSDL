@@ -503,5 +503,43 @@ Check 'tiles: the changed map gets a fresh provider id' ((($maps | Where-Object 
 Check 'tiles: no credit announced means no credit shown' ((($catT.GetProperty('All').GetValue($null)) | Where-Object { $_.Id -eq 'roadmap' }).Attribution) ''
 Remove-Item $sessionPath -ErrorAction SilentlyContinue
 
+# ---- PlaceFileReader (admin import: CSV or GeoJSON into rows for /v1/admin/pois/import)
+$readerT = GetT 'Hue_travel.Services.Data.PlaceFileReader'
+$readCsv = $readerT.GetMethod('ReadCsv')
+$readGeo = $readerT.GetMethod('ReadGeoJson')
+$csv = "id,group,name,lon,lat,summary`r`nZZ901,ditich,`"Chùa A, B`",107.5,16.4,`r`n,food,Khong ma,1,2,`r`nZZ902,xyz,Sai nhom,107.6,16.5,Mo ta`r`n"
+$res = $readCsv.Invoke($null, @($csv))
+Check 'import csv: the row with a group that does not exist is still read' $res.Rows.Count '2'
+Check 'import csv: a cell with a comma stays whole' $res.Rows[0]['name'] 'Chùa A, B'
+Check 'import csv: Vietnamese group name maps to the server group' $res.Rows[0]['group'] 'heritage'
+Check 'import csv: longitude is a number' $res.Rows[0]['lon'].GetType().Name 'Double'
+Check 'import csv: an empty cell is left out (keep as it is)' $res.Rows[0].ContainsKey('summary') 'False'
+Check 'import csv: a wrong group is dropped and reported' $res.Rows[1].ContainsKey('group') 'False'
+Check 'import csv: a row without id is reported' (@($res.Problems | ? { $_ -like '*thiếu mã*' }).Count) '1'
+$res = $readCsv.Invoke($null, @("mã;nhóm;tên;kinh độ;vĩ độ`nZZ903;canhquan;Cầu;107,58;16,47`n"))
+Check 'import csv: Vietnamese headers and semicolons' $res.Rows[0]['name'] 'Cầu'
+Check 'import csv: decimal comma' $res.Rows[0]['lon'] '107.58'
+Check 'import csv: no id column is refused' ($readCsv.Invoke($null, @("name,lon`nA,1`n"))).Rows.Count '0'
+$geo = '{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"id":"ZZ904","name":"Điểm","group":"food"},"geometry":{"type":"Point","coordinates":[107.5,16.4]}}]}'
+$res = $readGeo.Invoke($null, @($geo))
+Check 'import geojson: properties are read' $res.Rows[0]['name'] 'Điểm'
+Check 'import geojson: the point gives lon and lat' ("$($res.Rows[0]['lon']) $($res.Rows[0]['lat'])") '107.5 16.4'
+Check 'import geojson: not GeoJSON is reported' ($readGeo.Invoke($null, @('{"a":1}'))).Problems.Count '1'
+
+# ---- PhotoStore (photos downloaded from the server, one folder per place)
+$photoT = GetT 'Hue_travel.Services.Data.PhotoStore'
+$ids = New-Object 'System.Collections.Generic.List[long]'
+[void]$ids.Add(7); [void]$ids.Add(3)
+Check 'photos: an id that climbs out of the folder is refused' (@($photoT.GetMethod('PathsFor').Invoke($null, @('..\x'))).Count) '0'
+$photoT.GetMethod('Save').Invoke($null, @('ZZTEST', [long]3, [byte[]](1, 2, 3)))
+$photoT.GetMethod('Save').Invoke($null, @('ZZTEST', [long]7, [byte[]](4, 5, 6)))
+[void]$photoT.GetMethod('SetOrder').Invoke($null, @('ZZTEST', [System.Collections.Generic.IReadOnlyList[long]]$ids))
+$paths = @($photoT.GetMethod('PathsFor').Invoke($null, @('ZZTEST')))
+Check 'photos: files come back in the order the server gave' (($paths | % { [IO.Path]::GetFileName($_) }) -join ',') '7.jpg,3.jpg'
+Check 'photos: Has finds a saved photo' $photoT.GetMethod('Has').Invoke($null, @('ZZTEST', [long]7)) 'True'
+$none = New-Object 'System.Collections.Generic.List[long]'
+[void]$photoT.GetMethod('SetOrder').Invoke($null, @('ZZTEST', [System.Collections.Generic.IReadOnlyList[long]]$none))
+Check 'photos: an empty list removes the place folder' (Test-Path (Join-Path $photoT.GetProperty('Root').GetValue($null) 'ZZTEST')) 'False'
+
 Write-Host "passed=$script:pass failed=$script:fail"
 if ($script:fail -gt 0) { exit 1 }

@@ -134,9 +134,20 @@
     <Compile Include="Account\OwnerTab.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Account\AdminTab.cs">
-      <SubType>UserControl</SubType>
+    <Compile Include="Account\AccountKit.cs" />
+    <Compile Include="Account\ItemList.cs" />
+    <Compile Include="Account\PhotoGrid.cs" />
+    <Compile Include="Account\ReviewsDialog.cs" />
+    <Compile Include="Admin\AdminSection.cs" />
+    <Compile Include="Admin\ApprovalsSection.cs" />
+    <Compile Include="Admin\AuditSection.cs" />
+    <Compile Include="Admin\ModerationSection.cs" />
+    <Compile Include="Admin\PlacesSection.cs" />
+    <Compile Include="Admin\UsersSection.cs" />
+    <Compile Include="Admin\AdminConsole.cs">
+      <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Services\Data\PlaceFileReader.cs" />
     <Compile Include="Account\AccountPanel.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -249,6 +260,8 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Services\Data\PoiPhotos.cs" />
+    <Compile Include="Services\Data\PhotoStore.cs" />
+    <Compile Include="Services\Online\PhotoSync.cs" />
     <Compile Include="Auth\AuthValidation.cs" />
     <Compile Include="Welcome\AuthField.cs">
       <SubType>Component</SubType>

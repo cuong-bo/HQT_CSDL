@@ -19,6 +19,7 @@ namespace Hue_travel.Theme
         private bool isRevealable;
         private bool isFocused;
         private bool hasError;
+        private bool isMultiline;
 
         public InputField()
         {
@@ -98,6 +99,24 @@ namespace Hue_travel.Theme
             }
         }
 
+        /// <summary>Several lines of text (a description, a comment): Enter starts a new line and the text wraps and scrolls.</summary>
+        [Category("Behavior")]
+        public bool IsMultiline
+        {
+            get { return isMultiline; }
+            set
+            {
+                isMultiline = value;
+                textBox.Multiline = true;
+                textBox.WordWrap = value;
+                textBox.AcceptsReturn = value;
+                textBox.ScrollBars = value ? ScrollBars.Vertical : ScrollBars.None;
+                if (!value) textBox.Height = 20;
+                LayoutChildren();
+                Invalidate();
+            }
+        }
+
         /// <summary>Shows the eye button that toggles password visibility.</summary>
         [Category("Behavior")]
         public bool Revealable { get { return isRevealable; } set { isRevealable = value; revealButton.Visible = value; LayoutChildren(); } }
@@ -125,10 +144,21 @@ namespace Hue_travel.Theme
             leadingIcon.Visible = hasIcon;
             leadingIcon.Location = new Point(Ui.S(10), (Height - leadingIcon.Height) / 2);
             revealButton.Location = new Point(Width - Ui.S(10) - revealButton.Width, (Height - revealButton.Height) / 2);
+            if (isMultiline)
+            {
+                int inset = Ui.S(8);
+                textBox.SetBounds(left, inset, Math.Max(10, Width - left - right), Math.Max(Ui.S(20), Height - inset * 2));
+                leadingIcon.Location = new Point(Ui.S(10), inset + Ui.S(1));
+                placeholder.Font = textBox.Font;
+                placeholder.SetBounds(left, inset, textBox.Width, Ui.S(20));
+                placeholder.TextAlign = ContentAlignment.TopLeft;
+                return;
+            }
             textBox.Location = new Point(left, (Height - textBox.Height) / 2);
             textBox.Width = Math.Max(10, Width - left - right);
             placeholder.Font = textBox.Font;
             placeholder.SetBounds(left, 0, textBox.Width, Height);
+            placeholder.TextAlign = ContentAlignment.MiddleLeft;
         }
 
         protected override void OnPaint(PaintEventArgs e)

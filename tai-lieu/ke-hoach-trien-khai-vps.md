@@ -26,7 +26,7 @@ Bộ cài đã dựng được bằng Inno Setup (19 MB).
 **Các quyết định đã chốt (không còn là câu hỏi mở của mục 10.8):**
 chủ quản không sửa dữ liệu trực tiếp mà gửi yêu cầu chỉnh sửa, quản trị viên duyệt; tài khoản chủ quản có hai đường (gửi yêu cầu nhận địa điểm
 rồi được duyệt, hoặc quản trị viên tạo sẵn); một địa điểm có thể có nhiều chủ quản; đánh giá hiển thị ngay và quản trị viên ẩn khi cần;
-chưa làm tải ảnh lên; nên có ít nhất 2 quản trị viên; dùng HTTP, không HTTPS, không đăng nhập Google, không OTP.
+ảnh địa điểm tải lên lưu trong cơ sở dữ liệu và chờ quản trị viên duyệt (bản V010); nên có ít nhất 2 quản trị viên; dùng HTTP, không HTTPS, không đăng nhập Google, không OTP.
 
 **Chưa làm hoặc còn rủi ro** (đã biết, chưa che hết):
 1. HTTP: mật khẩu và token đi dạng chữ thường (không che được bằng chữ ký). Phản hồi đã được ký ECDSA P-256 và app kiểm tra, nên dữ liệu bị sửa giữa đường sẽ bị từ chối; cần tạo cặp khóa và đặt khóa công khai vào app (`may-chu/VAN-HANH.md`).

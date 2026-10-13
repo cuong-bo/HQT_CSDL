@@ -142,6 +142,7 @@ namespace Hue_travel.Panels.PoiIdentify
         private readonly IconButton btnFavorite = AccountButton("Yêu thích", "star");
         private readonly IconButton btnClaim = AccountButton("Chủ quản", "verified_user");
         private readonly IconButton btnReport = AccountButton("Báo sai", "campaign");
+        private readonly IconButton btnReviews = AccountButton("Đánh giá và nhận xét", "star");
         private Poi shown;
         private bool signedIn;
 
@@ -150,6 +151,16 @@ namespace Hue_travel.Panels.PoiIdentify
         public event EventHandler<Poi> ClaimRequested;
         public event EventHandler<Poi> ReportRequested;
         public event EventHandler<Poi> AddToRouteRequested;
+
+        /// <summary>The "Đánh giá và nhận xét" button: the host opens the reviews of the place (anyone may read, signed-in people may write).</summary>
+        public event EventHandler<Poi> ReviewsRequested;
+
+        /// <summary>Shows the reviews button; set when the app is connected to a server.</summary>
+        public bool ReviewsAvailable
+        {
+            get { return btnReviews.Visible; }
+            set { btnReviews.Visible = value; LayoutCard(); }
+        }
 
         /// <summary>Ids of the signed-in user's favourites, so the star shows the right state.</summary>
         public ISet<string> FavoriteIds { get; set; } = new HashSet<string>();
@@ -185,6 +196,8 @@ namespace Hue_travel.Panels.PoiIdentify
             btnFavorite.Click += (s, e) => { if (shown != null) FavoriteToggled?.Invoke(this, shown); };
             btnClaim.Click += (s, e) => { if (shown != null) ClaimRequested?.Invoke(this, shown); };
             btnReport.Click += (s, e) => { if (shown != null) ReportRequested?.Invoke(this, shown); };
+            btnReviews.Click += (s, e) => { if (shown != null) ReviewsRequested?.Invoke(this, shown); };
+            btnReviews.Visible = false;
             foreach (IconButton b in new[] { btnFavorite, btnClaim, btnReport }) b.Visible = false;
 
             Controls.Add(info);
@@ -193,6 +206,7 @@ namespace Hue_travel.Panels.PoiIdentify
             Controls.Add(btnFavorite);
             Controls.Add(btnClaim);
             Controls.Add(btnReport);
+            Controls.Add(btnReviews);
             Controls.Add(btnClose);
             btnClose.BringToFront();   // a control added later sits lower in the stack, so lift it above the photo
         }
@@ -206,6 +220,14 @@ namespace Hue_travel.Panels.PoiIdentify
             RefreshAccountButtons();
             LayoutCard();
             Visible = true;
+        }
+
+        /// <summary>Shows the photos again (the server's photos finished downloading).</summary>
+        public void ReloadPhotos(string placeId)
+        {
+            if (shown == null || shown.Id != placeId) return;
+            gallery.SetPhotos(PoiPhotos.PathsFor(placeId), shown.Category);
+            LayoutCard();
         }
 
         /// <summary>Shows the favourite / claim / report buttons only to a signed-in user.</summary>
@@ -237,8 +259,14 @@ namespace Hue_travel.Panels.PoiIdentify
 
             info.SetBounds(0, gallery.Bottom, width, info.MeasureHeight(width));
             int pad = Ui.S(16);
+            int top = info.Bottom;
+            if (btnReviews.Visible)
+            {
+                btnReviews.SetBounds(pad, top, width - pad * 2, Ui.S(42));
+                top = btnReviews.Bottom + Ui.S(10);
+            }
             btnRoute.Font = ThemeFonts.SemiBold(14);
-            btnRoute.SetBounds(pad, info.Bottom, width - pad * 2, Ui.S(48));
+            btnRoute.SetBounds(pad, top, width - pad * 2, Ui.S(48));
             int bottom = btnRoute.Bottom;
 
             if (signedIn)

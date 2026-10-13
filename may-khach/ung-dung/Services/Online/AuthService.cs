@@ -48,8 +48,28 @@ namespace Hue_travel.Services.Online
         public Task<string> LoginAsync(string username, string password, bool remember) =>
             AuthenticateAsync("/v1/auth/login", new Dictionary<string, object> { { "username", username }, { "password", password } }, remember);
 
-        public Task<string> RegisterAsync(string username, string password, string displayName, bool remember) =>
-            AuthenticateAsync("/v1/auth/register", new Dictionary<string, object> { { "username", username }, { "password", password }, { "displayName", displayName } }, remember);
+        /// <summary>
+        /// Creates an account. An owner (<paramref name="placeIds"/> given) asks to manage those places: the account starts as an
+        /// ordinary user and becomes an owner when an admin approves.
+        /// </summary>
+        public Task<string> RegisterAsync(string username, string password, string displayName, bool remember, IEnumerable<string> placeIds = null)
+        {
+            var body = new Dictionary<string, object> { { "username", username }, { "password", password }, { "displayName", displayName } };
+            if (placeIds != null)
+            {
+                body["accountType"] = "owner";
+                body["placeIds"] = new List<string>(placeIds).ToArray();
+            }
+            return AuthenticateAsync("/v1/auth/register", body, remember);
+        }
+
+        /// <summary>The name changed on the server: the signed-in user shows the new one.</summary>
+        public void UpdateDisplayName(string displayName)
+        {
+            if (CurrentUser == null) return;
+            CurrentUser.DisplayName = displayName;
+            Changed?.Invoke(this, EventArgs.Empty);
+        }
 
         private async Task<string> AuthenticateAsync(string path, object body, bool remember)
         {
