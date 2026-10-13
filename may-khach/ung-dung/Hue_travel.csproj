@@ -138,15 +138,27 @@
     <Compile Include="Account\AccountKit.cs" />
     <Compile Include="Account\ItemList.cs" />
     <Compile Include="Account\PhotoGrid.cs" />
-    <Compile Include="Account\ReviewsDialog.cs" />
-    <Compile Include="Admin\AdminSection.cs" />
-    <Compile Include="Admin\ApprovalsSection.cs" />
-    <Compile Include="Admin\AuditSection.cs" />
-    <Compile Include="Admin\ModerationSection.cs" />
-    <Compile Include="Admin\PlacesSection.cs" />
-    <Compile Include="Admin\UsersSection.cs" />
-    <Compile Include="Admin\AdminConsole.cs">
+    <Compile Include="Account\ReviewsDialog.cs">
       <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Admin\AdminSection.cs" />
+    <Compile Include="Admin\ApprovalsSection.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Admin\AuditSection.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Admin\ModerationSection.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Admin\PlacesSection.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Admin\UsersSection.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Admin\AdminConsole.cs">
+      <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Services\Data\PlaceFileReader.cs" />
     <Compile Include="Account\AccountPanel.cs">
