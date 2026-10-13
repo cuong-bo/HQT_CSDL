@@ -37,7 +37,7 @@ UninstallDisplayIcon={app}\Hue_travel.exe
 ; 32-bit installer on purpose: the app and MapWinGIS are 32-bit, so {sys} is SysWOW64 and regsvr32 registers the 32-bit control.
 
 [Files]
-Source: "{#SourceDir}\*"; DestDir: "{app}"; Excludes: "*.pdb,*.vshost.*"; Flags: recursesubdirs ignoreversion
+Source: "{#SourceDir}\*"; DestDir: "{app}"; Excludes: "*.pdb,*.vshost.*,mwtiles.db3,NutMangGiaoThong.*,*.lock"; Flags: recursesubdirs ignoreversion
 Source: "{#MapWinGisDir}\*"; DestDir: "{app}\MapWinGIS"; Excludes: "unins000.*,*.zip,*.pas,*.XML,regMapWinGIS.cmd,unregMapWinGIS.cmd"; Flags: recursesubdirs ignoreversion
 Source: "redist\vc_redist.x86.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall skipifsourcedoesntexist
 

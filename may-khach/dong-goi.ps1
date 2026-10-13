@@ -17,7 +17,8 @@ param(
     [string]$Server = "",
     [string]$PublicKey = "",
     [string]$MapWinGisDir = "C:\Program Files\MapWinGIS",
-    [string]$OutDir = "dist"
+    [string]$OutDir = "dist",
+    [string]$SourceDir = ""   # đóng gói nguyên thư mục này (ví dụ bin\Debug đang chạy), không dựng lại
 )
 
 $ErrorActionPreference = "Stop"
@@ -41,16 +42,30 @@ if (-not $msbuild) { $msbuild = Find-Tool "msbuild.exe" @() }
 if (-not $msbuild) { throw "Không tìm thấy MSBuild. Cài Visual Studio 2019/2022 (có khối lượng công việc .NET desktop) hoặc Build Tools." }
 if (-not (Test-Path $MapWinGisDir)) { throw "Không tìm thấy thư mục MapWinGIS: $MapWinGisDir (dùng -MapWinGisDir để chỉ đường dẫn khác)." }
 
-Write-Host "== dựng bản Release"
-& $msbuild "ung-dung/Hue_travel.csproj" /restore /nologo /v:m /p:Configuration=Release
-if ($LASTEXITCODE -ne 0) { throw "Dựng bản Release thất bại" }
-$release = Join-Path $root "ung-dung/bin/Release"
-if (-not (Test-Path (Join-Path $release "Hue_travel.exe"))) { throw "Không thấy Hue_travel.exe trong $release" }
+if ($SourceDir) {
+    $release = (Resolve-Path $SourceDir).Path
+    if (-not (Test-Path (Join-Path $release "Hue_travel.exe"))) { throw "Không thấy Hue_travel.exe trong $release" }
+    Write-Host "== dùng nguyên thư mục có sẵn: $release"
+    # Chép sang thư mục tạm trước để phần mềm khác (ví dụ ArcMap) đang giữ tệp dữ liệu không làm hỏng bước làm bộ cài.
+    $copy = Join-Path $root (Join-Path $OutDir "nguon-tam")
+    if (Test-Path $copy) { Remove-Item -Recurse -Force $copy }
+    New-Item -ItemType Directory -Force $copy | Out-Null
+    & robocopy.exe $release $copy /E /R:1 /W:1 /NFL /NDL /NJH /NJS /NP /XF mwtiles.db3 *.lock *.pdb NutMangGiaoThong.* | Out-Null
+    if ($LASTEXITCODE -ge 8) { throw "Không chép được thư mục $release (mã robocopy $LASTEXITCODE)" }
+    $release = $copy
+}
+else {
+    Write-Host "== dựng bản Release"
+    & $msbuild "ung-dung/Hue_travel.csproj" /restore /nologo /v:m /p:Configuration=Release
+    if ($LASTEXITCODE -ne 0) { throw "Dựng bản Release thất bại" }
+    $release = Join-Path $root "ung-dung/bin/Release"
+    if (-not (Test-Path (Join-Path $release "Hue_travel.exe"))) { throw "Không thấy Hue_travel.exe trong $release" }
+}
 
 # Dữ liệu chỉ để máy chủ tính toán không đi kèm máy khách (csproj đã loại). Kiểm tra lại cho chắc.
 $shp = Join-Path $release "Data\shp"
 foreach ($mustNot in @("NutMangGiaoThong.shp", "NutMangGiaoThong.dbf")) {
-    if (Test-Path (Join-Path $shp $mustNot)) { throw "$mustNot không được nằm trong bản máy khách (chỉ dành cho máy chủ)." }
+    if (-not $SourceDir -and (Test-Path (Join-Path $shp $mustNot))) { throw "$mustNot không được nằm trong bản máy khách (chỉ dành cho máy chủ)." }
 }
 
 New-Item -ItemType Directory -Force (Join-Path $root $OutDir) | Out-Null
@@ -63,7 +78,7 @@ $iscc = Find-Tool "ISCC.exe" @(
 
 if ($iscc) {
     Write-Host "== làm bộ cài"
-    $arguments = @("bo-cai/CoDoGIS.iss", "/DAppVersion=$Version", "/DMapWinGisDir=$MapWinGisDir", "/O$OutDir")
+    $arguments = @("bo-cai/CoDoGIS.iss", "/DAppVersion=$Version", "/DMapWinGisDir=$MapWinGisDir", "/DSourceDir=$release", "/O$OutDir")
     if ($Server) { $arguments += "/DDefaultServer=$Server" }
     if ($PublicKey) { $arguments += "/DDefaultPublicKey=$PublicKey" }
     & $iscc @arguments
