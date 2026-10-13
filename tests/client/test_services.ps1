@@ -209,14 +209,14 @@ Check 'group lang nghe' (G 'Làng nghề - trải nghiệm') 'Heritage'
 Check 'group empty' (G '') 'Heritage'
 $repo = (GetT 'Hue_travel.Services.Data.ShapefilePoiRepository').GetMethod('Load').Invoke($null, @([string]$dataDir))
 function CountOf($c) { @($repo | ? { "$($_.Category)" -eq $c }).Count }
-Check 'repo total' $repo.Count '191'
+Check 'repo total' $repo.Count '190'
 Check 'repo stay' (CountOf 'Stay') '38'
 Check 'repo service' (CountOf 'Service') '12'
 Check 'repo transport' (CountOf 'Transport') '11'
 Check 'repo heritage+scenery' ((CountOf 'Heritage') + (CountOf 'Scenery')) '49'
-Check 'repo food' (CountOf 'Food') '81'
+Check 'repo food (the blank record is skipped)' (CountOf 'Food') '80'
 Check 'repo all have location' (@($repo | ? { -not $_.HasLocation }).Count) '0'
-Check 'repo ids unique' (@($repo | % { $_.Id } | sort -Unique).Count) '191'
+Check 'repo ids unique' (@($repo | % { $_.Id } | sort -Unique).Count) '190'
 $lt1 = $repo | ? { $_.Id -eq 'LT001' }
 Check 'stay without Lon/Lat gets degrees from its UTM point' ([string]([math]::Round($lt1.Longitude, 2)) + ' ' + [string]([math]::Round($lt1.Latitude, 2))) '107.58 16.46'
 $utm = (GetT 'Hue_travel.Services.Data.VnUtm').GetMethod('ToDegrees')
@@ -232,9 +232,9 @@ Check 'repo DL001 hours' $hv.OpeningHours '07:00-17:30'
 Check 'repo DL001 utm x plausible' ([int]($hv.X -gt 700000 -and $hv.X -lt 900000)) '1'
 Check 'repo DL001 lat' ([math]::Round($hv.Latitude, 4)) '16.1908'
 $poiCat = (GetT 'Hue_travel.Services.Data.PoiCatalog').GetMethod('Load').Invoke($null, @([string]$dataDir))
-Check 'catalog loads real data' $poiCat.Count '191'
+Check 'catalog loads real data' $poiCat.Count '190'
 $poiMissing = (GetT 'Hue_travel.Services.Data.PoiCatalog').GetMethod('Load').Invoke($null, @('Z:\missing\dir'))
-Check 'catalog falls back to samples' ([int]($poiMissing.Count -gt 0 -and $poiMissing.Count -lt 191)) '1'
+Check 'catalog falls back to samples' ([int]($poiMissing.Count -gt 0 -and $poiMissing.Count -lt 190)) '1'
 
 
 # ---- Online services (server settings, JSON, place mapping, route parsing, tokens, API client, sign-in)

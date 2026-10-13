@@ -47,7 +47,7 @@ public class ApiTests(ApiFixture fixture)
         long transport = (await Json(await http.GetAsync("/v1/pois?group=transport"))).GetProperty("total").GetInt64();
         long both = (await Json(await http.GetAsync("/v1/pois?group=stay&group=transport"))).GetProperty("total").GetInt64();
         Assert.Equal(38, stays);
-        Assert.Equal(9, transport);
+        Assert.Equal(11, transport);
         Assert.Equal(stays + transport, both);
     }
 
@@ -145,8 +145,8 @@ public class ApiTests(ApiFixture fixture)
     public async Task Route_OrdersStopsAndReturnsLegsAlongTheRoads()
     {
         HttpClient http = fixture.CreateClient();
-        HttpResponseMessage response = await http.PostAsJsonAsync("/v1/route", new { startId = "GT002", stopIds = new[] { "DL001", "DL004", "DL019" }, optimize = true });
-        // DL019 is more than 14 km from any road; the route is still computed from its nearest road.
+        HttpResponseMessage response = await http.PostAsJsonAsync("/v1/route", new { startId = "GT002", stopIds = new[] { "DL001", "DL004", "DL002" }, optimize = true });
+        // DL002 is about a kilometre from the nearest road; the route is still computed from that road.
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         JsonElement route = await Json(response);
         Assert.Equal(3, route.GetProperty("order").GetArrayLength());
@@ -180,7 +180,7 @@ public class ApiTests(ApiFixture fixture)
     public async Task Route_FromAFreePointCanOptimizeTheOrder()
     {
         HttpClient http = fixture.CreateClient();
-        JsonElement route = await Json(await http.PostAsJsonAsync("/v1/route", new { startX = 775000.0, startY = 1822500.0, stopIds = new[] { "DL001", "DL004", "DL019" }, optimize = true }));
+        JsonElement route = await Json(await http.PostAsJsonAsync("/v1/route", new { startX = 775000.0, startY = 1822500.0, stopIds = new[] { "DL001", "DL004", "DL002" }, optimize = true }));
         Assert.Equal(3, route.GetProperty("order").GetArrayLength());
         Assert.Equal("start", route.GetProperty("legs")[0].GetProperty("fromId").GetString());
     }

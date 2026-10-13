@@ -9,7 +9,7 @@ Cần `psql` và `shp2pgsql` (gói `postgresql-client` và `postgis`), CSDL đã
 
 ```bash
 export PGHOST=127.0.0.1 PGPORT=5432 PGUSER=postgres PGPASSWORD=... PGDATABASE=huegis
-./db/run.sh                  # đọc shapefile ở ../DuLieu/DuLieu
+./db/run.sh                  # đọc shapefile ở ../Hue_travel/Data/shp
 ./db/run.sh /duong/dan/shp   # hoặc chỉ thư mục khác
 ```
 

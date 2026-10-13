@@ -15,12 +15,19 @@ namespace Hue_travel.Services.Data
             if (!Directory.Exists(dataDir)) throw new DirectoryNotFoundException("Data folder not found: " + dataDir);
 
             var pois = new List<Poi>();
-            foreach (ShapePoint p in ReadLayer(dataDir, "diemDuLich")) pois.Add(FromSite(p));
-            foreach (ShapePoint p in ReadLayer(dataDir, "diemAnUong")) pois.Add(FromFood(p));
-            foreach (ShapePoint p in ReadLayer(dataDir, "diemLuuTru")) pois.Add(FromStay(p));
-            foreach (ShapePoint p in ReadLayer(dataDir, "diemDVDuLich")) pois.Add(FromService(p));
-            foreach (ShapePoint p in ReadLayer(dataDir, "diemDMGiaoThong")) pois.Add(FromTransport(p));
+            foreach (ShapePoint p in ReadLayer(dataDir, "diemDuLich")) AddIfReal(pois, FromSite(p));
+            foreach (ShapePoint p in ReadLayer(dataDir, "diemAnUong")) AddIfReal(pois, FromFood(p));
+            foreach (ShapePoint p in ReadLayer(dataDir, "diemLuuTru")) AddIfReal(pois, FromStay(p));
+            foreach (ShapePoint p in ReadLayer(dataDir, "diemDVDuLich")) AddIfReal(pois, FromService(p));
+            foreach (ShapePoint p in ReadLayer(dataDir, "diemDMGiaoThong")) AddIfReal(pois, FromTransport(p));
             return pois;
+        }
+
+        // A layer can hold a blank record (no attributes, an empty shape): it is not a place.
+        private static void AddIfReal(List<Poi> pois, Poi poi)
+        {
+            bool hasPosition = poi.X > 0 && poi.Y > 0 && poi.X < 1e9 && poi.Y < 1e9;
+            if (!string.IsNullOrWhiteSpace(poi.Id) && !string.IsNullOrWhiteSpace(poi.Name) && hasPosition) pois.Add(poi);
         }
 
         // A layer that is not in the folder is skipped, so the app still starts with what is there.

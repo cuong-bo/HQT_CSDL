@@ -11,8 +11,9 @@ declare
 begin
     -- Every staged place must be in poi under the right group (the group of a staged site may be edited later by an admin).
     select count(*) into n from (
-        select btrim(madl) as id from stg.diemdulich union all select btrim(malt) from stg.diemluutru
-        union all select btrim(madv) from stg.diemdvdulich union all select btrim(magt) from stg.diemdmgiaothong) s
+        select btrim(madl) as id from stg.diemdulich union all select btrim(maau) from stg.diemanuong where nullif(btrim(maau), '') is not null
+        union all select btrim(malt) from stg.diemluutru
+        union all select btrim(macsdv) from stg.diemdvdulich union all select btrim(magt) from stg.diemdmgiaothong) s
     where not exists (select 1 from poi p where p.id = s.id);
     if n > 0 then raise exception 'poi: % staged places are missing', n; end if;
     select count(*) into n from poi p join stg.diemluutru s on btrim(s.malt) = p.id where p.nhom <> 'stay';

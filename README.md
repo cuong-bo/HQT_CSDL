@@ -30,7 +30,7 @@ Hệ tọa độ thống nhất: **VN-2000 / UTM 48N (EPSG:3405)**, đơn vị m
 | `deploy/` | Docker Compose, Caddy (HTTP), script cài VPS / cập nhật / sao lưu — xem `deploy/README.md` |
 | `installer/` | bộ cài Inno Setup — xem `installer/README.md` |
 | `docs/` | kế hoạch (`ke-hoach-trien-khai-vps.md`) và từ điển dữ liệu (`tai-lieu-du-lieu.md`) |
-| `DuLieu/DuLieu/` | dữ liệu gốc dạng shapefile (khoảng 64 MB, lưu thẳng trong Git, không dùng Git LFS) |
+| `Hue_travel/Data/shp/` | dữ liệu shapefile (điểm du lịch, ẩm thực, lưu trú, mạng giao thông, nút giao thông, ranh giới; khoảng 75 MB, lưu thẳng trong Git) |
 
 ## Chạy thử nhanh
 

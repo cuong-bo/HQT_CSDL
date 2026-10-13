@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Day-to-day operations on the VPS.  Usage: deploy/scripts/deploy.sh <command>
 #   up        start everything (first time: also run "import")
-#   import    build / refresh the database from DuLieu/DuLieu (safe to repeat; keeps edits made through the app)
+#   import    build / refresh the database from Hue_travel/Data/shp (safe to repeat; keeps edits made through the app)
 #   update    git pull, rebuild the API, restart it; goes back to the previous image if /healthz does not answer
 #   rollback  put the previous API image back
 #   status    containers and health

@@ -1,4 +1,4 @@
--- Builds the routing graph from stg.manggiaothong and snaps the POIs to it. Rebuilds from scratch every time.
+-- Builds the routing graph from stg.manggiaothong (edges) and stg.nutmanggiaothong (nodes) and snaps the POIs to it. Rebuilds from scratch every time.
 \set ON_ERROR_STOP on
 begin;
 
@@ -48,7 +48,13 @@ set cost_time = case when cost < 0 then -1 else cost / (speed_kmh / 3.6) end,
     reverse_cost_time = case when reverse_cost < 0 then -1 else reverse_cost / (speed_kmh / 3.6) end
 where cho_xe;
 
--- Vertices from the edge end points.
+-- Vertices: the node layer of the road network (NutMangGiaoThong, only for calculation, never drawn) ...
+insert into ways_vertices (id, geom)
+select id::bigint, geom
+from stg.nutmanggiaothong
+on conflict (id) do nothing;
+
+-- ... and, for any edge end the node layer does not have, the end point of the edge itself.
 insert into ways_vertices (id, geom)
 select node, (array_agg(pt))[1]
 from (
@@ -56,6 +62,7 @@ from (
     union all
     select target, st_endpoint(geom) from ways
 ) p
+where not exists (select 1 from ways_vertices v where v.id = p.node)
 group by node;
 
 -- Keep only the biggest STRONGLY connected vehicle network: with one-way streets a weakly connected piece can still be

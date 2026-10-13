@@ -80,7 +80,7 @@ tests/                    dự án test (xUnit) cho Core, Api, App
 docs/
 ```
 
-Dữ liệu `DuLieu/` (64 MB) **không** đưa vào Git thường; để ngoài kho hoặc dùng Git LFS / file đính kèm của bản phát hành.
+Dữ liệu shapefile (khoảng 75 MB) nằm trong kho Git ở `Hue_travel/Data/shp/`.
 
 ## 4. Các giai đoạn
 

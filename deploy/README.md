@@ -26,11 +26,7 @@ cp deploy/.env.example deploy/.env      # điền 3 giá trị bí mật: openss
 
 ## 2. Lần chạy đầu
 
-Dữ liệu `DuLieu/` (64 MB) không nằm trong Git; chép lên VPS (từ máy có dữ liệu):
-
-```bash
-scp -r DuLieu/DuLieu deploy@IP_VPS:/opt/hue-travel/DuLieu/
-```
+Dữ liệu shapefile nằm trong kho Git ở `Hue_travel/Data/shp/` (khoảng 75 MB), nên `git clone` trên VPS là đủ; không cần chép riêng.
 
 ```bash
 cd /opt/hue-travel
