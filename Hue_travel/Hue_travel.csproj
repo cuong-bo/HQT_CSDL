@@ -218,6 +218,9 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Panels\RouteOptimizer\StopList.cs" />
+    <Compile Include="Panels\RouteOptimizer\TripResultPanel.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Services\Routing\TripPlan.cs" />
     <Compile Include="MapEngine\RoutePalette.cs" />
     <Compile Include="MapEngine\RouteDrawing.cs" />

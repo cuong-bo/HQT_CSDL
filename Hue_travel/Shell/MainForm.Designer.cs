@@ -25,6 +25,7 @@ namespace Hue_travel.Shell
         private MapHost mapHost;
 
         private RouteOptimizerPanel routeOptimizerPanel;
+        private TripResultPanel tripResultPanel;
         private ExplorePanel explorePanel;
         private LayerPanel layerPanel;
         private SearchDropdown searchDropdown;
@@ -46,6 +47,7 @@ namespace Hue_travel.Shell
             this.statusBar = new AppStatusBar();
             this.mapHost = new MapHost();
             this.routeOptimizerPanel = new RouteOptimizerPanel();
+            this.tripResultPanel = new TripResultPanel();
             this.explorePanel = new ExplorePanel();
             this.layerPanel = new LayerPanel();
             this.searchDropdown = new SearchDropdown();
@@ -91,6 +93,8 @@ namespace Hue_travel.Shell
             this.explorePanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
             this.layerPanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
             this.routeOptimizerPanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
+            // The route result is a wide panel centred under the map (no left or right edge: it stays centred horizontally).
+            this.tripResultPanel.AttachTo(this, new System.Drawing.Point((this.ClientSize.Width - TripResultPanel.DesignWidth) / 2, this.ClientSize.Height - TripResultPanel.DesignHeight - 56), System.Windows.Forms.AnchorStyles.Bottom);
             this.travelGuidePanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
             // The place card sits at the bottom right of the map, clear of the map's control column (400px wide card, 92px from the right).
             this.poiIdentifyCard.AttachTo(this, new System.Drawing.Point(1044, 198), System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right);

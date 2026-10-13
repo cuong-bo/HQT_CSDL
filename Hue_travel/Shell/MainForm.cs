@@ -44,7 +44,7 @@ namespace Hue_travel.Shell
             WireEvents();
             var all = new List<FloatingPanelForm>
             {
-                explorePanel, routeOptimizerPanel, travelGuidePanel, poiIdentifyCard, layerPanel,
+                explorePanel, routeOptimizerPanel, travelGuidePanel, poiIdentifyCard, layerPanel, tripResultPanel,
             };
             if (accountPanel != null) all.Add(accountPanel);
             panels = all.ToArray();
@@ -186,17 +186,29 @@ namespace Hue_travel.Shell
                 mapHost.LoadPois(PoiCatalog.All);
             };
             routeOptimizerPanel.Api = api;
-            routeOptimizerPanel.Projector = (longitude, latitude) => mapHost.TryProject(longitude, latitude);
-            routeOptimizerPanel.RouteInvalidated += (s, e) => mapHost.ClearRoute();
-            routeOptimizerPanel.RouteComputed += (s, trip) => mapHost.ShowTrip(trip, true);
             routeOptimizerPanel.PickStartRequested += (s, on) => { if (on) mapHost.BeginPickPoint(); else mapHost.CancelPickPoint(); };
-            routeOptimizerPanel.LegSelected += (s, leg) => mapHost.ZoomToTripLeg(leg);
-            routeOptimizerPanel.PlayRequested += (s, e) => mapHost.PlayTrip();
-            routeOptimizerPanel.PauseRequested += (s, e) => mapHost.PauseTrip();
-            routeOptimizerPanel.ReplayRequested += (s, e) => mapHost.ReplayTrip();
-            routeOptimizerPanel.FitRequested += (s, e) => mapHost.ZoomToTrip();
-            mapHost.TripPlayStateChanged += (s, e) => routeOptimizerPanel.SetCarPlaying(mapHost.TripPlaying);
-            mapHost.TripLegChanged += (s, leg) => routeOptimizerPanel.SetActiveLeg(leg);
+            // "Tìm đường" closes the route form and opens the result; "Dừng lại" clears the map and the form and brings the empty form back.
+            routeOptimizerPanel.RouteComputed += (s, trip) =>
+            {
+                tripResultPanel.ShowTrip(trip);
+                ShowSidePanel(-1);                  // the route form closes ...
+                tripResultPanel.Visible = true;     // ... and the result opens, wide and centred under the map
+                mapHost.ShowTrip(trip, true);
+            };
+            tripResultPanel.StopRequested += (s, e) =>
+            {
+                mapHost.ClearRoute();
+                tripResultPanel.Visible = false;
+                routeOptimizerPanel.ResetAll();
+                ShowSidePanel(NavRail.Route);
+            };
+            tripResultPanel.LegSelected += (s, leg) => mapHost.ZoomToTripLeg(leg);
+            tripResultPanel.PlayRequested += (s, e) => mapHost.PlayTrip();
+            tripResultPanel.PauseRequested += (s, e) => mapHost.PauseTrip();
+            tripResultPanel.ReplayRequested += (s, e) => mapHost.ReplayTrip();
+            tripResultPanel.FitRequested += (s, e) => mapHost.ZoomToTrip();
+            mapHost.TripPlayStateChanged += (s, e) => tripResultPanel.SetCarPlaying(mapHost.TripPlaying);
+            mapHost.TripLegChanged += (s, leg) => tripResultPanel.SetActiveLeg(leg);
             mapHost.PointPicked += (s, point) =>
             {
                 double longitude, latitude;
