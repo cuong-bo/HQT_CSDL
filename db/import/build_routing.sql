@@ -33,9 +33,10 @@ insert into speed_by_type values
     ('duong_chuyen_dung_cap_3', 20), ('duong_chuyen_dung_cap_4', 20), ('duong_chuyen_dung_cap_5', 20),
     ('duong_di_bo', null), ('pho_di_bo', null), ('loi_di', null), ('bac_thang', null), ('duong_xe_dap', null);
 
--- A road with a maxspeed uses it, otherwise the typical speed of its type; types without one are not for vehicles.
+-- The data carries maxspeed = 30 on nearly every road (a placeholder, not a measurement), so the typical speed of the road type
+-- is used; a maxspeed above 30 is believed (motorways, trunk roads). Types without a typical speed are not for vehicles.
 update ways w
-set speed_kmh = case when t.kmh is null then null else coalesce(nullif(m.maxspeed, 0)::real, t.kmh) end,
+set speed_kmh = case when t.kmh is null then null when m.maxspeed > 30 then m.maxspeed::real else t.kmh end,
     cho_xe = t.kmh is not null
 from speed_by_type t, stg.manggiaothong m
 where t.road_type = w.road_type and m.id = w.gid;

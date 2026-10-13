@@ -12,6 +12,12 @@
 #ifndef MapWinGisDir
   #define MapWinGisDir "C:\Program Files\MapWinGIS"
 #endif
+#ifndef DefaultServer
+  #define DefaultServer ""
+#endif
+#ifndef DefaultPublicKey
+  #define DefaultPublicKey ""
+#endif
 #define AppName "Cố Đô GIS"
 
 [Setup]
@@ -76,8 +82,8 @@ begin
     'Nhập địa chỉ do quản trị viên cung cấp, ví dụ http://203.0.113.10 . Để trống để chỉ dùng dữ liệu ngoại tuyến.');
   ServerPage.Add('Địa chỉ:', False);
   ServerPage.Add('Khóa công khai của máy chủ (không bắt buộc, dùng để kiểm tra dữ liệu không bị sửa):', False);
-  ServerPage.Values[0] := '';
-  ServerPage.Values[1] := '';
+  ServerPage.Values[0] := '{#DefaultServer}';
+  ServerPage.Values[1] := '{#DefaultPublicKey}';
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);

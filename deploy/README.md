@@ -7,6 +7,9 @@ cả bốn chạy trong Docker Compose trên một VPS. PostgreSQL và API khôn
 > Hệ quả và cách giảm rủi ro nằm ở mục "Rủi ro khi dùng HTTP" bên dưới. HTTPS miễn phí vẫn làm được mà không cần mua tên miền
 > (hostname miễn phí dạng `ten.duckdns.org` + Let's Encrypt); khi muốn, chỉ cần sửa `Caddyfile` và địa chỉ trong app.
 
+> Hướng dẫn từng bước cho người mới, kèm cách chép gói lên VPS (không cần Git): `docs/huong-dan-cai-dat-may-chu.md`
+> (trong gói máy chủ là `HUONG-DAN-CAI-DAT.md`). Tài liệu này là bản tham chiếu vận hành.
+
 ## 1. Chuẩn bị VPS (một lần)
 
 ```bash

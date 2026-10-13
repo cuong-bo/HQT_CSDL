@@ -29,8 +29,17 @@ Hệ tọa độ thống nhất: **VN-2000 / UTM 48N (EPSG:3405)**, đơn vị m
 | `db/` | migration, nạp shapefile, đồ thị pgRouting, kiểm tra — xem `db/README.md` |
 | `deploy/` | Docker Compose, Caddy (HTTP), script cài VPS / cập nhật / sao lưu — xem `deploy/README.md` |
 | `installer/` | bộ cài Inno Setup — xem `installer/README.md` |
-| `docs/` | kế hoạch (`ke-hoach-trien-khai-vps.md`) và từ điển dữ liệu (`tai-lieu-du-lieu.md`) |
+| `scripts/` | đóng gói: `dong-goi-may-chu.ps1` (gói đưa lên VPS), `dong-goi-may-khach.ps1` (bộ cài Windows) |
+| `docs/` | hướng dẫn cài đặt máy chủ và máy khách, phân chia hai phần, kế hoạch, từ điển dữ liệu |
 | `Hue_travel/Data/shp/` | dữ liệu shapefile (điểm du lịch, ẩm thực, lưu trú, mạng giao thông, nút giao thông, ranh giới; khoảng 75 MB, lưu thẳng trong Git) |
+
+## Cài đặt (máy chủ và máy khách tách riêng)
+
+| Tài liệu | Dành cho |
+|---|---|
+| [`docs/phan-chia-may-chu-may-khach.md`](docs/phan-chia-may-chu-may-khach.md) | Hiểu phần nào chạy ở máy chủ, phần nào ở máy khách, tệp nào đi đâu |
+| [`docs/huong-dan-cai-dat-may-chu.md`](docs/huong-dan-cai-dat-may-chu.md) | Cài VPS Ubuntu từng bước (đóng gói `scripts\dong-goi-may-chu.ps1`) |
+| [`docs/huong-dan-cai-dat-may-khach.md`](docs/huong-dan-cai-dat-may-khach.md) | Cài ứng dụng Windows; làm bộ cài (`scripts\dong-goi-may-khach.ps1`) |
 
 ## Chạy thử nhanh
 

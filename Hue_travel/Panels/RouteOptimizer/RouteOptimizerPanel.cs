@@ -66,7 +66,7 @@ namespace Hue_travel.Panels.RouteOptimizer
         private readonly Label lblPickerCount = Hint("");
         private readonly PoiRowList pickerList = new PoiRowList { ShowAddButton = true, StealFocus = false, EmptyText = "Không có địa điểm nào khớp." };
         private readonly IconButton btnAutoOrder = new IconButton();
-        private readonly Label lblOrderHint = Hint("Xe đi đúng thứ tự trong danh sách. Dùng mũi tên để đổi chỗ, hoặc bấm nút trên để máy xếp giúp theo đường gần nhất.");
+        private readonly Label lblOrderHint = Hint("Xe đi đúng thứ tự trong danh sách. Dùng mũi tên để đổi chỗ, hoặc bấm nút trên để máy chủ xếp giúp theo đường đi nhanh nhất.");
         private readonly IconButton btnFind = new IconButton();
 
         private readonly List<Poi> itinerary = new List<Poi>();
@@ -101,7 +101,7 @@ namespace Hue_travel.Panels.RouteOptimizer
             StyleSecondary(btnPickOnMap, "Chọn trên bản đồ", "place");
             StyleSecondary(btnClearStart, "Xoá", "close");
             StyleSecondary(btnAddStops, "Thêm điểm đến từ danh sách địa điểm", "add");
-            StyleSecondary(btnAutoOrder, "Xếp giúp thứ tự đi gần nhất", "route");
+            StyleSecondary(btnAutoOrder, "Xếp giúp thứ tự đi nhanh nhất", "route");
             StylePrimary(btnFind, "Tìm đường", "directions");
 
             foreach (Control c in new Control[]
@@ -342,24 +342,52 @@ namespace Hue_travel.Panels.RouteOptimizer
         }
 
 
-        // ------------------------------------------------------------------ ordering
+        // ------------------------------------------------------------------ the server does the work
 
-        // Puts the stops in the order of a short trip from the start (straight lines as a guide); the visitor can still move them.
-        private void AutoOrder()
+        private const string NeedServer = "Cần kết nối máy chủ để tìm đường. Hãy nhập địa chỉ máy chủ (xem hướng dẫn cài đặt) rồi mở lại ứng dụng.";
+
+        // Asks the server for the route of a start through the stops; with <paramref name="optimize"/> the server also picks the order.
+        private Task<ApiResult<OnlineRoute>> AskServerAsync(StartSpot from, List<Poi> places, bool optimize, CancellationToken token)
         {
-            if (itinerary.Count < 2) return;
-            var points = itinerary.Select(p => new GeoPoint(p.Longitude, p.Latitude)).ToList();
-            GeoPoint? from = start == null ? (GeoPoint?)null : new GeoPoint(start.Longitude, start.Latitude);
-            RoutePlan best = RoutePlanner.Plan(from, points);
-            var ordered = best.Order.Select(i => itinerary[i]).ToList();
-            itinerary.Clear();
-            itinerary.AddRange(ordered);
-            AfterStopsChanged();
-            Notify("Đã xếp lại các điểm đến theo đường đi gần nhất", ToastKind.Success);
+            var ids = places.Select(p => p.Id).ToList();
+            bool byPlace = from.Place != null && !ids.Contains(from.Place.Id);
+            return byPlace
+                ? routeService.PlanAsync(from.Place.Id, ids, optimize, token)
+                : routeService.PlanFromPointAsync(from.Point.X, from.Point.Y, ids, optimize, token);
+        }
+
+        // "Xếp giúp": the server finds the order with the shortest travel time over the roads and the list is put in that order.
+        private async void AutoOrder()
+        {
+            if (itinerary.Count < 2 || busy) return;
+            if (routeService == null) { Notify(NeedServer, ToastKind.Info); return; }
+            if (start == null) { Notify("Hãy chọn điểm bắt đầu trước để máy chủ xếp thứ tự đi", ToastKind.Info); return; }
+
+            List<Poi> places = itinerary.ToList();
+            int version = planVersion;
+            SetBusy(true);
+            try
+            {
+                ApiResult<OnlineRoute> answer = await AskServerAsync(start, places, true, CancellationToken.None);
+                if (version != planVersion) return;
+                if (!answer.Ok) { Notify(answer.Error, ToastKind.Error); return; }
+                var byId = places.ToDictionary(p => p.Id);
+                var ordered = answer.Value.Order.Where(byId.ContainsKey).Select(id => byId[id]).ToList();
+                if (ordered.Count != places.Count) return;
+                itinerary.Clear();
+                itinerary.AddRange(ordered);
+                AfterStopsChanged();
+                Notify("Máy chủ đã xếp lại các điểm đến theo đường đi nhanh nhất", ToastKind.Success);
+            }
+            finally
+            {
+                SetBusy(false);
+            }
         }
 
         // ------------------------------------------------------------------ computing the route
 
+        // One request for the whole trip, in the order of the list; the server answers with every leg (line, distance, time).
         private async Task FindRouteAsync()
         {
             if (busy) return;
@@ -373,6 +401,11 @@ namespace Hue_travel.Panels.RouteOptimizer
                 Notify("Hãy thêm ít nhất một điểm đến vào lộ trình", ToastKind.Info);
                 return;
             }
+            if (routeService == null)
+            {
+                Notify(NeedServer, ToastKind.Info);
+                return;
+            }
 
             List<Poi> places = itinerary.ToList();
             StartSpot from = start;
@@ -382,21 +415,10 @@ namespace Hue_travel.Panels.RouteOptimizer
             planCts = new CancellationTokenSource();
             CancellationToken token = planCts.Token;
             SetBusy(true);
-            TripPlan result = null;
-            string problem = null;
+            ApiResult<OnlineRoute> answer;
             try
             {
-                if (routeService != null)
-                {
-                    var ids = places.Select(p => p.Id).ToList();
-                    bool byPlace = from.Place != null && !ids.Contains(from.Place.Id);
-                    ApiResult<OnlineRoute> answer = byPlace
-                        ? await routeService.PlanAsync(from.Place.Id, ids, false, token)
-                        : await routeService.PlanFromPointAsync(from.Point.X, from.Point.Y, ids, false, token);
-                    if (version != planVersion) return;   // the form was reset while the server was working
-                    if (answer.Ok) result = TripPlanner.FromOnline(answer.Value, from.Name, from.Point, places, null);
-                    else problem = answer.Error;
-                }
+                answer = await AskServerAsync(from, places, false, token);
             }
             catch (OperationCanceledException)
             {
@@ -407,13 +429,13 @@ namespace Hue_travel.Panels.RouteOptimizer
                 SetBusy(false);
             }
 
-            if (version != planVersion) return;
-            if (result == null)
+            if (version != planVersion) return;   // the form was reset while the server was working
+            if (!answer.Ok)
             {
-                result = TripPlanner.Estimate(from.Name, from.Longitude, from.Latitude, from.Point, places, false);
-                if (problem != null) Notify(problem + " Đang hiển thị số liệu ước tính.", ToastKind.Error);
+                Notify(answer.Error, ToastKind.Error);
+                return;
             }
-            RouteComputed?.Invoke(this, result);
+            RouteComputed?.Invoke(this, TripPlanner.FromOnline(answer.Value, from.Name, from.Point, places, null));
         }
 
         private void SetBusy(bool value)

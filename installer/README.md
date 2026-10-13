@@ -2,6 +2,9 @@
 
 `CoDoGIS.iss` (Inno Setup 6) đóng gói app, **MapWinGIS** (kèm GDAL) và tự đăng ký `MapWinGIS.ocx` bằng `regsvr32` 32-bit.
 
+> Cách nhanh: `powershell -ExecutionPolicy Bypass -File scripts\dong-goi-may-khach.ps1 -Version 1.0.0 -Server http://IP_VPS` (xem `docs/huong-dan-cai-dat-may-khach.md`).
+> Tham số `/DDefaultServer=...` và `/DDefaultPublicKey=...` điền sẵn trang "Máy chủ dữ liệu".
+
 ## Làm bộ cài
 
 1. Máy dựng cần: Visual Studio 2019 hoặc MSBuild, [Inno Setup 6](https://jrsoftware.org/isinfo.php), và thư mục MapWinGIS đã cài

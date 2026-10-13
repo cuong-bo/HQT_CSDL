@@ -16,3 +16,10 @@ DuLieu.zip
 .env
 appsettings.Development.json
 appsettings.Local.json
+
+# tệp khoá của phần mềm GIS khi đang mở dữ liệu
+*.sr.lock
+*.lock
+
+# gói phát hành dựng ra từ scripts/
+dist/
