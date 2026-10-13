@@ -9,7 +9,8 @@ using Npgsql;
 
 namespace Hue_travel.Api.Admin;
 
-public sealed record AdminUserDto(long Id, string Username, string DisplayName, string Role, string Status, DateTimeOffset CreatedAt, DateTimeOffset? LastLoginAt);
+public sealed record AdminUserDto(long Id, string Username, string DisplayName, string Role, string Status, DateTimeOffset CreatedAt, DateTimeOffset? LastLoginAt,
+    int OwnedPlaces = 0, int PendingClaims = 0);
 public sealed record AdminUserUpdate(string? Role, string? Status);
 public sealed record AdminCreateUser(string? Username, string? Password, string? DisplayName, string? Role);
 public sealed record DecisionRequest(bool Approve, string? Note);
@@ -58,17 +59,25 @@ public static partial class AdminEndpoints
         admin.MapDelete("/pois/{id}", DeletePoiAsync);
         admin.MapGet("/audit", ListAuditAsync);
         admin.MapGet("/stats", StatsAsync);
+        MapPlaceAndAccountEndpoints(admin);
     }
 
     // ------------------------------------------------------------ users
-    private static async Task<IResult> ListUsersAsync(NpgsqlDataSource db, CancellationToken ct, string? q = null, int page = 1) =>
-        Results.Ok(await db.ListAsync(
-            "select id, username::text, display_name, role, status, created_at, last_login_at from app_user " +
-            "where @q::text is null or username::text ilike '%' || @q::text || '%' or display_name ilike '%' || @q::text || '%' " +
-            "order by id limit @n offset @o",
+    private static async Task<IResult> ListUsersAsync(NpgsqlDataSource db, CancellationToken ct, string? q = null, string? role = null, string? status = null, int page = 1)
+    {
+        if (role != null && !Roles.Contains(role)) return Bad("role phải là user, owner hoặc admin.");
+        if (status != null && !UserStatuses.Contains(status)) return Bad("status phải là active, locked hoặc must_change_password.");
+        return Results.Ok(await db.ListAsync(
+            "select u.id, u.username::text, u.display_name, u.role, u.status, u.created_at, u.last_login_at, " +
+            "(select count(*) from place_owner o where o.user_id = u.id and o.status = 'approved')::int, " +
+            "(select count(*) from place_owner o where o.user_id = u.id and o.status = 'pending')::int from app_user u " +
+            "where (@q::text is null or u.username::text ilike '%' || @q::text || '%' or u.display_name ilike '%' || @q::text || '%') " +
+            "and (@r::text is null or u.role = @r::text) and (@s::text is null or u.status = @s::text) " +
+            "order by u.id limit @n offset @o",
             r => new AdminUserDto(r.GetInt64(0), r.GetString(1), r.GetString(2), r.GetString(3), r.GetString(4), r.GetFieldValue<DateTimeOffset>(5),
-                r.IsDBNull(6) ? null : r.GetFieldValue<DateTimeOffset>(6)), ct,
-            ("q", string.IsNullOrWhiteSpace(q) ? null : q.Trim().Replace("%", "").Replace("_", "")), ("n", PageSize), ("o", (Math.Max(page, 1) - 1) * PageSize)));
+                r.IsDBNull(6) ? null : r.GetFieldValue<DateTimeOffset>(6), r.GetInt32(7), r.GetInt32(8)), ct,
+            ("q", string.IsNullOrWhiteSpace(q) ? null : q.Trim().Replace("%", "").Replace("_", "")), ("r", role), ("s", status), ("n", PageSize), ("o", (Math.Max(page, 1) - 1) * PageSize)));
+    }
 
     /// <summary>Creates an account (for an owner, or another admin) with a password the admin chooses; the person must change it at first login.</summary>
     private static async Task<IResult> CreateUserAsync(AdminCreateUser request, ClaimsPrincipal admin, UserRepository users, NpgsqlDataSource db, CancellationToken ct)
@@ -308,9 +317,9 @@ public static partial class AdminEndpoints
         await using NpgsqlCommand cmd = db.CreateCommand(
             "select (select count(*) from app_user), (select count(*) from poi where deleted_at is null), " +
             "(select count(*) from place_owner where status = 'pending'), (select count(*) from poi_edit_request where status = 'pending'), " +
-            "(select count(*) from report where status = 'open'), (select count(*) from review)");
+            "(select count(*) from report where status = 'open'), (select count(*) from review), (select count(*) from poi_photo where status = 'pending')");
         await using NpgsqlDataReader r = await cmd.ExecuteReaderAsync(ct);
         await r.ReadAsync(ct);
-        return Results.Ok(new { users = r.GetInt64(0), places = r.GetInt64(1), pendingClaims = r.GetInt64(2), pendingEditRequests = r.GetInt64(3), openReports = r.GetInt64(4), reviews = r.GetInt64(5) });
+        return Results.Ok(new { users = r.GetInt64(0), places = r.GetInt64(1), pendingClaims = r.GetInt64(2), pendingEditRequests = r.GetInt64(3), openReports = r.GetInt64(4), reviews = r.GetInt64(5), pendingPhotos = r.GetInt64(6) });
     }
 }
