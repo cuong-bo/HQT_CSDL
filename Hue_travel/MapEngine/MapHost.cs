@@ -35,7 +35,7 @@ namespace Hue_travel.MapEngine
         private readonly LeftPressFilter pressFilter = new LeftPressFilter();
         private int routeHandle = -1;
         private int placeholderHandle = -1;
-        private readonly HighlightRing highlightRing = new HighlightRing(HighlightDesignPixels);
+        private HighlightRing highlightRing;
         private Poi highlighted;
         private const int HighlightDesignPixels = 54;
         private IReadOnlyList<Poi> lastPois = new List<Poi>();
@@ -194,21 +194,27 @@ namespace Hue_travel.MapEngine
             axMap.Redraw();
         }
 
-        // The ring is a small control above the map (a layer with a single point is not drawn by the map engine); it follows the place as the map moves.
+        // The pulse is a click-through window above the map (a map layer with a single point is not drawn by the engine); it follows the place.
         private void DrawHighlight()
         {
-            if (highlighted == null || (highlighted.X == 0 && highlighted.Y == 0) || hiddenPoiIds.Contains(highlighted.Id))
+            bool show = highlighted != null && (highlighted.X != 0 || highlighted.Y != 0) && !hiddenPoiIds.Contains(highlighted.Id);
+            if (show && highlightRing == null)
             {
-                highlightRing.Visible = false;
-                return;
+                highlightRing = new HighlightRing(Ui.S(HighlightDesignPixels * 2), Ui.S(MarkerDesignPixels), HighlightCenterOnScreen);
+                Disposed += (s, e) => highlightRing.Dispose();
             }
+            if (highlightRing != null) highlightRing.Run(show, FindForm());
+        }
+
+        // Screen position of the highlighted marker's centre; null when it is outside the map window.
+        private System.Drawing.Point? HighlightCenterOnScreen()
+        {
+            if (highlighted == null || !IsHandleCreated) return null;
             double px = 0, py = 0;
             axMap.ProjToPixel(highlighted.X, highlighted.Y, ref px, ref py);
-            // The marker picture stands on its point (its bottom centre is the place), so the ring is centred half a marker above it.
-            int size = highlightRing.Width;
-            int centerY = (int)Math.Round(py) - Ui.S(MarkerDesignPixels) / 2 - 2;
-            highlightRing.Location = new System.Drawing.Point((int)Math.Round(px) - size / 2, centerY - size / 2);
-            highlightRing.Visible = ClientRectangle.IntersectsWith(highlightRing.Bounds);
+            // The marker picture stands on its point (its bottom centre is the place), so its centre is half a marker above it.
+            var local = new System.Drawing.Point((int)Math.Round(px), (int)Math.Round(py) - Ui.S(MarkerDesignPixels) / 2 - 2);
+            return ClientRectangle.Contains(local) ? PointToScreen(local) : (System.Drawing.Point?)null;
         }
 
         /// <summary>Places that are switched off in the layer list: they are left out of the map until switched on again.</summary>
@@ -522,14 +528,7 @@ namespace Hue_travel.MapEngine
             axMap.SendMouseUp = true;
             axMap.BackColor = System.Drawing.ColorTranslator.FromHtml("#E2E8F0");
             MapCrs.Apply(axMap);
-            Controls.Add(highlightRing);
-            highlightRing.BringToFront();
-            stackTools.BringToFront();
-            stackZoom.BringToFront();
-            compass.BringToFront();
-            stackBaseMaps.BringToFront();
-            attribution.BringToFront();
-            viewTracker.Tick += (s, e) => { PublishViewIfChanged(); if (highlightRing.Visible) DrawHighlight(); };
+            viewTracker.Tick += (s, e) => PublishViewIfChanged();
             viewTracker.Start();
             axMap.MouseMoveEvent += (s, e) => PublishCursor(e.x, e.y);
             pressFilter.Pressed += (s, screen) => NotePress(screen);

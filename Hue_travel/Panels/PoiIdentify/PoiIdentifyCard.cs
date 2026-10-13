@@ -122,7 +122,7 @@ namespace Hue_travel.Panels.PoiIdentify
                 int iconPx = Ui.S(18), textLeft = pad + iconPx + Ui.S(12), textWidth = inner - iconPx - Ui.S(12);
                 Font valueFont = ThemeFonts.Medium(13);
                 int valueHeight = Math.Min(TextRenderer.MeasureText(value, valueFont, new Size(textWidth, int.MaxValue),
-                    TextFormatFlags.WordBreak | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Height, valueFont.Height * 2);
+                    TextFormatFlags.WordBreak | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Height, valueFont.Height * 4);
                 if (g != null)
                 {
                     g.DrawImage(IconFont.Get(icon, iconPx, ThemeColors.Primary), pad, y + Ui.S(5), iconPx, iconPx);
@@ -193,7 +193,8 @@ namespace Hue_travel.Panels.PoiIdentify
             Controls.Add(btnFavorite);
             Controls.Add(btnClaim);
             Controls.Add(btnReport);
-            Controls.Add(btnClose);   // last: drawn above the photo
+            Controls.Add(btnClose);
+            btnClose.BringToFront();   // a control added later sits lower in the stack, so lift it above the photo
         }
 
         public void ShowPoi(Poi poi)
