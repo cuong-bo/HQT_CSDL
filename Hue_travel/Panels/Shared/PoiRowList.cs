@@ -25,6 +25,9 @@ namespace Hue_travel.Panels.Shared
 
         /// <summary>The switch state when the list shows switches.</summary>
         public bool On { get; set; } = true;
+
+        /// <summary>True when the place is already in the itinerary (the add button shows a tick).</summary>
+        public bool Added { get; set; }
     }
 
     /// <summary>
@@ -60,6 +63,19 @@ namespace Hue_travel.Panels.Shared
 
         /// <summary>True when each row has a switch on the right (layer list).</summary>
         public bool ShowSwitch { get; set; }
+
+        /// <summary>True when each row has a round add button on the right (picking places for the itinerary).</summary>
+        public bool ShowAddButton { get; set; }
+
+        /// <summary>Raised when the add button of a row is pressed.</summary>
+        public event EventHandler<PoiRow> AddClicked;
+
+        private Rectangle AddRect(int rowTop)
+        {
+            int size = Ui.S(30);
+            int right = Width - Ui.S(14) - (NeedsScrollBar ? ScrollBarWidth : 0);
+            return new Rectangle(right - size, rowTop + (RowPx - size) / 2, size, size);
+        }
 
         /// <summary>False for a list that must not take the keyboard focus (the search drop-down under the search box).</summary>
         public bool StealFocus
@@ -210,6 +226,17 @@ namespace Hue_travel.Panels.Shared
                 SwitchToggled?.Invoke(this, row);
                 return;
             }
+            if (ShowAddButton)
+            {
+                Rectangle add = AddRect(index * RowPx - scroll);
+                add.Inflate(Ui.S(8), Ui.S(8));
+                if (add.Contains(e.Location))
+                {
+                    AddClicked?.Invoke(this, row);
+                    Invalidate();
+                    return;
+                }
+            }
             selectedIndex = index;
             Invalidate();
             RowClicked?.Invoke(this, row);
@@ -284,6 +311,13 @@ namespace Hue_travel.Panels.Shared
                     ToggleSwitch.Draw(g, sw, row.On, false, true);
                     rightEdge = sw.X - Ui.S(10);
                 }
+                else if (ShowAddButton)
+                {
+                    Rectangle add = AddRect(top);
+                    add.Y += sink;
+                    DrawAddButton(g, add, row.Added);
+                    rightEdge = add.X - Ui.S(10);
+                }
                 else if (!string.IsNullOrEmpty(row.Right))
                 {
                     Font rightFont = ThemeFonts.SemiBold(12);
@@ -314,6 +348,23 @@ namespace Hue_travel.Panels.Shared
                     g.FillPath(brush, thumb);
                 }
             }
+        }
+
+        // A round "+" (outlined) or a tick (solid) for a place that is already in the itinerary.
+        private static void DrawAddButton(Graphics g, Rectangle r, bool added)
+        {
+            if (added)
+            {
+                using (var brush = new SolidBrush(ThemeColors.Primary)) g.FillEllipse(brush, r);
+            }
+            else
+            {
+                using (var brush = new SolidBrush(ThemeColors.Sky50)) g.FillEllipse(brush, r);
+                using (var pen = new Pen(ThemeColors.Primary, Math.Max(1.5f, Ui.S(1.5f)))) g.DrawEllipse(pen, r.X + 0.75f, r.Y + 0.75f, r.Width - 1.5f, r.Height - 1.5f);
+            }
+            int px = (int)(r.Width * 0.58);
+            Bitmap glyph = IconFont.Get(added ? "check" : "add", px, added ? Color.White : ThemeColors.Primary);
+            g.DrawImage(glyph, r.X + (r.Width - px) / 2, r.Y + (r.Height - px) / 2, px, px);
         }
 
         // The round badge of the group; faded when the row is switched off.

@@ -108,9 +108,21 @@ namespace Hue_travel.Services.Online
             this.api = api;
         }
 
-        public async Task<ApiResult<OnlineRoute>> PlanAsync(string startId, IList<string> stopIds, bool optimize, CancellationToken ct)
+        public Task<ApiResult<OnlineRoute>> PlanAsync(string startId, IList<string> stopIds, bool optimize, CancellationToken ct)
         {
             var body = new Dictionary<string, object> { { "startId", startId }, { "stopIds", stopIds.ToArray() }, { "optimize", optimize } };
+            return SendAsync(body, ct);
+        }
+
+        /// <summary>Like <see cref="PlanAsync"/> but from a free point (map metres, e.g. one picked on the map) instead of a place.</summary>
+        public Task<ApiResult<OnlineRoute>> PlanFromPointAsync(double x, double y, IList<string> stopIds, bool optimize, CancellationToken ct)
+        {
+            var body = new Dictionary<string, object> { { "startX", x }, { "startY", y }, { "stopIds", stopIds.ToArray() }, { "optimize", optimize } };
+            return SendAsync(body, ct);
+        }
+
+        private async Task<ApiResult<OnlineRoute>> SendAsync(Dictionary<string, object> body, CancellationToken ct)
+        {
             ApiResponse r = await api.PostAsync("/v1/route", body, ct).ConfigureAwait(true);
             if (!r.IsSuccess) return new ApiResult<OnlineRoute> { Error = r.Error };
             OnlineRoute route = RouteJson.Parse(r.Object);

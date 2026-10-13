@@ -164,6 +164,35 @@ public class ApiTests(ApiFixture fixture)
     }
 
     [RequiresDbFact]
+    public async Task Route_FromAFreePointStartsAtThatPointAndKeepsTheGivenOrder()
+    {
+        HttpClient http = fixture.CreateClient();
+        // A point in the middle of Huế (VN-2000 / UTM 48N metres), e.g. picked on the map.
+        JsonElement route = await Json(await http.PostAsJsonAsync("/v1/route", new { startX = 775000.0, startY = 1822500.0, stopIds = new[] { "DL004", "DL001" }, optimize = false }));
+        Assert.Equal(new[] { "DL004", "DL001" }, route.GetProperty("order").EnumerateArray().Select(e => e.GetString()).ToArray());
+        JsonElement firstLeg = route.GetProperty("legs")[0];
+        Assert.Equal("start", firstLeg.GetProperty("fromId").GetString());
+        Assert.Equal("DL004", firstLeg.GetProperty("toId").GetString());
+        Assert.True(route.GetProperty("totalMeters").GetDouble() > 0);
+    }
+
+    [RequiresDbFact]
+    public async Task Route_FromAFreePointCanOptimizeTheOrder()
+    {
+        HttpClient http = fixture.CreateClient();
+        JsonElement route = await Json(await http.PostAsJsonAsync("/v1/route", new { startX = 775000.0, startY = 1822500.0, stopIds = new[] { "DL001", "DL004", "DL019" }, optimize = true }));
+        Assert.Equal(3, route.GetProperty("order").GetArrayLength());
+        Assert.Equal("start", route.GetProperty("legs")[0].GetProperty("fromId").GetString());
+    }
+
+    [RequiresDbFact]
+    public async Task Route_RefusesAFreeStartThatIsFarFromEveryRoad()
+    {
+        HttpClient http = fixture.CreateClient();
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, (await http.PostAsJsonAsync("/v1/route", new { startX = 1.0, startY = 1.0, stopIds = new[] { "DL001" } })).StatusCode);
+    }
+
+    [RequiresDbFact]
     public async Task Route_ValidatesTheRequest()
     {
         HttpClient http = fixture.CreateClient();

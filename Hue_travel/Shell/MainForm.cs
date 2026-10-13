@@ -186,8 +186,22 @@ namespace Hue_travel.Shell
                 mapHost.LoadPois(PoiCatalog.All);
             };
             routeOptimizerPanel.Api = api;
+            routeOptimizerPanel.Projector = (longitude, latitude) => mapHost.TryProject(longitude, latitude);
             routeOptimizerPanel.RouteInvalidated += (s, e) => mapHost.ClearRoute();
-            routeOptimizerPanel.RouteComputed += (s, route) => mapHost.ShowRoute(route.Legs.Select(l => l.Path).ToList());
+            routeOptimizerPanel.RouteComputed += (s, trip) => mapHost.ShowTrip(trip, true);
+            routeOptimizerPanel.PickStartRequested += (s, on) => { if (on) mapHost.BeginPickPoint(); else mapHost.CancelPickPoint(); };
+            routeOptimizerPanel.LegSelected += (s, leg) => mapHost.ZoomToTripLeg(leg);
+            routeOptimizerPanel.PlayRequested += (s, e) => mapHost.PlayTrip();
+            routeOptimizerPanel.PauseRequested += (s, e) => mapHost.PauseTrip();
+            routeOptimizerPanel.ReplayRequested += (s, e) => mapHost.ReplayTrip();
+            routeOptimizerPanel.FitRequested += (s, e) => mapHost.ZoomToTrip();
+            mapHost.TripPlayStateChanged += (s, e) => routeOptimizerPanel.SetCarPlaying(mapHost.TripPlaying);
+            mapHost.TripLegChanged += (s, leg) => routeOptimizerPanel.SetActiveLeg(leg);
+            mapHost.PointPicked += (s, point) =>
+            {
+                double longitude, latitude;
+                if (mapHost.TryToDegrees(point, out longitude, out latitude)) routeOptimizerPanel.SetStartFromMap(point, longitude, latitude);
+            };
             poiIdentifyCard.AddToRouteRequested += (s, poi) =>
             {
                 ShowSidePanel(NavRail.Route);

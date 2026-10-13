@@ -101,6 +101,26 @@ namespace Hue_travel.Theme
             }
         }
 
+        // "Play" (a rounded triangle) and "pause" (two bars); the font subset has neither.
+        private static void DrawPlayPause(Bitmap bmp, int px, Color color, bool pause)
+        {
+            float s = px / 16f;
+            using (Graphics g = Graphics.FromImage(bmp))
+            using (var brush = new SolidBrush(color))
+            {
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                if (pause)
+                {
+                    g.FillRectangle(brush, 3.5f * s, 2.5f * s, 3.2f * s, 11f * s);
+                    g.FillRectangle(brush, 9.3f * s, 2.5f * s, 3.2f * s, 11f * s);
+                }
+                else
+                {
+                    g.FillPolygon(brush, new[] { new PointF(4f * s, 2.2f * s), new PointF(13.2f * s, 8f * s), new PointF(4f * s, 13.8f * s) });
+                }
+            }
+        }
+
         // "Arrow forward": a horizontal line with an arrow head.
         private static void DrawArrow(Bitmap bmp, int px, Color color)
         {
@@ -197,6 +217,11 @@ namespace Hue_travel.Theme
             if (name == "arrow_forward")
             {
                 DrawArrow(bmp, px, color);
+                return bmp;
+            }
+            if (name == "play_arrow" || name == "pause")
+            {
+                DrawPlayPause(bmp, px, color, name == "pause");
                 return bmp;
             }
 

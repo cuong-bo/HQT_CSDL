@@ -4,6 +4,12 @@ namespace Hue_travel.Api.Routing;
 
 public static class RouteEndpoints
 {
+    /// <summary>Id given to a free start (picked on the map) in the legs of the answer.</summary>
+    public const string StartLabel = "start";
+
+    // A free start further than this from the connected road network is refused.
+    private const double MaxStartSnapMeters = 1500;
+
     public static void MapRouteEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapPost("/v1/route", PlanAsync).RequireRateLimiting("heavy");
@@ -14,14 +20,27 @@ public static class RouteEndpoints
     {
         string? start = request.StartId?.Trim();
         string[] stops = (request.StopIds ?? []).Select(s => s.Trim()).ToArray();
-        if (string.IsNullOrEmpty(start))
-            return Results.Problem(detail: "Thiếu startId.", statusCode: StatusCodes.Status400BadRequest);
+        bool freeStart = string.IsNullOrEmpty(start) && request.StartX is double && request.StartY is double;
+        if (string.IsNullOrEmpty(start) && !freeStart)
+            return Results.Problem(detail: "Thiếu điểm xuất phát (startId hoặc startX/startY).", statusCode: StatusCodes.Status400BadRequest);
         if (stops.Length is < 1 or > RouteOptimizer.MaxStops)
             return Results.Problem(detail: $"stopIds cần từ 1 đến {RouteOptimizer.MaxStops} địa điểm.", statusCode: StatusCodes.Status400BadRequest);
-        if (stops.Distinct().Count() != stops.Length || stops.Contains(start))
+        if (stops.Distinct().Count() != stops.Length || (start != null && stops.Contains(start)))
             return Results.Problem(detail: "Các địa điểm phải khác nhau và khác điểm xuất phát.", statusCode: StatusCodes.Status400BadRequest);
 
-        string[] all = [start, .. stops];
+        long startVertex = 0;
+        if (freeStart)
+        {
+            double x = request.StartX!.Value, y = request.StartY!.Value;
+            if (!double.IsFinite(x) || !double.IsFinite(y))
+                return Results.Problem(detail: "Tọa độ điểm xuất phát không hợp lệ.", statusCode: StatusCodes.Status400BadRequest);
+            var snapped = await routes.SnapAsync(x, y, ct);
+            if (snapped == null || snapped.Value.DistanceMeters > MaxStartSnapMeters)
+                return Results.Problem(detail: "Điểm xuất phát quá xa đường đi; hãy chọn gần đường hơn.", statusCode: StatusCodes.Status422UnprocessableEntity);
+            startVertex = snapped.Value.VertexId;
+        }
+
+        string[] all = freeStart ? stops : [start!, .. stops];
         HashSet<string> routable = await routes.RoutableIdsAsync(all, ct);
         string[] missing = all.Where(id => !routable.Contains(id)).ToArray();
         if (missing.Length > 0)
@@ -30,18 +49,37 @@ public static class RouteEndpoints
         string[] order = stops;
         if (request.Optimize ?? true)
         {
-            double[,] matrix = await routes.TimeMatrixAsync(all, ct);
+            double[,] matrix;
+            if (freeStart)
+            {
+                // Index 0 is the free start, 1..n the stops.
+                double[,] among = await routes.TimeMatrixAsync(stops, ct);
+                double[] fromStart = await routes.TimesFromVertexAsync(startVertex, stops, ct);
+                matrix = new double[stops.Length + 1, stops.Length + 1];
+                for (int i = 0; i < stops.Length; i++)
+                {
+                    matrix[0, i + 1] = fromStart[i];
+                    matrix[i + 1, 0] = double.PositiveInfinity;
+                    for (int j = 0; j < stops.Length; j++) matrix[i + 1, j + 1] = among[i, j];
+                }
+            }
+            else
+            {
+                matrix = await routes.TimeMatrixAsync(all, ct);
+            }
             IReadOnlyList<int>? best = RouteOptimizer.Order(matrix);
             if (best == null)
                 return Results.Problem(detail: "Có địa điểm không nối được bằng đường bộ với các điểm còn lại.", statusCode: StatusCodes.Status422UnprocessableEntity);
-            order = best.Select(i => all[i]).ToArray();
+            order = freeStart ? best.Select(i => stops[i - 1]).ToArray() : best.Select(i => all[i]).ToArray();
         }
 
         var legs = new List<RouteLeg>(order.Length);
-        string previous = start;
+        string previous = start ?? StartLabel;
         foreach (string next in order)
         {
-            legs.Add(await routes.LegAsync(previous, next, ct));
+            legs.Add(freeStart && legs.Count == 0
+                ? await routes.LegFromVertexAsync(startVertex, StartLabel, next, ct)
+                : await routes.LegAsync(previous, next, ct));
             previous = next;
         }
         // Counted for signed-in use of a real plan only; the app also asks for the order as listed, just to show the saving.

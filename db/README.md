@@ -21,7 +21,7 @@ toàn bộ đồ thị đường) → `verify.sql` (dừng với mã lỗi nếu
 
 | Thư mục / file | Nội dung |
 |---|---|
-| `migrations/V001..V004` | extension và hàm hỗ trợ; `app_user`, `audit_log`; `poi`, `hanh_chinh_diem`, `ranh_tinh`, `ranh_xa`, `place_owner`; `ways`, `ways_vertices`, `poi_snap`, `route_cost_matrix()`, `route_path()` |
+| `migrations/V001..V008` | extension và hàm hỗ trợ; `app_user`, `audit_log`; `poi`, `hanh_chinh_diem`, `ranh_tinh`, `ranh_xa`, `place_owner`; `ways`, `ways_vertices`, `poi_snap`, `route_cost_matrix()`, `route_path()` |
 | `import/transform.sql` | từ `stg` sang bảng ứng dụng (gộp 4 lớp điểm thành `poi`) |
 | `import/build_routing.sql` | đồ thị: bỏ đoạn tự nối, tốc độ theo loại đường, chỉ giữ mạng liên thông mạnh lớn nhất (tính cả đường một chiều), bám POI vào đoạn đường gần nhất rồi vào đầu gần hơn của đoạn đó |
 | `import/verify.sql` | kiểm tra số bản ghi, SRID, hình học hợp lệ, điểm trong tỉnh, khoảng cách bám đường, tuyến mẫu Ga Huế đến Đại Nội |

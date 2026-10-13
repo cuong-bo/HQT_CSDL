@@ -7,6 +7,7 @@ using Hue_travel.Models;
 using Hue_travel.Services;
 using Hue_travel.Services.Area;
 using Hue_travel.Services.Online;
+using Hue_travel.Services.Routing;
 using Hue_travel.Theme;
 using Interop.MapWinGIS;
 
@@ -33,7 +34,8 @@ namespace Hue_travel.MapEngine
         private int lastPixelWidth = -1;
         private readonly List<PoiMarker> markers = new List<PoiMarker>();
         private readonly LeftPressFilter pressFilter = new LeftPressFilter();
-        private int routeHandle = -1;
+        private RouteDrawing routeDrawing;
+        private bool pickingPoint;
         private int placeholderHandle = -1;
         private HighlightRing highlightRing;
         private Poi highlighted;
@@ -327,10 +329,10 @@ namespace Hue_travel.MapEngine
         // The pointers of the system: the arrow over the map, the pointing hand over a place you can click.
         private void UpdateMapCursor(int pixelX, int pixelY)
         {
-            int state = axMap.CursorMode != tkCursorMode.cmPan ? 3 : FindPoiAt(pixelX, pixelY) != null ? 2 : 0;
+            int state = pickingPoint ? 4 : axMap.CursorMode != tkCursorMode.cmPan ? 3 : FindPoiAt(pixelX, pixelY) != null ? 2 : 0;
             if (state == mapCursorState) return;
             mapCursorState = state;
-            axMap.MapCursor = state == 3 ? tkCursor.crsrMapDefault : state == 2 ? tkCursor.crsrHand : tkCursor.crsrArrow;
+            axMap.MapCursor = state == 3 ? tkCursor.crsrMapDefault : state == 2 ? tkCursor.crsrHand : state == 4 ? tkCursor.crsrCross : tkCursor.crsrArrow;
         }
 
         // The nearest visible marker within HitRadius of a pixel, or null.
@@ -363,10 +365,18 @@ namespace Hue_travel.MapEngine
         {
             int downX = pressX, downY = pressY;
             pressX = pressY = int.MinValue;
-            UpdateMapCursor(pixelX, pixelY);
-            if (button != LeftButton || axMap.CursorMode != tkCursorMode.cmPan) return;
+            if (button != LeftButton || axMap.CursorMode != tkCursorMode.cmPan) { UpdateMapCursor(pixelX, pixelY); return; }
             if (downX == int.MinValue) return;   // no press was seen: do not guess
             if (Math.Abs(pixelX - downX) > ClickSlopPixels || Math.Abs(pixelY - downY) > ClickSlopPixels) return;
+            if (pickingPoint)
+            {
+                double x = 0, y = 0;
+                axMap.PixelToProj(pixelX, pixelY, ref x, ref y);
+                CancelPickPoint();
+                PointPicked?.Invoke(this, new MapXY(x, y));
+                return;
+            }
+            UpdateMapCursor(pixelX, pixelY);
             Poi hit = FindPoiAt(pixelX, pixelY);
             if (hit != null) PoiClicked?.Invoke(this, hit);
         }
@@ -397,49 +407,90 @@ namespace Hue_travel.MapEngine
             public int LayerHandle { get; }
         }
 
-        /// <summary>Draws the route (one line per leg, in map metres) above the base map and below the markers, and zooms to it.</summary>
-        public void ShowRoute(IReadOnlyList<IReadOnlyList<MapXY>> lines)
+        /// <summary>A position in degrees as map metres, or null when the map cannot convert it.</summary>
+        public MapXY? TryProject(double longitude, double latitude)
         {
-            ClearRoute();
-            var layer = new Shapefile();
-            if (!layer.CreateNew(string.Empty, ShpfileType.SHP_POLYLINE)) return;
+            double x = 0, y = 0;
+            return axMap.DegreesToProj(longitude, latitude, ref x, ref y) ? new MapXY(x, y) : (MapXY?)null;
+        }
 
-            double minX = double.MaxValue, minY = double.MaxValue, maxX = double.MinValue, maxY = double.MinValue;
-            foreach (IReadOnlyList<MapXY> line in lines)
-            {
-                if (line.Count < 2) continue;
-                var shape = new Shape();
-                int part = 0;
-                if (!shape.Create(ShpfileType.SHP_POLYLINE) || !shape.InsertPart(0, ref part)) continue;
-                foreach (MapXY p in line)
-                {
-                    shape.AddPoint(p.X, p.Y);
-                    minX = Math.Min(minX, p.X); maxX = Math.Max(maxX, p.X);
-                    minY = Math.Min(minY, p.Y); maxY = Math.Max(maxY, p.Y);
-                }
-                layer.EditAddShape(shape);
-            }
-            if (layer.NumShapes == 0) return;
+        /// <summary>A map position as degrees.</summary>
+        public bool TryToDegrees(MapXY point, out double longitude, out double latitude)
+        {
+            longitude = latitude = 0;
+            return axMap.ProjToDegrees(point.X, point.Y, ref longitude, ref latitude);
+        }
 
-            ShapeDrawingOptions style = layer.DefaultDrawingOptions;
-            style.LineColor = (uint)System.Drawing.ColorTranslator.ToOle(ThemeColors.Primary);
-            style.LineWidth = Ui.S(5);
-            style.LineVisible = true;
-            style.FillVisible = false;
-            routeHandle = axMap.AddLayer(layer, true);
+        /// <summary>Raised when the car enters another leg of the trip (the index of the leg).</summary>
+        public event EventHandler<int> TripLegChanged;
 
-            double padX = Math.Max((maxX - minX) * 0.15, 300), padY = Math.Max((maxY - minY) * 0.15, 300);
-            var view = new Extents();
-            view.SetBounds(minX - padX, minY - padY, 0, maxX + padX, maxY + padY, 0);
-            axMap.Extents = view;
+        /// <summary>Raised when the car starts or stops moving.</summary>
+        public event EventHandler TripPlayStateChanged;
+
+        /// <summary>Raised when the car reaches the end of the trip.</summary>
+        public event EventHandler TripFinished;
+
+        /// <summary>Raised with the clicked position (map metres) while <see cref="BeginPickPoint"/> is waiting for one.</summary>
+        public event EventHandler<MapXY> PointPicked;
+
+        public bool IsPickingPoint => pickingPoint;
+
+        public bool TripPlaying => routeDrawing != null && routeDrawing.IsPlaying;
+
+        /// <summary>Waits for the next click on the map and raises <see cref="PointPicked"/> with it (a crosshair shows meanwhile).</summary>
+        public void BeginPickPoint()
+        {
+            pickingPoint = true;
+            mapCursorState = -1;
+            UpdateMapCursor(0, 0);
+        }
+
+        public void CancelPickPoint()
+        {
+            pickingPoint = false;
+            mapCursorState = -1;
+            UpdateMapCursor(0, 0);
+        }
+
+        /// <summary>Draws the trip (a coloured line per leg, numbered stops) with a car that drives along it, and zooms to it.</summary>
+        public void ShowTrip(TripPlan plan, bool play)
+        {
+            if (plan == null || plan.Legs.Count == 0) return;
+            EnsureRouteDrawing().Show(plan, play);
         }
 
         public void ClearRoute()
         {
-            if (routeHandle < 0) return;
-            axMap.RemoveLayer(routeHandle);
-            routeHandle = -1;
-            axMap.Redraw();
+            if (routeDrawing != null) routeDrawing.Clear();
+        }
+
+        public void PlayTrip() { if (routeDrawing != null) routeDrawing.Play(); }
+
+        public void PauseTrip() { if (routeDrawing != null) routeDrawing.Pause(); }
+
+        public void ReplayTrip() { if (routeDrawing != null) routeDrawing.Replay(); }
+
+        public void ZoomToTripLeg(int leg) { if (routeDrawing != null) routeDrawing.ZoomToLeg(leg); }
+
+        public void ZoomToTrip() { if (routeDrawing != null) routeDrawing.ZoomToTrip(); }
+
+        private RouteDrawing EnsureRouteDrawing()
+        {
+            if (routeDrawing != null) return routeDrawing;
+            routeDrawing = new RouteDrawing(axMap, LowestPlacePosition);
+            routeDrawing.LegChanged += (s, leg) => TripLegChanged?.Invoke(this, leg);
+            routeDrawing.PlayStateChanged += (s, e) => TripPlayStateChanged?.Invoke(this, EventArgs.Empty);
+            routeDrawing.Finished += (s, e) => TripFinished?.Invoke(this, EventArgs.Empty);
+            Disposed += (s, e) => routeDrawing.Dispose();
+            return routeDrawing;
+        }
+
+        // The layer position of the lowest place layer: the route line goes in just below it, so markers stay on top.
+        private int LowestPlacePosition()
+        {
+            int lowest = axMap.NumLayers;
+            foreach (int handle in poiLayers.Handles) lowest = Math.Min(lowest, axMap.get_LayerPosition(handle));
+            return lowest;
         }
 
         public void PanMode(bool enabled)
