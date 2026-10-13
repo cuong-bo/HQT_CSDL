@@ -35,6 +35,8 @@ namespace Hue_travel.MapEngine
     /// </summary>
     public static class BaseMapCatalog
     {
+        /// <summary>True: the base map is drawn from the project's own Shapefiles and the web tiles (Google) are off.</summary>
+        public const bool UseLocalData = true;
         public const string DefaultId = "roadmap";
         public const int MinZoom = 1;
         public const int MaxZoom = 20;

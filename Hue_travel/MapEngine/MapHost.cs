@@ -471,6 +471,7 @@ namespace Hue_travel.MapEngine
 
         public void SetBaseMap(string mapId)
         {
+            if (BaseMapCatalog.UseLocalData) return;
             BaseMapInfo info = BaseMapCatalog.Find(mapId);
             if (info == null) return;
             baseMapId = mapId;
@@ -481,8 +482,21 @@ namespace Hue_travel.MapEngine
         /// <summary>Applies the current base map again, after the catalog got new tile addresses.</summary>
         public void ReloadBaseMap()
         {
+            if (BaseMapCatalog.UseLocalData) return;
             BaseMapInfo info = BaseMapCatalog.Find(baseMapId);
             if (info != null) ApplyTiles(info);
+        }
+
+        // The base map is drawn from the project's own Shapefiles (the web tiles are switched off); the place layers are added above it.
+        private void ApplyLocalBase()
+        {
+            axMap.Tiles.Visible = false;
+            axMap.TileProvider = tkTileProvider.ProviderNone;
+            LocalBaseMap.Add(axMap);
+            stackBaseMaps.Visible = false;
+            attribution.Visible = false;
+            LayoutOverlays();
+            axMap.Redraw();
         }
 
         // The base map is a web tile layer; MapWinGIS still does zoom, pan, measuring and the coordinate read-out.
@@ -546,7 +560,8 @@ namespace Hue_travel.MapEngine
             pressFilter.Pressed += (s, screen) => NotePress(screen);
             Application.AddMessageFilter(pressFilter);
             axMap.MouseUpEvent += (s, e) => OnMapMouseUp(e.button, e.x, e.y);
-            ApplyTiles(BaseMapCatalog.Find(baseMapId));
+            if (BaseMapCatalog.UseLocalData) ApplyLocalBase();
+            else ApplyTiles(BaseMapCatalog.Find(baseMapId));
             ZoomToFull();
         }
 

@@ -204,6 +204,7 @@
     <Compile Include="Shell\SearchDropdown.cs" />
     <Compile Include="Theme\ToggleSwitch.cs" />
     <Compile Include="MapEngine\HighlightRing.cs" />
+    <Compile Include="MapEngine\LocalBaseMap.cs" />
 
     <Compile Include="MapEngine\PoiMarkerIcons.cs" />
     <Compile Include="Shell\StatusBar.cs">
@@ -303,6 +304,9 @@
     <None Include="Resources\LICENSES.md" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Data\NenBanDo\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Data\Photos\README.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
