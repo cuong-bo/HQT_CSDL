@@ -65,6 +65,7 @@ namespace Hue_travel.MapEngine
             compass.BringToFront();
             stackBaseMaps.BringToFront();
             attribution.BringToFront();
+            InitTripChip();
             LayoutOverlays();
             Resize += (s, e) => LayoutOverlays();
             new ToolTip().SetToolTip(compass, "Khôi phục hướng Bắc");
@@ -632,6 +633,48 @@ namespace Hue_travel.MapEngine
             stackZoom.Location = new System.Drawing.Point(x, compass.Bottom + Ui.S(StackGap));
             stackTools.Location = new System.Drawing.Point(x, stackZoom.Bottom + Ui.S(StackGap + 4));
             attribution.Location = new System.Drawing.Point(Width - attribution.Width - Ui.S(8), Height - attribution.Height - Ui.S(8));
+            int chipWidth = Ui.S(206), chipHeight = Ui.S(46);
+            // Centred on the window (like the result panel it stands for), not on the map, which starts to the right of the rail.
+            Form window = FindForm();
+            int centre = window != null && window.IsHandleCreated ? PointToClient(window.PointToScreen(new System.Drawing.Point(window.ClientSize.Width / 2, 0))).X : Width / 2;
+            tripChip.SetBounds(centre - chipWidth / 2, Height - chipHeight - Ui.S(22), chipWidth, chipHeight);
+        }
+
+        // ------------------------------------------------------------------ the button the folded route result leaves on the map
+
+        private readonly IconButton tripChip = new IconButton();
+
+        /// <summary>Raised when the folded route result's button is pressed.</summary>
+        public event EventHandler TripChipClicked;
+
+        private void InitTripChip()
+        {
+            tripChip.AutoWidth = false;
+            tripChip.Text = "Kết quả tìm đường";
+            tripChip.IconName = "route";
+            tripChip.IconSize = 18;
+            tripChip.TrailingIconName = "expand_less";
+            tripChip.TrailingIconSize = 18;
+            tripChip.Gap = 8;
+            tripChip.Font = ThemeFonts.SemiBold(13);
+            tripChip.Radius = 23;
+            tripChip.ForeColor = System.Drawing.Color.White;
+            tripChip.IconColor = ThemeColors.Sky300;
+            tripChip.TrailingIconColor = ThemeColors.Slate300;
+            tripChip.FillColor = ThemeColors.Slate800;
+            tripChip.HoverFillColor = ThemeColors.Slate700;
+            tripChip.Elevated = true;
+            tripChip.Visible = false;
+            tripChip.Click += (s, e) => TripChipClicked?.Invoke(this, EventArgs.Empty);
+            Controls.Add(tripChip);
+            tripChip.BringToFront();
+        }
+
+        /// <summary>Shows or hides the button that reopens the folded route result.</summary>
+        public void ShowTripChip(bool visible)
+        {
+            tripChip.Visible = visible;
+            if (visible) tripChip.BringToFront();
         }
 
         private void stackBaseMaps_ItemClicked(object sender, int index) => SetBaseMap(BaseMapIds[index]);

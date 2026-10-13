@@ -190,6 +190,7 @@ namespace Hue_travel.Shell
             // "Tìm đường" closes the route form and opens the result; "Dừng lại" clears the map and the form and brings the empty form back.
             routeOptimizerPanel.RouteComputed += (s, trip) =>
             {
+                mapHost.ShowTripChip(false);
                 ShowSidePanel(-1);                  // the route form closes ...
                 tripResultPanel.Open(trip);         // ... and the result opens, a low bar centred under the map
                 mapHost.ShowTrip(trip, true);
@@ -197,10 +198,13 @@ namespace Hue_travel.Shell
             tripResultPanel.StopRequested += (s, e) =>
             {
                 mapHost.ClearRoute();
+                mapHost.ShowTripChip(false);
                 tripResultPanel.CloseAll();
                 routeOptimizerPanel.ResetAll();
                 ShowSidePanel(NavRail.Route);
             };
+            tripResultPanel.Folded += (s, e) => mapHost.ShowTripChip(true);
+            mapHost.TripChipClicked += (s, e) => { mapHost.ShowTripChip(false); tripResultPanel.Unfold(); };
             tripResultPanel.LegSelected += (s, leg) => mapHost.ZoomToTripLeg(leg);
             tripResultPanel.PlayRequested += (s, e) => mapHost.PlayTrip();
             tripResultPanel.PauseRequested += (s, e) => mapHost.PauseTrip();

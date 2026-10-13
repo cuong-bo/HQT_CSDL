@@ -95,8 +95,6 @@ namespace Hue_travel.Shell
             this.routeOptimizerPanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
             // The route result is a wide panel centred under the map (no left or right edge: it stays centred horizontally).
             this.tripResultPanel.AttachTo(this, new System.Drawing.Point((this.ClientSize.Width - TripResultPanel.DesignWidth) / 2, this.ClientSize.Height - TripResultPanel.DesignHeight - 56), System.Windows.Forms.AnchorStyles.Bottom);
-            // While folded the result is a small pill button at the same place.
-            this.tripResultPanel.Chip.AttachTo(this, new System.Drawing.Point((this.ClientSize.Width - TripResultPanel.ChipWidth) / 2, this.ClientSize.Height - TripResultPanel.ChipHeight - 56), System.Windows.Forms.AnchorStyles.Bottom);
             this.travelGuidePanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
             // The place card sits at the bottom right of the map, clear of the map's control column (400px wide card, 92px from the right).
             this.poiIdentifyCard.AttachTo(this, new System.Drawing.Point(1044, 198), System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right);

@@ -17,40 +17,11 @@ namespace Hue_travel.Panels.RouteOptimizer
 {
     /// <summary>
     /// "Kết quả tìm đường": a compact bar centred under the map that opens when the route form has computed a trip. A strip of
-    /// numbers on top, the legs side by side, the car controls underneath. It can be folded into a small round button (see
-    /// <see cref="Chip"/>) and opened again; "Dừng lại" clears everything the search put on the map and in the form.
+    /// numbers on top, the legs side by side, the car controls underneath. It can be folded away to a button on the map (see
+    /// <see cref="Folded"/>) and opened again; "Dừng lại" clears everything the search put on the map and in the form.
     /// </summary>
     public sealed class TripResultPanel : FloatingPanelForm
     {
-        // ------------------------------------------------------------------ the small round button the panel folds into
-
-        private sealed class ChipForm : FloatingPanelForm
-        {
-            private readonly IconButton button = new IconButton();
-
-            public event EventHandler Clicked;
-
-            public ChipForm()
-            {
-                Size = new Size(ChipDesignWidth, ChipDesignHeight);
-                button.AutoWidth = false;
-                button.Text = "Kết quả";
-                button.IconName = "route";
-                button.IconSize = 20;
-                button.Gap = 8;
-                button.Font = ThemeFonts.SemiBold(14);
-                button.ForeColor = Color.White;
-                button.IconColor = Color.White;
-                button.FillColor = ThemeColors.Primary;
-                button.HoverFillColor = ThemeColors.PrimaryContainer;
-                button.Radius = ChipDesignHeight / 2;
-                button.Dock = DockStyle.Fill;
-                button.Click += (s, e) => Clicked?.Invoke(this, EventArgs.Empty);
-                Controls.Add(button);
-                new ToolTip().SetToolTip(button, "Mở kết quả tìm đường");
-            }
-        }
-
         // ------------------------------------------------------------------ the legs of a computed trip, side by side
 
         private sealed class LegStrip : Control
@@ -263,7 +234,6 @@ namespace Hue_travel.Panels.RouteOptimizer
         private readonly IconButton btnSave = new IconButton();
         private readonly IconButton btnPrint = new IconButton();
         private readonly IconButton btnStop = new IconButton();
-        private readonly ChipForm chip = new ChipForm();
         private TripPlan plan;
         private bool carPlaying;
 
@@ -279,15 +249,8 @@ namespace Hue_travel.Panels.RouteOptimizer
         /// <summary>Design size (96-DPI pixels) of the panel: a low bar to sit under the map.</summary>
         public const int DesignWidth = 760;
         public const int DesignHeight = 204;
-        private const int ChipDesignWidth = 150;
-        private const int ChipDesignHeight = 48;
-
-        public static int ChipWidth => ChipDesignWidth;
-
-        public static int ChipHeight => ChipDesignHeight;
-
-        /// <summary>The small round button shown while the panel is folded away; the host attaches it next to the panel.</summary>
-        public FloatingPanelForm Chip => chip;
+        /// <summary>Raised when the panel is folded away: the host shows a button on the map that calls <see cref="Unfold"/>.</summary>
+        public event EventHandler Folded;
 
         public TripResultPanel()
         {
@@ -318,7 +281,6 @@ namespace Hue_travel.Panels.RouteOptimizer
             foreach (Control c in new Control[] { titleRow, btnFold, btnClose, legStrip, btnPlay, btnReplay, btnFit, btnSave, btnPrint, btnStop }) Controls.Add(c);
 
             btnFold.Click += (s, e) => Fold();
-            chip.Clicked += (s, e) => Unfold();
             btnClose.Click += (s, e) => StopRequested?.Invoke(this, EventArgs.Empty);
             legStrip.LegClicked += (s, i) => { LegSelected?.Invoke(this, i); legStrip.SetActive(i); };
             btnPlay.Click += (s, e) => { if (carPlaying) PauseRequested?.Invoke(this, EventArgs.Empty); else PlayRequested?.Invoke(this, EventArgs.Empty); };
@@ -360,36 +322,25 @@ namespace Hue_travel.Panels.RouteOptimizer
 
         // ------------------------------------------------------------------ folding into the round button
 
-        /// <summary>True while the panel is folded into its round button.</summary>
-        public bool IsFolded => !Visible && chip.Visible;
-
-        /// <summary>Hides the panel and shows the round button in its place.</summary>
+        /// <summary>Hides the panel; the host shows its button on the map.</summary>
         public void Fold()
         {
             Visible = false;
-            chip.Visible = true;
+            Folded?.Invoke(this, EventArgs.Empty);
         }
 
-        /// <summary>Hides the round button and shows the panel again.</summary>
-        public void Unfold()
-        {
-            chip.Visible = false;
-            Visible = true;
-        }
+        /// <summary>Shows the panel again.</summary>
+        public void Unfold() => Visible = true;
 
-        /// <summary>Opens the panel with a new trip (and removes the round button).</summary>
+        /// <summary>Opens the panel with a new trip.</summary>
         public void Open(TripPlan trip)
         {
             ShowTrip(trip);
             Unfold();
         }
 
-        /// <summary>Closes the panel and the round button (after "Dừng lại").</summary>
-        public void CloseAll()
-        {
-            chip.Visible = false;
-            Visible = false;
-        }
+        /// <summary>Closes the panel (after "Dừng lại").</summary>
+        public void CloseAll() => Visible = false;
 
         /// <summary>Fills the panel with a computed trip.</summary>
         public void ShowTrip(TripPlan trip)

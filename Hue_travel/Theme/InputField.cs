@@ -15,6 +15,7 @@ namespace Hue_travel.Theme
         private readonly TextBox textBox = new TextBox();
         private readonly IconButton leadingIcon = new IconButton();
         private readonly IconButton revealButton = new IconButton();
+        private readonly Label placeholder = new Label { AutoSize = false, Visible = false, BackColor = Color.Transparent, ForeColor = ThemeColors.Slate400, TextAlign = ContentAlignment.MiddleLeft, Cursor = Cursors.IBeam };
         private bool isRevealable;
         private bool isFocused;
         private bool hasError;
@@ -36,7 +37,8 @@ namespace Hue_travel.Theme
             textBox.Font = Font;
             textBox.GotFocus += (s, e) => { isFocused = true; Invalidate(); };
             textBox.LostFocus += (s, e) => { isFocused = false; Invalidate(); };
-            textBox.TextChanged += (s, e) => { hasError = false; Invalidate(); OnTextChanged(EventArgs.Empty); };
+            textBox.TextChanged += (s, e) => { hasError = false; UpdatePlaceholder(); Invalidate(); OnTextChanged(EventArgs.Empty); };
+            placeholder.Click += (s, e) => textBox.Focus();
 
             leadingIcon.AutoWidth = false;
             leadingIcon.IconSize = 15;
@@ -63,10 +65,21 @@ namespace Hue_travel.Theme
             };
 
             Controls.Add(textBox);
+            Controls.Add(placeholder);
+            placeholder.BringToFront();
             Controls.Add(leadingIcon);
             Controls.Add(revealButton);
             LayoutChildren();
         }
+
+        /// <summary>Grey text shown while the field is empty ("Tìm theo tên địa điểm…").</summary>
+        [Category("Appearance")]
+        public string PlaceholderText { get { return placeholder.Text; } set { placeholder.Text = value ?? ""; UpdatePlaceholder(); } }
+
+        /// <summary>Puts the cursor in the text box (the field itself is only a frame around it).</summary>
+        public void FocusText() => textBox.Focus();
+
+        private void UpdatePlaceholder() => placeholder.Visible = placeholder.Text.Length > 0 && textBox.Text.Length == 0;
 
         [Category("Appearance")]
         public string IconName { get { return leadingIcon.IconName; } set { leadingIcon.IconName = value; LayoutChildren(); } }
@@ -114,6 +127,8 @@ namespace Hue_travel.Theme
             revealButton.Location = new Point(Width - Ui.S(10) - revealButton.Width, (Height - revealButton.Height) / 2);
             textBox.Location = new Point(left, (Height - textBox.Height) / 2);
             textBox.Width = Math.Max(10, Width - left - right);
+            placeholder.Font = textBox.Font;
+            placeholder.SetBounds(left, 0, textBox.Width, Height);
         }
 
         protected override void OnPaint(PaintEventArgs e)

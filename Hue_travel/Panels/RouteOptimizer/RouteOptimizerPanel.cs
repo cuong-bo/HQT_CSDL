@@ -54,7 +54,7 @@ namespace Hue_travel.Panels.RouteOptimizer
         private readonly Label lblStartHint = Hint("Bấm \"Gợi ý điểm bắt đầu\" để chọn từ danh sách, hoặc \"Chọn trên bản đồ\" rồi bấm vào vị trí bạn muốn xuất phát.");
         private readonly IconButton btnSuggest = new IconButton();
         private readonly IconButton btnPickOnMap = new IconButton();
-        private readonly InputField suggestSearch = new InputField { IconName = "search" };
+        private readonly InputField suggestSearch = new InputField { IconName = "search", PlaceholderText = "Tìm điểm bắt đầu theo tên (ví dụ: ga, Đại Nội)…" };
         private readonly Label lblSuggestCount = Hint("");
         private readonly PoiRowList suggestList = new PoiRowList { StealFocus = false, EmptyText = "Không có địa điểm nào khớp." };
 
@@ -62,7 +62,7 @@ namespace Hue_travel.Panels.RouteOptimizer
         private readonly Label lblStopsCount = Hint("");
         private readonly StopList stopList = new StopList();
         private readonly IconButton btnAddStops = new IconButton();
-        private readonly InputField pickerSearch = new InputField { IconName = "search" };
+        private readonly InputField pickerSearch = new InputField { IconName = "search", PlaceholderText = "Tìm điểm đến theo tên…" };
         private readonly Label lblPickerCount = Hint("");
         private readonly PoiRowList pickerList = new PoiRowList { ShowAddButton = true, StealFocus = false, EmptyText = "Không có địa điểm nào khớp." };
         private readonly IconButton btnAutoOrder = new IconButton();
@@ -209,7 +209,7 @@ namespace Hue_travel.Panels.RouteOptimizer
 
         private void WireEvents()
         {
-            btnSuggest.Click += (s, e) => { suggestOpen = !suggestOpen; if (suggestOpen) ReloadSuggestions(); LayoutAll(); };
+            btnSuggest.Click += (s, e) => { suggestOpen = !suggestOpen; if (suggestOpen) ReloadSuggestions(); LayoutAll(); if (suggestOpen) suggestSearch.FocusText(); };
             btnPickOnMap.Click += (s, e) => SetPicking(!pickingOnMap, true);
             btnClearStart.Click += (s, e) => { SetPicking(false, true); SetStart(null); };
             suggestSearch.TextChanged += (s, e) => ReloadSuggestions();
@@ -217,7 +217,7 @@ namespace Hue_travel.Panels.RouteOptimizer
 
             stopList.MoveRequested += (s, move) => MoveStop(move.Key, move.Value);
             stopList.RemoveRequested += (s, index) => RemoveStop(index);
-            btnAddStops.Click += (s, e) => { pickerOpen = !pickerOpen; if (pickerOpen) ReloadPicker(); LayoutAll(); };
+            btnAddStops.Click += (s, e) => { pickerOpen = !pickerOpen; if (pickerOpen) ReloadPicker(); LayoutAll(); if (pickerOpen) pickerSearch.FocusText(); };
             pickerSearch.TextChanged += (s, e) => ReloadPicker();
             pickerList.AddClicked += (s, row) => TogglePlace(row);
             pickerList.RowClicked += (s, row) => TogglePlace(row);
