@@ -5,7 +5,7 @@ RUN dotnet restore api/Hue_travel.Api.csproj
 COPY api api
 RUN dotnet publish api/Hue_travel.Api.csproj -c Release -o /app --no-restore
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 COPY --from=build /app .
 ENV ASPNETCORE_URLS=http://+:8080
