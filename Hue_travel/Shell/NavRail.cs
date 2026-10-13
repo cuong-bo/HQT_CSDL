@@ -15,10 +15,11 @@ namespace Hue_travel.Shell
         public const int Explore = 0;
         public const int Route = 1;
         public const int Guide = 2;
+        public const int Profile = 3;
 
-        private static readonly string[] Icons = { "search", "alt_route", "menu_book" };
-        private static readonly string[] Labels = { "Khám phá", "Lộ trình", "Hướng dẫn" };
-        private static readonly string[] Tips = { "Tìm địa điểm theo tên và nhóm", "Lên lộ trình tham quan ngắn nhất", "Gợi ý các tour tham quan" };
+        private static readonly string[] Icons = { "search", "alt_route", "menu_book", "account_circle" };
+        private static readonly string[] Labels = { "Khám phá", "Lộ trình", "Hướng dẫn", "Hồ sơ" };
+        private static readonly string[] Tips = { "Tìm địa điểm theo tên và nhóm", "Lên lộ trình tham quan ngắn nhất", "Gợi ý các tour tham quan", "Hồ sơ, yêu thích, lộ trình đã lưu và đăng xuất" };
 
         private const int DesignWidth = 80;
         private const int ItemHeight = 76;

@@ -89,6 +89,31 @@ namespace Hue_travel.Theme
             }
         }
 
+        // "Chevron right": a thin right-pointing angle (the font subset has no such glyph).
+        private static void DrawChevron(Bitmap bmp, int px, Color color)
+        {
+            float s = px / 16f;
+            using (Graphics g = Graphics.FromImage(bmp))
+            using (var pen = new Pen(color, Math.Max(1.2f, 1.6f * s)) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round, LineJoin = System.Drawing.Drawing2D.LineJoin.Round })
+            {
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                g.DrawLines(pen, new[] { new PointF(5.5f * s, 3f * s), new PointF(10.5f * s, 8f * s), new PointF(5.5f * s, 13f * s) });
+            }
+        }
+
+        // "Arrow forward": a horizontal line with an arrow head.
+        private static void DrawArrow(Bitmap bmp, int px, Color color)
+        {
+            float s = px / 16f;
+            using (Graphics g = Graphics.FromImage(bmp))
+            using (var pen = new Pen(color, Math.Max(1.2f, 1.6f * s)) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round, LineJoin = System.Drawing.Drawing2D.LineJoin.Round })
+            {
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                g.DrawLine(pen, 2.5f * s, 8f * s, 13f * s, 8f * s);
+                g.DrawLines(pen, new[] { new PointF(8.5f * s, 3.5f * s), new PointF(13f * s, 8f * s), new PointF(8.5f * s, 12.5f * s) });
+            }
+        }
+
         // "Landscape": two mountains and a sun.
         private static void DrawLandscape(Bitmap bmp, int px, Color color)
         {
@@ -124,6 +149,16 @@ namespace Hue_travel.Theme
             if (name == "landscape")
             {
                 DrawLandscape(bmp, px, color);
+                return bmp;
+            }
+            if (name == "chevron_right")
+            {
+                DrawChevron(bmp, px, color);
+                return bmp;
+            }
+            if (name == "arrow_forward")
+            {
+                DrawArrow(bmp, px, color);
                 return bmp;
             }
 

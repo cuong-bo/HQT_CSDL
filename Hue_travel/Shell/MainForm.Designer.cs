@@ -27,9 +27,7 @@ namespace Hue_travel.Shell
         private SearchPoiPanel searchPoiPanel;
         private TravelGuidePanel travelGuidePanel;
         private PoiIdentifyCard poiIdentifyCard;
-        private AuthModal authModal;
         private Toast toast;
-        private RegisterPanel registerPanel;
 
         protected override void Dispose(bool disposing)
         {
@@ -48,9 +46,7 @@ namespace Hue_travel.Shell
             this.searchPoiPanel = new SearchPoiPanel();
             this.travelGuidePanel = new TravelGuidePanel();
             this.poiIdentifyCard = new PoiIdentifyCard();
-            this.authModal = new AuthModal();
             this.toast = new Toast();
-            this.registerPanel = new RegisterPanel();
             this.SuspendLayout();
 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
@@ -91,10 +87,6 @@ namespace Hue_travel.Shell
             this.routeOptimizerPanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
             this.travelGuidePanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
             this.poiIdentifyCard.AttachTo(this, new System.Drawing.Point(522, 584), System.Windows.Forms.AnchorStyles.Bottom);
-
-            // Auth cards share one spot (top-16, centred over the map); only one is visible at a time.
-            this.authModal.AttachTo(this, new System.Drawing.Point(582, 160), System.Windows.Forms.AnchorStyles.Top);
-            this.registerPanel.AttachTo(this, new System.Drawing.Point(582, 160), System.Windows.Forms.AnchorStyles.Top);
 
             this.Controls.Add(this.statusBar);
 

@@ -32,6 +32,11 @@ namespace Hue_travel.Theme
         public static readonly Color CategoryStay = ColorTranslator.FromHtml("#2563EB");
         public static readonly Color CategoryScenery = ColorTranslator.FromHtml("#0891B2");
 
+        // "Hue Travel" brand purple, used by the start-up sign-in screen (the logo and the card in the mockup).
+        public static readonly Color BrandPurple = ColorTranslator.FromHtml("#5B2A86");
+        public static readonly Color BrandPurpleDark = ColorTranslator.FromHtml("#44206A");
+        public static readonly Color BrandPurpleLight = ColorTranslator.FromHtml("#F3ECF9");
+
         public static readonly Color StatusOnline = ColorTranslator.FromHtml("#10B981");
         public static readonly Color BadgeAmber = ColorTranslator.FromHtml("#F59E0B");
 

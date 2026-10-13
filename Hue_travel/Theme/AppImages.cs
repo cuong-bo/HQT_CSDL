@@ -25,6 +25,31 @@ namespace Hue_travel.Theme
             }
         }
 
+        private static Bitmap loginBackground;
+
+        /// <summary>The sign-in screen picture (photo, logo and the sign-in card, 1536 x 1024; shared, do not dispose).</summary>
+        public static Bitmap LoginBackground()
+        {
+            lock (LogoCache)
+            {
+                if (loginBackground != null) return loginBackground;
+                try
+                {
+                    using (Stream stream = typeof(AppImages).Assembly.GetManifestResourceStream("Hue_travel.Resources.dangnhap.jpg"))
+                    {
+                        if (stream == null) loginBackground = new Bitmap(1, 1);
+                        else using (var source = new Bitmap(stream)) loginBackground = new Bitmap(source);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("AppImages.LoginBackground: " + ex.Message);
+                    loginBackground = new Bitmap(1, 1);
+                }
+                return loginBackground;
+            }
+        }
+
         private static Bitmap poiThumbnail;
 
         /// <summary>The Đại Nội photo the mockup uses for result cards and the identify card (shared, do not dispose).</summary>

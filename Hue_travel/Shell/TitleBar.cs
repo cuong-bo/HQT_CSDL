@@ -16,7 +16,6 @@ namespace Hue_travel.Shell
         [DllImport("user32.dll")]
         private static extern int SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
 
-        public event EventHandler AuthClicked;
         public event EventHandler MinimizeClicked;
         public event EventHandler MaximizeClicked;
         public event EventHandler CloseClicked;
@@ -43,15 +42,6 @@ namespace Hue_travel.Shell
             picLogo.DoubleClick += toggleMaximize;
         }
 
-        /// <summary>The text of the account button: the signed-in name, or the invitation to sign in when null.</summary>
-        public void SetUser(string text)
-        {
-            string shown = string.IsNullOrWhiteSpace(text) ? "Đăng nhập / Đăng ký" : (text.Length > 22 ? text.Substring(0, 21) + "…" : text);
-            btnAuth.AutoWidth = true;
-            btnAuth.Text = shown;
-            LayoutRightGroup();
-        }
-
         /// <summary>Shows the "restore" icon while the window is maximised, "maximise" otherwise.</summary>
         public void SetMaximized(bool isMaximized)
         {
@@ -70,19 +60,18 @@ namespace Hue_travel.Shell
             btnMaximize.Left = btnClose.Left - btnMaximize.Width;
             btnMinimize.Left = btnMaximize.Left - btnMinimize.Width;
 
-            btnAuth.Left = btnMinimize.Left - Hue_travel.Theme.Ui.S(10) - btnAuth.Width;
             LayoutSearch();
         }
 
-        // The search box is centred in the bar and shrinks before it would touch the logo or the account button.
+        // The search box is centred in the bar and shrinks before it would touch the logo or the window buttons.
         private void LayoutSearch()
         {
             int gap = Hue_travel.Theme.Ui.S(24);
-            int free = btnAuth.Left - gap - (lblLogo.Right + gap);
+            int free = btnMinimize.Left - gap - (lblLogo.Right + gap);
             int width = System.Math.Max(Hue_travel.Theme.Ui.S(200), System.Math.Min(Hue_travel.Theme.Ui.S(560), free));
             int height = Hue_travel.Theme.Ui.S(38);
             int left = System.Math.Max(lblLogo.Right + gap, (Width - width) / 2);
-            if (left + width > btnAuth.Left - gap) left = btnAuth.Left - gap - width;
+            if (left + width > btnMinimize.Left - gap) left = btnMinimize.Left - gap - width;
             boxSearch.SetBounds(left, (Height - 1 - height) / 2, width, height);
             boxSearch.Radius = 19;
 
@@ -153,8 +142,6 @@ namespace Hue_travel.Shell
             ReleaseCapture();
             SendMessage(form.Handle, WM_NCLBUTTONDOWN, HTCAPTION, 0);
         }
-
-        private void btnAuth_Click(object sender, EventArgs e) => AuthClicked?.Invoke(this, EventArgs.Empty);
 
         private void btnMinimize_Click(object sender, EventArgs e) => MinimizeClicked?.Invoke(this, EventArgs.Empty);
 

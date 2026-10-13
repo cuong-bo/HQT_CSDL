@@ -1,4 +1,4 @@
-using Hue_travel.Theme;
+﻿using Hue_travel.Theme;
 
 namespace Hue_travel.Shell
 {
@@ -14,7 +14,6 @@ namespace Hue_travel.Shell
         private System.Windows.Forms.TextBox txtSearch;
         private System.Windows.Forms.Label lblSearchHint;
         private IconButton btnClearSearch;
-        private IconButton btnAuth;
         private IconButton btnMinimize;
         private IconButton btnMaximize;
         private IconButton btnClose;
@@ -36,7 +35,6 @@ namespace Hue_travel.Shell
             this.txtSearch = new System.Windows.Forms.TextBox();
             this.lblSearchHint = new System.Windows.Forms.Label();
             this.btnClearSearch = new IconButton();
-            this.btnAuth = new IconButton();
             this.btnMinimize = new IconButton();
             this.btnMaximize = new IconButton();
             this.btnClose = new IconButton();
@@ -167,28 +165,9 @@ namespace Hue_travel.Shell
             this.btnMinimize.AutoWidth = false;
             this.btnMinimize.Click += new System.EventHandler(this.btnMinimize_Click);
 
-            // "Đăng nhập / Đăng ký": bg-sky-600, 11px semibold white, account_circle 14px, rounded.
-            this.btnAuth.Text = "Đăng nhập / Đăng ký";
-            this.btnAuth.Font = ThemeFonts.SemiBold(13);
-            this.btnAuth.ForeColor = System.Drawing.Color.White;
-            this.btnAuth.IconName = "account_circle";
-            this.btnAuth.IconSize = 18;
-            this.btnAuth.IconColor = System.Drawing.Color.White;
-            this.btnAuth.Gap = 6;
-            this.btnAuth.HorizontalPadding = 16;
-            this.btnAuth.FillColor = ThemeColors.Sky600;
-            this.btnAuth.HoverFillColor = ThemeColors.Sky700;
-            this.btnAuth.Elevated = true;
-            this.btnAuth.Radius = 4;
-            this.btnAuth.Size = new System.Drawing.Size(210, 38);
-            this.btnAuth.Location = new System.Drawing.Point(736, 9);
-            this.btnAuth.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            this.btnAuth.Click += new System.EventHandler(this.btnAuth_Click);
-
             this.panelRoot.Controls.Add(this.picLogo);
             this.panelRoot.Controls.Add(this.lblLogo);
             this.panelRoot.Controls.Add(this.boxSearch);
-            this.panelRoot.Controls.Add(this.btnAuth);
             this.panelRoot.Controls.Add(this.btnMinimize);
             this.panelRoot.Controls.Add(this.btnMaximize);
             this.panelRoot.Controls.Add(this.btnClose);

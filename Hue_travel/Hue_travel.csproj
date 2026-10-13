@@ -136,11 +136,21 @@
     <Compile Include="Services\Online\ApiConfigSource.cs" />
     <Compile Include="Account\AccountUi.cs" />
     <Compile Include="Account\Dialogs.cs" />
-    <Compile Include="Account\AccountTab.cs" />
-    <Compile Include="Account\UserTabs.cs" />
-    <Compile Include="Account\OwnerTab.cs" />
-    <Compile Include="Account\AdminTab.cs" />
-    <Compile Include="Account\AccountPanel.cs" />
+    <Compile Include="Account\AccountTab.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Account\UserTabs.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Account\OwnerTab.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Account\AdminTab.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Account\AccountPanel.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Services\Data\ShapefilePointReader.cs" />
     <Compile Include="Services\Data\TourismGrouping.cs" />
     <Compile Include="Services\Data\ShapefilePoiRepository.cs" />
@@ -184,8 +194,12 @@
     <Compile Include="Shell\TitleBar.Designer.cs">
       <DependentUpon>TitleBar.cs</DependentUpon>
     </Compile>
-    <Compile Include="Shell\NavRail.cs" />
-    <Compile Include="Shell\FilterBar.cs" />
+    <Compile Include="Shell\NavRail.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Shell\FilterBar.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Theme\PressFeedback.cs" />
     <Compile Include="Shell\StatusBar.cs">
       <SubType>UserControl</SubType>
@@ -220,21 +234,13 @@
       <DependentUpon>PoiIdentifyCard.cs</DependentUpon>
     </Compile>
     <Compile Include="Auth\AuthValidation.cs" />
-    <Compile Include="Auth\AuthTabStrip.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Auth\RegisterPanel.cs">
+    <Compile Include="Welcome\AuthField.cs" />
+    <Compile Include="Welcome\BrandCheckBox.cs" />
+    <Compile Include="Welcome\LoginForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Auth\RegisterPanel.Designer.cs">
-      <DependentUpon>RegisterPanel.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Auth\AuthModal.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Auth\AuthModal.Designer.cs">
-      <DependentUpon>AuthModal.cs</DependentUpon>
-    </Compile>
+    <Compile Include="Services\Online\AppSession.cs" />
+    <Compile Include="Account\ProfileMenu.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -263,6 +269,9 @@
     <None Include="app.manifest" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Resources\dangnhap.jpg">
+      <LogicalName>Hue_travel.Resources.dangnhap.jpg</LogicalName>
+    </EmbeddedResource>
     <EmbeddedResource Include="Resources\PlusJakartaSans-Regular.ttf">
       <LogicalName>Hue_travel.Resources.PlusJakartaSans-Regular.ttf</LogicalName>
     </EmbeddedResource>

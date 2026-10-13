@@ -21,14 +21,18 @@ namespace Hue_travel.Shell
 {
     public partial class MainForm : Form
     {
-        public MainForm()
+        /// <summary>
+        /// The main window, opened once somebody has signed in (or chose to continue offline) on the sign-in screen.
+        /// With a server the app is "online": accounts, the server's places, road routes and weather. Without one it works
+        /// offline on the data that ships with it.
+        /// </summary>
+        public MainForm(AppSession session)
         {
-            // With a server address the app is "online": accounts, the server's places, road routes and weather.
-            // Without one it works offline on the data that ships with it.
-            if (ServerSettings.IsOnline)
+            this.session = session;
+            api = session.Api;
+            auth = session.Auth;
+            if (api != null)
             {
-                api = new ApiClient(ServerSettings.BaseUrl, new TokenStore(), null, ResponseVerifier.TryCreate(ServerSettings.PublicKey));
-                auth = new AuthService(api, new TokenStore());
                 var areaFromServer = new ApiAreaLocator(api, areaLocator);
                 areaFromServer.Updated += (s, e) => ShowArea();
                 areaLocator = areaFromServer;
@@ -40,7 +44,7 @@ namespace Hue_travel.Shell
             WireEvents();
             var all = new List<FloatingPanelForm>
             {
-                searchPoiPanel, routeOptimizerPanel, travelGuidePanel, poiIdentifyCard, authModal, registerPanel,
+                searchPoiPanel, routeOptimizerPanel, travelGuidePanel, poiIdentifyCard,
             };
             if (accountPanel != null) all.Add(accountPanel);
             panels = all.ToArray();
@@ -48,7 +52,8 @@ namespace Hue_travel.Shell
         }
 
         private readonly FloatingPanelForm[] panels;
-        private FloatingPanelForm[] sidePanels;   // in NavRail tab order: explore, route, guide
+        private FloatingPanelForm[] sidePanels;   // in NavRail tab order: explore, route, guide, profile (null while offline)
+        private readonly AppSession session;
         private readonly WeatherUpdater weatherUpdater;
         private readonly ApiClient api;
         private readonly AuthService auth;
@@ -70,6 +75,7 @@ namespace Hue_travel.Shell
             mapHost.ZoomToFull();
             weatherUpdater.Start();
             if (api != null) StartOnline();
+            if (auth != null && auth.MustChangePassword) ShowSidePanel(NavRail.Profile);   // a temporary password must be changed first
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
@@ -94,11 +100,18 @@ namespace Hue_travel.Shell
                 WindowState = FormWindowState.Maximized;
             };
             titleBar.CloseClicked += (s, e) => Close();
-            titleBar.AuthClicked += (s, e) => OnAccountButton();
 
             // Left rail: one tab per tool; the tools' panels share the side slot, so opening one closes the others.
-            sidePanels = new FloatingPanelForm[] { searchPoiPanel, routeOptimizerPanel, travelGuidePanel };
-            navRail.ItemClicked += (s, index) => ShowSidePanel(sidePanels[index].Visible ? -1 : index);
+            sidePanels = new FloatingPanelForm[] { searchPoiPanel, routeOptimizerPanel, travelGuidePanel, accountPanel };
+            navRail.ItemClicked += (s, index) =>
+            {
+                if (sidePanels[index] == null)
+                {
+                    toast.ShowMessage("Chưa có địa chỉ máy chủ nên chưa có hồ sơ cá nhân. Ứng dụng đang chạy ngoại tuyến.", ToastKind.Info);
+                    return;
+                }
+                ShowSidePanel(sidePanels[index].Visible ? -1 : index);
+            };
 
             // The chips under the header show only the picked kind of place on the map.
             filterBar.CategorySelected += (s, category) => mapHost.ShowOnlyCategory(category);
@@ -114,16 +127,13 @@ namespace Hue_travel.Shell
             for (int i = 0; i < sidePanels.Length; i++)
             {
                 int index = i;
+                if (sidePanels[i] == null) continue;
                 sidePanels[i].CloseRequested += (s, e) =>
                 {
                     sidePanels[index].Visible = false;
                     if (navRail.ActiveIndex == index) navRail.ActiveIndex = -1;
                 };
             }
-            authModal.CloseRequested += (s, e) => authModal.Visible = false;
-            registerPanel.CloseRequested += (s, e) => registerPanel.Visible = false;
-            authModal.RegisterRequested += (s, e) => ShowAuthCard(registerPanel);
-            registerPanel.LoginRequested += (s, e) => ShowAuthCard(authModal);
 
             searchPoiPanel.PoiSelected += (s, poi) => ShowPoiCard(poi);
             mapHost.PoiClicked += (s, poi) => ShowPoiCard(poi);
@@ -178,36 +188,30 @@ namespace Hue_travel.Shell
             if (titleBar != null) titleBar.SetMaximized(WindowState == FormWindowState.Maximized);
         }
 
-        // Shows the tool panel of one rail tab (NavRail.Explore / Route / Guide) and closes the other two; -1 closes all.
+        // Shows the panel of one rail tab (NavRail.Explore / Route / Guide / Profile) and closes the others; -1 closes all.
         private void ShowSidePanel(int index)
         {
             for (int i = 0; i < sidePanels.Length; i++)
             {
-                if (i != index) sidePanels[i].Visible = false;
+                if (i != index && sidePanels[i] != null) sidePanels[i].Visible = false;
             }
             // No BringToFront here: for a window of its own it activates the panel and takes the keyboard from whoever is
             // typing (the header search box). The panels are owned by this window, so they stay above it anyway.
-            if (index >= 0) sidePanels[index].Visible = true;
+            if (index >= 0 && sidePanels[index] != null)
+            {
+                sidePanels[index].Visible = true;
+                if (index == NavRail.Profile) Safe(accountPanel.OpenAsync());
+            }
             navRail.ActiveIndex = index;
         }
 
-        // The auth button toggles whichever auth card is open (login by default).
-        private void ToggleAuth()
+        // Back to the sign-in screen (signed out, password changed, or the session ended); Program.Main shows it again.
+        private void ReturnToSignIn(string notice)
         {
-            bool anyOpen = authModal.Visible || registerPanel.Visible;
-            if (anyOpen)
-            {
-                authModal.Visible = registerPanel.Visible = false;
-                return;
-            }
-            ShowAuthCard(authModal);
-        }
-
-        private void ShowAuthCard(Control card)
-        {
-            authModal.Visible = card == authModal;
-            registerPanel.Visible = card == registerPanel;
-            card.BringToFront();
+            if (session.ReturnToSignIn) return;
+            session.ReturnToSignIn = true;
+            session.Notice = notice;
+            Close();
         }
 
         private void ShowCursorCoordinates()
@@ -234,57 +238,29 @@ namespace Hue_travel.Shell
         private void SetUpAccount()
         {
             accountPanel = new AccountPanel(api, auth);
-            accountPanel.AttachTo(this, new System.Drawing.Point(510, 110), System.Windows.Forms.AnchorStyles.Top);
+            accountPanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
             accountPanel.SetRouteSource(() => routeOptimizerPanel.CurrentStopIds);
-            accountPanel.CloseRequested += (s, e) => accountPanel.Visible = false;
             accountPanel.ShowOnMapRequested += (s, poi) => ShowOnMap(poi);
             accountPanel.FavoritesChanged += (s, e) => Safe(LoadFavoritesAsync());
-            accountPanel.LoggedOut += (s, e) =>
-            {
-                accountPanel.Visible = false;
-                ShowAuthCard(authModal);
-            };
-
-            authModal.Service = auth;
-            registerPanel.Service = auth;
-            authModal.Authenticated += (s, e) => OnSignedIn(authModal);
-            registerPanel.Registered += (s, e) => OnSignedIn(registerPanel);
+            accountPanel.LoggedOut += (s, e) => ReturnToSignIn(null);
+            accountPanel.PasswordChanged += (s, e) => ReturnToSignIn("Đã đổi mật khẩu. Hãy đăng nhập lại bằng mật khẩu mới.");
             auth.Changed += (s, e) => UpdateAccountUi();
 
             poiIdentifyCard.FavoriteToggled += (s, poi) => Safe(ToggleFavoriteAsync(poi));
             poiIdentifyCard.ClaimRequested += (s, poi) => Safe(ClaimAsync(poi));
             poiIdentifyCard.ReportRequested += (s, poi) => Safe(ReportAsync(poi));
-        }
-
-        private void OnAccountButton()
-        {
-            if (api == null)
-            {
-                toast.ShowMessage("Chưa có địa chỉ máy chủ nên chưa đăng nhập được. Ứng dụng đang chạy ngoại tuyến.", ToastKind.Info);
-                return;
-            }
-            if (auth.CurrentUser == null) ToggleAuth();
-            else if (accountPanel.Visible) accountPanel.Visible = false;
-            else Safe(accountPanel.OpenAsync());
-        }
-
-        private void OnSignedIn(FloatingPanelForm card)
-        {
-            card.Visible = false;
-            toast.ShowMessage("Xin chào " + auth.CurrentUser.DisplayName, ToastKind.Success);
-            Safe(accountPanel.OpenAsync());
-            Safe(LoadFavoritesAsync());
+            UpdateAccountUi();
         }
 
         private void UpdateAccountUi()
         {
             UserInfo user = auth.CurrentUser;
-            titleBar.SetUser(user == null ? null : user.DisplayName);
             poiIdentifyCard.SignedIn = user != null;
             if (user == null)
             {
                 favoriteIds.Clear();
-                accountPanel.Visible = false;   // signed out, or the session ended
+                // Signing out or changing the password is handled by the panel's own events; anything else is a session that ended.
+                if (!accountPanel.IsLeaving) ReturnToSignIn("Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.");
             }
             poiIdentifyCard.RefreshAccountButtons();
         }
@@ -358,7 +334,7 @@ namespace Hue_travel.Shell
             {
                 IReadOnlyList<Poi> cached = PoiCache.TryLoad(ServerSettings.BaseUrl);
                 if (cached != null) PoiCatalog.Replace(cached);
-                if (await auth.RestoreAsync()) await LoadFavoritesAsync();
+                if (auth.CurrentUser != null) await LoadFavoritesAsync();   // already signed in on the sign-in screen
 
                 ApiConfigSource config = await ApiConfigSource.FetchAsync(api, lifetime.Token);
                 if (BaseMapCatalog.ApplyOverrides(config.TileUrls, config.TileAttribution)) mapHost.ReloadBaseMap();

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Windows.Forms;
+using Hue_travel.Services.Online;
 using Hue_travel.Shell;
+using Hue_travel.Welcome;
 
 namespace Hue_travel
 {
@@ -21,7 +23,20 @@ namespace Hue_travel
             };
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainForm());
+
+            // Sign in first, then the main window. Signing out (or an ended session) comes back to the sign-in screen.
+            AppSession session = AppSession.Create();
+            while (true)
+            {
+                using (var login = new LoginForm(session))
+                {
+                    if (login.ShowDialog() != DialogResult.OK) return;
+                }
+                session.Notice = null;
+                session.ReturnToSignIn = false;
+                using (var main = new MainForm(session)) Application.Run(main);
+                if (!session.ReturnToSignIn) return;
+            }
         }
     }
 }
