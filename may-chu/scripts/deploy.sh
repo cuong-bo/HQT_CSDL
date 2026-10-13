@@ -13,8 +13,10 @@ cd "$(dirname "$0")/.."
 compose=(docker compose)
 
 healthy() {
+    # Cổng 8082, không phải 80: cổng 80 trên máy này do nginx (dự án ecoai)
+    # chiếm, xem /root/hue-travel/DEPLOY_ISOLATION.md.
     for _ in $(seq 1 30); do
-        if curl -fsS http://localhost/healthz >/dev/null 2>&1; then return 0; fi
+        if curl -fsS http://localhost:8082/healthz >/dev/null 2>&1; then return 0; fi
         sleep 2
     done
     return 1
@@ -48,7 +50,7 @@ case "${1:-}" in
         ;;
     status)
         "${compose[@]}" ps
-        curl -fsS http://localhost/healthz && echo
+        curl -fsS http://localhost:8082/healthz && echo
         ;;
     logs)
         "${compose[@]}" logs -f --tail=100

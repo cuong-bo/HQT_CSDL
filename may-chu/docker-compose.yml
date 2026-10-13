@@ -52,7 +52,9 @@ services:
     image: caddy:2
     restart: unless-stopped
     ports:
-      - "80:80"
+      # Đổi từ 80:80 sang 8082:80: cổng 80 trên máy chủ này đã do nginx (dự án
+      # ecoai) chiếm. Xem /root/hue-travel/DEPLOY_ISOLATION.md.
+      - "8082:80"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
