@@ -14,9 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: microsoft/setup-msbuild@v2
-      - run: msbuild Hue_travel/Hue_travel.csproj /restore /p:Configuration=Release /v:minimal
-      - name: Zip the client (the Windows installer is built on a machine that has MapWinGIS, see installer/README.md)
-        run: Compress-Archive -Path Hue_travel/bin/Release/* -DestinationPath CoDoGIS-${{ github.ref_name }}-portable.zip
+      - run: msbuild may-khach/ung-dung/Hue_travel.csproj /restore /p:Configuration=Release /v:minimal
+      - name: Zip the client (the Windows installer is built on a machine that has MapWinGIS, see may-khach/bo-cai/README.md)
+        run: Compress-Archive -Path may-khach/ung-dung/bin/Release/* -DestinationPath CoDoGIS-${{ github.ref_name }}-portable.zip
       - uses: softprops/action-gh-release@v2
         with:
           files: CoDoGIS-${{ github.ref_name }}-portable.zip
@@ -33,4 +33,4 @@ jobs:
         run: |
           install -m 600 /dev/null key
           printf '%s\n' "$KEY" > key
-          ssh -i key -o StrictHostKeyChecking=accept-new "$USER_NAME@$HOST" 'cd /opt/hue-travel && deploy/scripts/deploy.sh update'
+          ssh -i key -o StrictHostKeyChecking=accept-new "$USER_NAME@$HOST" 'cd /opt/hue-travel/may-chu && scripts/deploy.sh update'

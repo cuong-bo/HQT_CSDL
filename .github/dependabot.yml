@@ -1,11 +1,11 @@
 version: 2
 updates:
   - package-ecosystem: nuget
-    directory: "/src/Hue_travel.Api"
+    directory: "/may-chu/api"
     schedule:
       interval: weekly
   - package-ecosystem: nuget
-    directory: "/tests/Hue_travel.Api.Tests"
+    directory: "/may-chu/kiem-thu"
     schedule:
       interval: weekly
   - package-ecosystem: github-actions
@@ -13,6 +13,6 @@ updates:
     schedule:
       interval: weekly
   - package-ecosystem: docker
-    directory: "/src/Hue_travel.Api"
+    directory: "/may-chu/api"
     schedule:
       interval: weekly

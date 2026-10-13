@@ -14,8 +14,8 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
-      # The tests that need a database are skipped here (no HUE_TEST_DB); see db/README.md to run them locally.
-      - run: dotnet test tests/Hue_travel.Api.Tests --configuration Release
+      # The tests that need a database are skipped here (no HUE_TEST_DB); see may-chu/co-so-du-lieu/README.md to run them locally.
+      - run: dotnet test may-chu/kiem-thu --configuration Release
 
   migrations:
     name: SQL migrations apply on an empty database
@@ -24,12 +24,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: Start PostGIS + pgRouting
         run: |
-          docker build -t huegis-db deploy/db
+          docker build -t huegis-db may-chu/docker-csdl
           docker run -d --name pg -e POSTGRES_PASSWORD=ci -e POSTGRES_DB=huegis -e APP_DB_PASSWORD=ci huegis-db
           for i in $(seq 1 30); do docker exec pg pg_isready -U postgres -d huegis && break; sleep 2; done
       - name: Apply migrations in order
         run: |
-          for f in db/migrations/V*.sql; do
+          for f in may-chu/co-so-du-lieu/migrations/V*.sql; do
             echo "== $f"
             docker exec -i pg psql -U postgres -d huegis -v ON_ERROR_STOP=1 < "$f"
           done
@@ -40,9 +40,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: microsoft/setup-msbuild@v2
-      - run: msbuild Hue_travel/Hue_travel.csproj /restore /p:Configuration=Debug /v:minimal
+      - run: msbuild may-khach/ung-dung/Hue_travel.csproj /restore /p:Configuration=Debug /v:minimal
       - name: Service tests (32-bit PowerShell, the app is x86)
-        run: C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests/client/test_services.ps1
+        run: C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File may-khach/kiem-thu/test_services.ps1
 
   secrets:
     name: Secret scan

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Hue_travel.Api.Tests;
 
-/// <summary>Integration tests need a database built by db/run.sh; point HUE_TEST_DB at it (an Npgsql connection string).</summary>
+/// <summary>Integration tests need a database built by co-so-du-lieu/run.sh; point HUE_TEST_DB at it (an Npgsql connection string).</summary>
 public sealed class RequiresDbFactAttribute : FactAttribute
 {
     public RequiresDbFactAttribute()
