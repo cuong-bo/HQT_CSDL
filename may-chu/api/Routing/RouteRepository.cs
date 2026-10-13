@@ -1,11 +1,15 @@
 using System.Text.Json;
 using Hue_travel.Api.Data;
+using Microsoft.Extensions.Caching.Memory;
 using Npgsql;
 
 namespace Hue_travel.Api.Routing;
 
-public sealed class RouteRepository(NpgsqlDataSource db)
+public sealed class RouteRepository(NpgsqlDataSource db, IMemoryCache cache)
 {
+    // Roads and places change only through a data import or an approved edit, so answers between two places are kept briefly.
+    private static readonly TimeSpan CacheFor = TimeSpan.FromMinutes(5);
+
     /// <summary>The ids (from those asked for) that are visible places snapped to the road network.</summary>
     public async Task<HashSet<string>> RoutableIdsAsync(string[] ids, CancellationToken ct)
     {
@@ -21,6 +25,15 @@ public sealed class RouteRepository(NpgsqlDataSource db)
 
     /// <summary>Travel time in seconds between every pair; infinity where there is no road connection. Index follows <paramref name="ids"/>.</summary>
     public async Task<double[,]> TimeMatrixAsync(string[] ids, CancellationToken ct)
+    {
+        string key = "route-matrix:" + string.Join(',', ids);
+        if (cache.TryGetValue(key, out double[,]? kept) && kept != null) return (double[,])kept.Clone();
+        double[,] matrix = await ReadTimeMatrixAsync(ids, ct);
+        cache.Set(key, matrix.Clone(), CacheFor);
+        return matrix;
+    }
+
+    private async Task<double[,]> ReadTimeMatrixAsync(string[] ids, CancellationToken ct)
     {
         var index = new Dictionary<string, int>();
         for (int i = 0; i < ids.Length; i++) index[ids[i]] = i;
@@ -44,27 +57,27 @@ public sealed class RouteRepository(NpgsqlDataSource db)
         db.ExecAsync("insert into poi_stats_daily (poi_id, route_adds) select unnest(@ids), 1 " +
                      "on conflict (poi_id, day) do update set route_adds = poi_stats_daily.route_adds + 1", ct, ("ids", ids));
 
-    /// <summary>The nearest vertex of the vehicle network to a point (VN-2000 / UTM 48N metres), or null when there is none.</summary>
-    public async Task<(long VertexId, double DistanceMeters)?> SnapAsync(double x, double y, CancellationToken ct)
+    /// <summary>How far a point (VN-2000 / UTM 48N metres) is from the nearest drivable road segment, or null when there is no road.</summary>
+    public async Task<double?> DistanceToRoadAsync(double x, double y, CancellationToken ct)
     {
-        await using NpgsqlCommand cmd = db.CreateCommand("select vertex_id, dist_m from snap_vertex(@x, @y)");
+        await using NpgsqlCommand cmd = db.CreateCommand("select dist_m from snap_point(@x, @y)");
         cmd.Parameters.AddWithValue("x", x);
         cmd.Parameters.AddWithValue("y", y);
-        await using NpgsqlDataReader r = await cmd.ExecuteReaderAsync(ct);
-        if (!await r.ReadAsync(ct)) return null;
-        return (r.GetInt64(0), r.GetDouble(1));
+        object? value = await cmd.ExecuteScalarAsync(ct);
+        return value is double meters ? meters : null;
     }
 
-    /// <summary>Travel time in seconds from a vertex to each place; infinity where there is no road connection. Index follows <paramref name="ids"/>.</summary>
-    public async Task<double[]> TimesFromVertexAsync(long vertexId, string[] ids, CancellationToken ct)
+    /// <summary>Travel time in seconds from a free point to each place; infinity where there is no road connection. Index follows <paramref name="ids"/>.</summary>
+    public async Task<double[]> TimesFromPointAsync(double x, double y, string[] ids, CancellationToken ct)
     {
         var index = new Dictionary<string, int>();
         for (int i = 0; i < ids.Length; i++) index[ids[i]] = i;
         var times = new double[ids.Length];
         Array.Fill(times, double.PositiveInfinity);
 
-        await using NpgsqlCommand cmd = db.CreateCommand("select to_id, cost from route_cost_from_vertex(@v, @ids, true)");
-        cmd.Parameters.AddWithValue("v", vertexId);
+        await using NpgsqlCommand cmd = db.CreateCommand("select to_id, cost from route_cost_from_point(@x, @y, @ids, true)");
+        cmd.Parameters.AddWithValue("x", x);
+        cmd.Parameters.AddWithValue("y", y);
         cmd.Parameters.AddWithValue("ids", ids);
         await using NpgsqlDataReader r = await cmd.ExecuteReaderAsync(ct);
         while (await r.ReadAsync(ct))
@@ -74,27 +87,33 @@ public sealed class RouteRepository(NpgsqlDataSource db)
         return times;
     }
 
-    /// <summary>One leg along the roads: length, time and the line as GeoJSON in degrees.</summary>
-    public Task<RouteLeg> LegAsync(string fromId, string toId, CancellationToken ct) =>
-        ReadLegAsync("route_path(@f, @t)", fromId, toId, ("f", fromId), ("t", toId), ct);
+    /// <summary>One leg along the roads between two places (kept for a few minutes).</summary>
+    public async Task<RouteLeg> LegAsync(string fromId, string toId, CancellationToken ct)
+    {
+        string key = $"route-leg:{fromId}>{toId}";
+        if (cache.TryGetValue(key, out RouteLeg? kept) && kept != null) return kept;
+        RouteLeg leg = await ReadLegAsync("route_path(@f, @t)", fromId, toId, [("f", fromId), ("t", toId)], ct);
+        cache.Set(key, leg, CacheFor);
+        return leg;
+    }
 
-    /// <summary>A leg from a free start (a vertex) to a place; <paramref name="fromLabel"/> names the start in the answer.</summary>
-    public Task<RouteLeg> LegFromVertexAsync(long vertexId, string fromLabel, string toId, CancellationToken ct) =>
-        ReadLegAsync("route_path_from_vertex(@f, @t)", fromLabel, toId, ("f", vertexId), ("t", toId), ct);
+    /// <summary>A leg from a free start point to a place; <paramref name="fromLabel"/> names the start in the answer. Not kept: every point is different.</summary>
+    public Task<RouteLeg> LegFromPointAsync(double x, double y, string fromLabel, string toId, CancellationToken ct) =>
+        ReadLegAsync("route_path_from_point(@x, @y, @t)", fromLabel, toId, [("x", x), ("y", y), ("t", toId)], ct);
 
-    private async Task<RouteLeg> ReadLegAsync(string source, string fromId, string toId, (string, object) first, (string, object) second, CancellationToken ct)
+    private async Task<RouteLeg> ReadLegAsync(string source, string fromId, string toId, (string Name, object Value)[] parameters, CancellationToken ct)
     {
         await using NpgsqlCommand cmd = db.CreateCommand(
-            "select coalesce(sum(length_m), 0), coalesce(sum(seconds), 0), " +
-            "st_asgeojson(st_transform(st_linemerge(st_collect(geom order by seq)), 4326), 6), " +
-            "st_asgeojson(st_linemerge(st_collect(geom order by seq)), 1) " +
-            "from " + source);
-        cmd.Parameters.AddWithValue(first.Item1, first.Item2);
-        cmd.Parameters.AddWithValue(second.Item1, second.Item2);
+            "select length_m, seconds, st_asgeojson(geom, 1), st_asgeojson(st_transform(geom, 4326), 6) from " + source + " order by seq");
+        foreach ((string name, object value) in parameters) cmd.Parameters.AddWithValue(name, value);
+        var pieces = new List<PathPiece>();
         await using NpgsqlDataReader r = await cmd.ExecuteReaderAsync(ct);
-        await r.ReadAsync(ct);
-        JsonElement? geometry = r.IsDBNull(2) ? null : JsonDocument.Parse(r.GetString(2)).RootElement.Clone();
-        JsonElement? geometryUtm = r.IsDBNull(3) ? null : JsonDocument.Parse(r.GetString(3)).RootElement.Clone();
-        return new RouteLeg(fromId, toId, r.GetDouble(0), r.GetDouble(1), geometry, geometryUtm);
+        while (await r.ReadAsync(ct))
+        {
+            using JsonDocument utm = JsonDocument.Parse(r.GetString(2));
+            using JsonDocument degrees = JsonDocument.Parse(r.GetString(3));
+            pieces.Add(new PathPiece(r.GetDouble(0), r.GetDouble(1), LegBuilder.Coordinates(utm.RootElement), LegBuilder.Coordinates(degrees.RootElement)));
+        }
+        return LegBuilder.Build(fromId, toId, pieces);
     }
 }

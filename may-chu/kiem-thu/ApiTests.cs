@@ -186,6 +186,42 @@ public class ApiTests(ApiFixture fixture)
     }
 
     [RequiresDbFact]
+    public async Task Route_GivesATimePerPointOfEveryLeg_RisingFromZeroToTheLegTime()
+    {
+        HttpClient http = fixture.CreateClient();
+        JsonElement route = await Json(await http.PostAsJsonAsync("/v1/route", new { startX = 775000.0, startY = 1822500.0, stopIds = new[] { "DL004", "DL001" }, optimize = false }));
+        foreach (JsonElement leg in route.GetProperty("legs").EnumerateArray())
+        {
+            double[] times = leg.GetProperty("times").EnumerateArray().Select(t => t.GetDouble()).ToArray();
+            Assert.Equal(leg.GetProperty("geometryUtm").GetProperty("coordinates").GetArrayLength(), times.Length);
+            Assert.Equal(0, times[0]);
+            Assert.True(times.Zip(times.Skip(1), (a, b) => b >= a).All(ok => ok));
+            Assert.Equal(leg.GetProperty("seconds").GetDouble(), times[^1], 1);
+        }
+    }
+
+    [RequiresDbFact]
+    public async Task Route_FromAFreePointJoinsTheRoadWhereItLies_NotAtTheNearestCrossing()
+    {
+        HttpClient http = fixture.CreateClient();
+        JsonElement route = await Json(await http.PostAsJsonAsync("/v1/route", new { startX = 775000.0, startY = 1822500.0, stopIds = new[] { "DL004" }, optimize = false }));
+        JsonElement line = route.GetProperty("legs")[0].GetProperty("geometryUtm").GetProperty("coordinates");
+        double firstX = line[0][0].GetDouble(), firstY = line[0][1].GetDouble();
+        // The line begins at the point the user picked (a short hop to the road), not at some crossing metres away.
+        Assert.True(Math.Abs(firstX - 775000.0) < 1 && Math.Abs(firstY - 1822500.0) < 1);
+    }
+
+    [RequiresDbFact]
+    public async Task Route_AnsweredTwice_GivesTheSamePlan()
+    {
+        HttpClient http = fixture.CreateClient();
+        var request = new { startId = "GT002", stopIds = new[] { "DL004", "DL001" }, optimize = true };
+        string first = await (await http.PostAsJsonAsync("/v1/route", request)).Content.ReadAsStringAsync();
+        string second = await (await http.PostAsJsonAsync("/v1/route", request)).Content.ReadAsStringAsync();
+        Assert.Equal(first, second);
+    }
+
+    [RequiresDbFact]
     public async Task Route_RefusesAFreeStartThatIsFarFromEveryRoad()
     {
         HttpClient http = fixture.CreateClient();

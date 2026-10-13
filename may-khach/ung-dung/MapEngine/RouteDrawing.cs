@@ -21,6 +21,7 @@ namespace Hue_travel.MapEngine
     {
         private const double MinSpeedMetresPerSecond = 120;     // a short trip is not a blink
         private const double TripSeconds = 26;                  // a long trip is shown in about this time
+        private const double FallbackMetresPerSecond = 8.3;     // about 30 km/h, when a leg comes without road times
         private const int FrameMs = 33;
         private const double DwellSeconds = 0.9;                // the car waits a moment at every stop
         private const int BadgeRadiusPixels = 14;
@@ -39,7 +40,10 @@ namespace Hue_travel.MapEngine
         private double[] legEnds = new double[0];        // distance at the end of every leg
         private double total;
         private double travelled;
-        private double speed;
+        private double[] elapsed = new double[0];    // real travel seconds on arrival at every point of the line
+        private double totalElapsed;
+        private double tripClock;                    // real travel seconds the car has driven so far
+        private double clockScale;                   // real seconds that pass per second of the show
         private double dwellLeft;
         private int legIndex;
         private bool playing;
@@ -109,30 +113,81 @@ namespace Hue_travel.MapEngine
             points = new List<MapXY>();
             cumulative = new double[0];
             legEnds = new double[0];
-            total = travelled = 0;
+            elapsed = new double[0];
+            total = travelled = totalElapsed = tripClock = 0;
             if (wasPlaying) PlayStateChanged?.Invoke(this, EventArgs.Empty);
             map.Redraw();
         }
 
-        // The legs joined end to end, with the distance along the line at every point and at the end of every leg.
+        // The legs joined end to end, with the distance along the line and the real travel time at every point, and the
+        // distance at the end of every leg. The car moves by travel time, so it is slow on a slow road and quick on a fast one.
         private void BuildLine()
         {
             points = new List<MapXY>();
+            var times = new List<double>();
             var ends = new List<int>();
+            double legBase = 0;
             foreach (TripLeg leg in plan.Legs)
             {
-                foreach (MapXY p in leg.Path)
+                IReadOnlyList<double> legTimes = leg.Times != null && leg.Times.Count == leg.Path.Count ? leg.Times : UniformTimes(leg);
+                for (int k = 0; k < leg.Path.Count; k++)
                 {
+                    MapXY p = leg.Path[k];
                     if (points.Count > 0 && Distance(points[points.Count - 1], p) < 0.01) continue;
                     points.Add(p);
+                    times.Add(legBase + legTimes[k]);
                 }
+                if (legTimes.Count > 0) legBase += legTimes[legTimes.Count - 1];
                 ends.Add(points.Count - 1);
             }
             cumulative = new double[points.Count];
             for (int i = 1; i < points.Count; i++) cumulative[i] = cumulative[i - 1] + Distance(points[i - 1], points[i]);
             total = points.Count == 0 ? 0 : cumulative[points.Count - 1];
             legEnds = ends.Select(i => i >= 0 && i < cumulative.Length ? cumulative[i] : 0).ToArray();
-            speed = Math.Max(MinSpeedMetresPerSecond, total / TripSeconds);
+            elapsed = times.ToArray();
+            for (int i = 1; i < elapsed.Length; i++) elapsed[i] = Math.Max(elapsed[i], elapsed[i - 1]);
+            totalElapsed = elapsed.Length == 0 ? 0 : elapsed[elapsed.Length - 1];
+            if (totalElapsed <= 0 && total > 0)
+            {
+                for (int i = 0; i < elapsed.Length; i++) elapsed[i] = cumulative[i] / FallbackMetresPerSecond;
+                totalElapsed = total / FallbackMetresPerSecond;
+            }
+            // The whole trip is shown in a fixed time (a short one is not a blink); real seconds are compressed to fit.
+            double shown = Math.Max(1, Math.Min(TripSeconds, total / MinSpeedMetresPerSecond));
+            clockScale = totalElapsed / shown;
+        }
+
+        // Without road times, a leg's own total time is spread over its points by distance.
+        private static double[] UniformTimes(TripLeg leg)
+        {
+            var result = new double[leg.Path.Count];
+            double length = 0;
+            for (int i = 1; i < leg.Path.Count; i++) length += Distance(leg.Path[i - 1], leg.Path[i]);
+            double seconds = leg.Seconds > 0 ? leg.Seconds : length / FallbackMetresPerSecond;
+            double walked = 0;
+            for (int i = 1; i < leg.Path.Count; i++)
+            {
+                walked += Distance(leg.Path[i - 1], leg.Path[i]);
+                result[i] = length > 0 ? seconds * walked / length : 0;
+            }
+            return result;
+        }
+
+        // The distance along the line the car has covered after a given travel time.
+        private double DistanceAt(double seconds)
+        {
+            if (elapsed.Length == 0) return 0;
+            if (seconds >= totalElapsed) return total;
+            int i = Array.BinarySearch(elapsed, seconds);
+            if (i >= 0)
+            {
+                while (i > 0 && elapsed[i - 1] == seconds) i--;   // a stretch with no time (a repeated point): stay at its start
+                return cumulative[i];
+            }
+            i = Math.Max(1, ~i);
+            double span = elapsed[i] - elapsed[i - 1];
+            double t = span <= 0 ? 0 : (seconds - elapsed[i - 1]) / span;
+            return cumulative[i - 1] + (cumulative[i] - cumulative[i - 1]) * t;
         }
 
         private void DrawLegs()
@@ -273,7 +328,7 @@ namespace Hue_travel.MapEngine
 
         private void Restart()
         {
-            travelled = 0;
+            travelled = tripClock = 0;
             dwellLeft = 0;
             legIndex = 0;
             lastMetresPerPixel = 0;
@@ -307,7 +362,8 @@ namespace Hue_travel.MapEngine
                 else
                 {
                     double before = travelled;
-                    travelled = Math.Min(total, travelled + speed * dt);
+                    tripClock = Math.Min(totalElapsed, tripClock + clockScale * dt);
+                    travelled = tripClock >= totalElapsed ? total : DistanceAt(tripClock);
                     moved = travelled != before;
                     int arrived = Array.FindIndex(legEnds, end => before < end - 0.001 && travelled >= end - 0.001);
                     if (travelled >= total)

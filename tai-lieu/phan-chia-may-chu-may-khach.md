@@ -19,6 +19,7 @@ Windows nhẹ, hiển thị bản đồ và gọi máy chủ khi cần.
 |---|---|---|
 | Tìm đường (đường bộ thật, từng chặng) | ✔ (pgRouting) | chỉ gửi yêu cầu và vẽ kết quả |
 | Xếp thứ tự điểm đến ngắn nhất | ✔ (Held-Karp, tối đa 12 điểm) | chỉ bấm nút |
+| Gắn điểm bắt đầu chọn trên bản đồ vào đường; thời gian từng đoạn theo loại đường; nhớ tạm kết quả 5 phút | ✔ | xe chạy theo thời gian máy chủ trả về nên chậm trên đường nhỏ, nhanh trên đường lớn |
 | Danh sách địa điểm, tìm kiếm, nhóm | ✔ (nguồn chính) | hiển thị; có bản dữ liệu đi kèm để xem khi không có mạng |
 | Tài khoản, đăng nhập, yêu thích, lịch trình đã lưu, báo sai, chủ quản | ✔ | giao diện |
 | Thời tiết, khu vực đang xem | ✔ (trung chuyển) | hiển thị |

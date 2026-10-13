@@ -16,6 +16,9 @@ namespace Hue_travel.Services.Routing
 
         /// <summary>The line to drive, in map metres (VN-2000 / UTM 48N), from the leg's start to its stop.</summary>
         public IReadOnlyList<MapXY> Path { get; set; }
+
+        /// <summary>Seconds elapsed on arrival at each point of <see cref="Path"/> (same count), so the car can run at the real speed of each road; null when unknown.</summary>
+        public IReadOnlyList<double> Times { get; set; }
     }
 
     /// <summary>A trip ready to show: the start, the stops in visiting order and the legs between them.</summary>
@@ -31,11 +34,11 @@ namespace Hue_travel.Services.Routing
         /// <summary>How much time the order saves against the order as listed (0 when unknown).</summary>
         public double SavedSeconds { get; set; }
 
-        /// <summary>True when the figures are estimates (straight lines, no road data from the server).</summary>
+        /// <summary>Always false now: every route comes from the server along the real roads.</summary>
         public bool IsEstimate { get; set; }
     }
 
-    /// <summary>Builds <see cref="TripPlan"/>s: from the server's road route, or an estimate when the server is not available.</summary>
+    /// <summary>Builds <see cref="TripPlan"/>s from the server's road route.</summary>
     public static class TripPlanner
     {
         private const double JoinToleranceMeters = 3;
@@ -54,13 +57,17 @@ namespace Hue_travel.Services.Routing
                 if (!byId.TryGetValue(leg.ToId, out to)) continue;
                 stops.Add(to);
                 var end = new MapXY(to.X, to.Y);
+                IReadOnlyList<MapXY> path;
+                IReadOnlyList<double> times;
+                Joined(previousPoint, leg, end, out path, out times);
                 legs.Add(new TripLeg
                 {
                     FromName = previousName,
                     ToName = to.Name,
                     Meters = leg.Meters,
                     Seconds = leg.Seconds,
-                    Path = Joined(previousPoint, leg.Path, end),
+                    Path = path,
+                    Times = times,
                 });
                 previousName = to.Name;
                 previousPoint = end;
@@ -78,79 +85,35 @@ namespace Hue_travel.Services.Routing
             };
         }
 
-        /// <summary>
-        /// An estimate without the server: straight lines scaled by the road detour factor at the average city speed.
-        /// With <paramref name="optimize"/> the stops are put in the shortest order, otherwise kept as listed.
-        /// </summary>
-        public static TripPlan Estimate(string startName, double startLongitude, double startLatitude, MapXY startPoint, IReadOnlyList<Poi> stops, bool optimize)
+        // The road line with the leg's own end points added, so the line reaches the markers; the times follow the same points.
+        private static void Joined(MapXY from, OnlineLeg leg, MapXY to, out IReadOnlyList<MapXY> path, out IReadOnlyList<double> times)
         {
-            var geo = stops.Select(p => new GeoPoint(p.Longitude, p.Latitude)).ToList();
-            var start = new GeoPoint(startLongitude, startLatitude);
-            int[] listed = Enumerable.Range(0, stops.Count).ToArray();
-            int[] order = optimize ? RoutePlanner.Plan(start, geo).Order.ToArray() : listed;
-
-            double listedKm = LengthKm(start, geo, listed);
-            double orderKm = LengthKm(start, geo, order);
-            var ordered = order.Select(i => stops[i]).ToList();
-            var legs = new List<TripLeg>();
-            string previousName = startName;
-            MapXY previousPoint = startPoint;
-            GeoPoint previousGeo = start;
-            foreach (int i in order)
-            {
-                double km = GeoMath.Between(previousGeo, geo[i]) * RoutePlanner.RoadDetourFactor;
-                var end = new MapXY(stops[i].X, stops[i].Y);
-                legs.Add(new TripLeg
-                {
-                    FromName = previousName,
-                    ToName = stops[i].Name,
-                    Meters = km * 1000,
-                    Seconds = km / RoutePlanner.AverageSpeedKmh * 3600,
-                    Path = new[] { previousPoint, end },
-                });
-                previousName = stops[i].Name;
-                previousPoint = end;
-                previousGeo = geo[i];
-            }
-            return new TripPlan
-            {
-                StartName = startName,
-                StartPoint = startPoint,
-                Stops = ordered,
-                Legs = legs,
-                TotalMeters = orderKm * 1000,
-                TotalSeconds = orderKm / RoutePlanner.AverageSpeedKmh * 3600,
-                SavedSeconds = Math.Max(0, (listedKm - orderKm) / RoutePlanner.AverageSpeedKmh * 3600),
-                IsEstimate = true,
-            };
-        }
-
-        private static double LengthKm(GeoPoint start, IReadOnlyList<GeoPoint> stops, int[] order)
-        {
-            double km = 0;
-            GeoPoint previous = start;
-            foreach (int i in order)
-            {
-                km += GeoMath.Between(previous, stops[i]) * RoutePlanner.RoadDetourFactor;
-                previous = stops[i];
-            }
-            return km;
-        }
-
-        // The road line with the leg's own end points added, so the line reaches the markers.
-        private static IReadOnlyList<MapXY> Joined(MapXY from, IReadOnlyList<MapXY> road, MapXY to)
-        {
+            IReadOnlyList<MapXY> road = leg.Path;
             var points = new List<MapXY>();
             if (road == null || road.Count == 0)
             {
                 points.Add(from);
                 points.Add(to);
-                return points;
+                path = points;
+                times = new[] { 0.0, leg.Seconds };
+                return;
             }
-            if (Distance(from, road[0]) > JoinToleranceMeters) points.Add(from);
+            bool aligned = leg.Times != null && leg.Times.Count == road.Count;
+            var elapsed = new List<double>();
+            if (Distance(from, road[0]) > JoinToleranceMeters)
+            {
+                points.Add(from);
+                elapsed.Add(0);
+            }
             points.AddRange(road);
-            if (Distance(road[road.Count - 1], to) > JoinToleranceMeters) points.Add(to);
-            return points;
+            if (aligned) elapsed.AddRange(leg.Times);
+            if (Distance(road[road.Count - 1], to) > JoinToleranceMeters)
+            {
+                points.Add(to);
+                if (aligned) elapsed.Add(leg.Times[leg.Times.Count - 1]);
+            }
+            path = points;
+            times = aligned ? elapsed : null;
         }
 
         private static double Distance(MapXY a, MapXY b) => Math.Sqrt((a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y));

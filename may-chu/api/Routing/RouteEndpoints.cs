@@ -28,16 +28,17 @@ public static class RouteEndpoints
         if (stops.Distinct().Count() != stops.Length || (start != null && stops.Contains(start)))
             return Results.Problem(detail: "Các địa điểm phải khác nhau và khác điểm xuất phát.", statusCode: StatusCodes.Status400BadRequest);
 
-        long startVertex = 0;
+        double startX = 0, startY = 0;
         if (freeStart)
         {
             double x = request.StartX!.Value, y = request.StartY!.Value;
             if (!double.IsFinite(x) || !double.IsFinite(y))
                 return Results.Problem(detail: "Tọa độ điểm xuất phát không hợp lệ.", statusCode: StatusCodes.Status400BadRequest);
-            var snapped = await routes.SnapAsync(x, y, ct);
-            if (snapped == null || snapped.Value.DistanceMeters > MaxStartSnapMeters)
+            double? away = await routes.DistanceToRoadAsync(x, y, ct);
+            if (away == null || away.Value > MaxStartSnapMeters)
                 return Results.Problem(detail: "Điểm xuất phát quá xa đường đi; hãy chọn gần đường hơn.", statusCode: StatusCodes.Status422UnprocessableEntity);
-            startVertex = snapped.Value.VertexId;
+            startX = x;
+            startY = y;
         }
 
         string[] all = freeStart ? stops : [start!, .. stops];
@@ -54,7 +55,7 @@ public static class RouteEndpoints
             {
                 // Index 0 is the free start, 1..n the stops.
                 double[,] among = await routes.TimeMatrixAsync(stops, ct);
-                double[] fromStart = await routes.TimesFromVertexAsync(startVertex, stops, ct);
+                double[] fromStart = await routes.TimesFromPointAsync(startX, startY, stops, ct);
                 matrix = new double[stops.Length + 1, stops.Length + 1];
                 for (int i = 0; i < stops.Length; i++)
                 {
@@ -78,7 +79,7 @@ public static class RouteEndpoints
         foreach (string next in order)
         {
             legs.Add(freeStart && legs.Count == 0
-                ? await routes.LegFromVertexAsync(startVertex, StartLabel, next, ct)
+                ? await routes.LegFromPointAsync(startX, startY, StartLabel, next, ct)
                 : await routes.LegAsync(previous, next, ct));
             previous = next;
         }

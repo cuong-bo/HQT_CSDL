@@ -27,6 +27,9 @@ namespace Hue_travel.Services.Online
         public double Meters { get; set; }
         public double Seconds { get; set; }
         public IReadOnlyList<MapXY> Path { get; set; }
+
+        /// <summary>Seconds elapsed on arrival at each point of <see cref="Path"/> (same count), or null when the server gave none.</summary>
+        public IReadOnlyList<double> Times { get; set; }
     }
 
     /// <summary>A route computed by the server along the real roads.</summary>
@@ -68,7 +71,21 @@ namespace Hue_travel.Services.Online
             Meters = JsonHelper.Dbl(d, "meters"),
             Seconds = JsonHelper.Dbl(d, "seconds"),
             Path = ParsePath(JsonHelper.Obj(d, "geometryUtm")),
+            Times = ParseTimes(JsonHelper.List(d, "times")),
         };
+
+        private static IReadOnlyList<double> ParseTimes(IList<object> values)
+        {
+            if (values == null || values.Count == 0) return null;
+            var times = new List<double>(values.Count);
+            foreach (object value in values)
+            {
+                double seconds;
+                if (!TryNumber(value, out seconds)) return null;
+                times.Add(seconds);
+            }
+            return times;
+        }
 
         private static bool TryNumber(object value, out double number)
         {

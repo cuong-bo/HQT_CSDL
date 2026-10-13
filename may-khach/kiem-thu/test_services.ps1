@@ -313,6 +313,25 @@ Check 'route: multi-line leg is joined' $route.Legs[1].Path.Count '4'
 Check 'route: first point x' $route.Legs[0].Path[0].X '775000'
 Check 'route: missing geometry gives no points' ($routeT.GetMethod('ParsePath').Invoke($null, @($null))).Count '0'
 
+# the server's per-point arrival times
+$timedJson = '{"order":["DL001"],"legs":[{"fromId":"start","toId":"DL001","meters":200,"seconds":60,"geometryUtm":{"type":"LineString","coordinates":[[775000,1821000],[775100,1821000],[775200,1821000]]},"times":[0,10,60]}],"totalMeters":200,"totalSeconds":60}'
+$timed = $routeT.GetMethod('Parse').Invoke($null, @($jsonT.GetMethod('Parse').Invoke($null, @($timedJson))))
+Check 'route: times are read per point' ($timed.Legs[0].Times -join ',') '0,10,60'
+Check 'route: a leg without times has none' ($route.Legs[0].Times -eq $null) 'True'
+$mapXyT = GetT ($online + 'MapXY')
+$tripT = GetT 'Hue_travel.Services.Routing.TripPlanner'
+$placeList = [Activator]::CreateInstance($listT)
+$place.Id = 'DL001'
+$placeList.Add($place)
+$farStart = [Activator]::CreateInstance($mapXyT, @([double]774900, [double]1821000))
+$plan = $tripT.GetMethod('FromOnline').Invoke($null, @($timed, 'Start', $farStart, $placeList, $null))
+$tripLeg = $plan.Legs[0]
+Check 'trip: times stay as long as the line (start and stop joined on)' "$($tripLeg.Times.Count)|$($tripLeg.Path.Count)" "$($tripLeg.Path.Count)|$($tripLeg.Path.Count)"
+Check 'trip: joined start has time 0' $tripLeg.Times[0] '0'
+Check 'trip: times never go back' ((@(1..($tripLeg.Times.Count - 1) | Where-Object { $tripLeg.Times[$_] -lt $tripLeg.Times[$_ - 1] })).Count) '0'
+Check 'trip: last time is the leg time' $tripLeg.Times[$tripLeg.Times.Count - 1] '60'
+Check 'trip: no times from the server means none' (($tripT.GetMethod('FromOnline').Invoke($null, @($route, 'Start', $farStart, $placeList, $null))).Legs.Count -ge 0) 'True'
+
 $storeT = GetT ($online + 'TokenStore')
 $sessionPath = [string](Join-Path ([IO.Path]::GetTempPath()) ('session-' + [guid]::NewGuid().ToString('N') + '.dat'))
 $store = [Activator]::CreateInstance($storeT, @($sessionPath))
