@@ -322,20 +322,15 @@ namespace Hue_travel.MapEngine
             labels.MaxVisibleScale = LabelMaxScaleDenominator;
         }
 
-        private int mapCursorState = -1;   // 0 open hand, 1 dragging, 2 over a place, 3 the tool's own cursor
+        private int mapCursorState = -1;   // 0 arrow, 2 over a place, 3 the tool's own cursor
 
-        // Familiar pointers: an open hand over the map, a closed-looking hand while dragging, the pointing hand over a place.
+        // The pointers of the system: the arrow over the map, the pointing hand over a place you can click.
         private void UpdateMapCursor(int pixelX, int pixelY)
         {
-            int state = axMap.CursorMode != tkCursorMode.cmPan ? 3
-                : pressX != int.MinValue ? 1
-                : FindPoiAt(pixelX, pixelY) != null ? 2 : 0;
+            int state = axMap.CursorMode != tkCursorMode.cmPan ? 3 : FindPoiAt(pixelX, pixelY) != null ? 2 : 0;
             if (state == mapCursorState) return;
             mapCursorState = state;
-            if (state == 3) { axMap.MapCursor = tkCursor.crsrMapDefault; return; }
-            IntPtr handle = state == 1 ? MapCursors.Grabbing : state == 2 ? MapCursors.Pointing : MapCursors.OpenHand;
-            axMap.UDCursorHandle = handle.ToInt32();
-            axMap.MapCursor = tkCursor.crsrUserDefined;
+            axMap.MapCursor = state == 3 ? tkCursor.crsrMapDefault : state == 2 ? tkCursor.crsrHand : tkCursor.crsrArrow;
         }
 
         // The nearest visible marker within HitRadius of a pixel, or null.
