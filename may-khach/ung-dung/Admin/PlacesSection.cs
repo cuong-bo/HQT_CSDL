@@ -46,6 +46,7 @@ namespace Hue_travel.Admin
             ListPane.Button(groupFilter, 40);
             ListPane.List(list);
             ListPane.Button(more, 42);
+            more.Visible = false;
 
             add.Click += (s, e) => ShowForm(null);
             import.Click += async (s, e) => await ImportAsync();
@@ -69,6 +70,16 @@ namespace Hue_travel.Admin
             string path = "/v1/admin/pois?q=" + Uri.EscapeDataString(search.Text.Trim()) + "&page=" + page;
             if (filterGroup != null) path += "&group=" + filterGroup;
             ApiResponse r = await Api.GetAsync(path);
+            if (IsMissing(r))
+            {
+                // An older server can create and change places but cannot list every one of them.
+                list.EmptyText = ServerTooOld;
+                list.SetItems(new List<ListItem>());
+                more.Visible = false;
+                ListPane.Relayout();
+                return;
+            }
+            list.EmptyText = "Không có địa điểm nào khớp.";
             if (!Check(r)) return;
             List<IDictionary<string, object>> rows = Rows(r);
             foreach (IDictionary<string, object> d in rows)

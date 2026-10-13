@@ -90,6 +90,7 @@ namespace Hue_travel.Welcome
         {
             this.session = session;
             Text = "Hue Travel";
+            Icon = AppImages.AppIcon();
             FormBorderStyle = FormBorderStyle.None;
             StartPosition = FormStartPosition.CenterScreen;
             AutoScaleMode = AutoScaleMode.None;

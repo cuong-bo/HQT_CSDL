@@ -6,7 +6,7 @@ namespace Hue_travel.Services.Online
 {
     /// <summary>
     /// Where the server is. The address comes from, in this order: the HUE_API_URL environment variable, the file
-    /// %ProgramData%\CoDoGIS\server.txt (written by the installer), and the ApiBaseUrl setting in the .config file.
+    /// %ProgramData%\HueTravel\server.txt (written by the installer), and the ApiBaseUrl setting in the .config file.
     /// An empty address means "offline": the app uses the data that ships with it.
     /// </summary>
     public static class ServerSettings
@@ -19,7 +19,7 @@ namespace Hue_travel.Services.Online
         public static string BaseUrl => Current.Value;
 
         /// <summary>
-        /// The server's public signing key (base64), from HUE_API_PUBLIC_KEY, %ProgramData%\CoDoGIS\public.key or the
+        /// The server's public signing key (base64), from HUE_API_PUBLIC_KEY, %ProgramData%\HueTravel\public.key or the
         /// ApiPublicKey setting. Empty means replies are not checked.
         /// </summary>
         public static string PublicKey => PublicKeyValue.Value;
@@ -75,8 +75,14 @@ namespace Hue_travel.Services.Online
         {
             try
             {
-                string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "CoDoGIS", name);
-                return File.Exists(path) ? File.ReadAllText(path) : null;
+                string root = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+                // "CoDoGIS" is the folder of the versions released before the product was named Hue Travel; a machine set up then keeps working.
+                foreach (string folder in new[] { "HueTravel", "CoDoGIS" })
+                {
+                    string path = Path.Combine(root, folder, name);
+                    if (File.Exists(path)) return File.ReadAllText(path);
+                }
+                return null;
             }
             catch (IOException)
             {

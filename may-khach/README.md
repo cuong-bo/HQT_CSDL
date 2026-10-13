@@ -1,4 +1,4 @@
-# Máy khách Cố Đô GIS (Windows)
+# Máy khách Hue Travel (Windows)
 
 Ứng dụng WinForms (.NET Framework 4.7.2, x86) dùng MapWinGIS. Vẽ bản đồ nền từ shapefile đi kèm; tìm đường và tài khoản
 gọi máy chủ qua HTTP. Thư mục này **không cần** `may-chu/`.
@@ -13,10 +13,10 @@ gọi máy chủ qua HTTP. Thư mục này **không cần** `may-chu/`.
 ```
 may-khach/
 ├── ung-dung/        mã nguồn ứng dụng (Hue_travel.csproj) và Data/shp (bản đồ nền, địa điểm dự phòng)
-├── bo-cai/          CoDoGIS.iss (Inno Setup)
+├── bo-cai/          HueTravel.iss (Inno Setup)
 ├── kiem-thu/        test_services.ps1 (chạy bằng PowerShell 32-bit sau khi dựng bản Debug)
 ├── Hue_travel.sln   solution Visual Studio
-└── dong-goi.ps1     dựng bộ cài CoDoGIS-Setup-<phiên bản>.exe
+└── dong-goi.ps1     dựng bộ cài HueTravel-Setup-<phiên bản>.exe
 ```
 
 ## Dựng và thử

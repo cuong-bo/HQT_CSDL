@@ -1,4 +1,4 @@
-# Cố Đô GIS on one VPS: PostGIS + pgRouting, the API, and Caddy as the only thing that listens on the network.
+# Hue Travel on one VPS: PostGIS + pgRouting, the API, and Caddy as the only thing that listens on the network.
 # Plain HTTP on port 80 (no TLS) by decision; see VAN-HANH.md for what that means.
 name: hue-travel
 

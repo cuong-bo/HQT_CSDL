@@ -61,7 +61,7 @@ namespace Hue_travel.Shell
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.ClientSize = new System.Drawing.Size(1536, 860);
-            this.Text = "Cố Đô GIS";
+            this.Text = "Hue Travel";
 
             this.titleBar.Dock = System.Windows.Forms.DockStyle.Top;
             this.titleBar.Size = new System.Drawing.Size(1536, 56);

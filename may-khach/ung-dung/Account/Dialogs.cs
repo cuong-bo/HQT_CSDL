@@ -49,6 +49,7 @@ namespace Hue_travel.Account
         public ModalCard(string titleText, int designWidth, string okText, bool danger = false, bool showCancel = true)
         {
             this.designWidth = designWidth;
+            Icon = AppImages.AppIcon();
             FormBorderStyle = FormBorderStyle.None;
             StartPosition = FormStartPosition.CenterParent;
             ShowInTaskbar = false;

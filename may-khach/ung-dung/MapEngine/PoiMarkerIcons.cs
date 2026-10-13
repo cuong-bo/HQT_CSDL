@@ -71,7 +71,7 @@ namespace Hue_travel.MapEngine
         {
             try
             {
-                string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CoDoGIS", "markers");
+                string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HueTravel", "markers");
                 Directory.CreateDirectory(folder);
                 string path = Path.Combine(folder, category.ToString().ToLowerInvariant() + "_" + px + ".png");
                 if (!File.Exists(path)) Badge(category, px).Save(path, ImageFormat.Png);

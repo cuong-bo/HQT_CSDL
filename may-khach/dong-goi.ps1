@@ -1,11 +1,11 @@
 ﻿<#
 .SYNOPSIS
-  Đóng gói phần MÁY KHÁCH (ứng dụng Windows) của Cố Đô GIS: dựng bản Release và làm bộ cài.
+  Đóng gói phần MÁY KHÁCH (ứng dụng Windows) của Hue Travel: dựng bản Release và làm bộ cài.
 
 .DESCRIPTION
   1. Dựng Hue_travel.csproj ở chế độ Release (32-bit, .NET Framework 4.7.2).
-  2. Nếu có Inno Setup 6 (ISCC.exe): làm bộ cài  dist\CoDoGIS-Setup-<phiên bản>.exe  (có MapWinGIS bên trong).
-     Nếu không có: tạo bản "mang đi" dist\CoDoGIS-MayKhach-<phiên bản>.zip và nhắc cài Inno Setup.
+  2. Nếu có Inno Setup 6 (ISCC.exe): làm bộ cài  dist\HueTravel-Setup-<phiên bản>.exe  (có MapWinGIS bên trong).
+     Nếu không có: tạo bản "mang đi" dist\HueTravel-MayKhach-<phiên bản>.zip và nhắc cài Inno Setup.
 
   Chạy từ gốc kho mã:
     powershell -ExecutionPolicy Bypass -File may-khach/dong-goi.ps1 -Version 1.0.0 -Server http://IP_VPS
@@ -78,27 +78,27 @@ $iscc = Find-Tool "ISCC.exe" @(
 
 if ($iscc) {
     Write-Host "== làm bộ cài"
-    $arguments = @("bo-cai/CoDoGIS.iss", "/DAppVersion=$Version", "/DMapWinGisDir=$MapWinGisDir", "/DSourceDir=$release", "/O$OutDir")
+    $arguments = @("bo-cai/HueTravel.iss", "/DAppVersion=$Version", "/DMapWinGisDir=$MapWinGisDir", "/DSourceDir=$release", "/O$OutDir")
     if ($Server) { $arguments += "/DDefaultServer=$Server" }
     if ($PublicKey) { $arguments += "/DDefaultPublicKey=$PublicKey" }
     & $iscc @arguments
     if ($LASTEXITCODE -ne 0) { throw "Inno Setup thất bại" }
     Write-Host ""
-    Write-Host "Xong: $(Join-Path $OutDir "CoDoGIS-Setup-$Version.exe")"
+    Write-Host "Xong: $(Join-Path $OutDir "HueTravel-Setup-$Version.exe")"
 }
 else {
     Write-Host "== không có Inno Setup 6: tạo bản mang đi (.zip)"
-    $stage = Join-Path $root (Join-Path $OutDir "CoDoGIS-MayKhach-$Version")
+    $stage = Join-Path $root (Join-Path $OutDir "HueTravel-MayKhach-$Version")
     if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }
     New-Item -ItemType Directory -Force $stage | Out-Null
     Copy-Item -Recurse -Force (Join-Path $release "*") $stage
     Copy-Item -Recurse -Force $MapWinGisDir (Join-Path $stage "MapWinGIS")
     Get-ChildItem $stage -Recurse -Include "*.pdb" | Remove-Item -Force
-    $zip = Join-Path $root (Join-Path $OutDir "CoDoGIS-MayKhach-$Version.zip")
+    $zip = Join-Path $root (Join-Path $OutDir "HueTravel-MayKhach-$Version.zip")
     if (Test-Path $zip) { Remove-Item -Force $zip }
     Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $zip
     Write-Host ""
     Write-Host "Xong (bản mang đi): $zip"
     Write-Host "Muốn có bộ cài .exe: cài Inno Setup 6 (https://jrsoftware.org/isinfo.php) rồi chạy lại script này."
-    Write-Host "Bản mang đi cần tự đăng ký MapWinGIS:  regsvr32 MapWinGIS\MapWinGIS.ocx  (quyền quản trị) và tạo %ProgramData%\CoDoGIS\server.txt."
+    Write-Host "Bản mang đi cần tự đăng ký MapWinGIS:  regsvr32 MapWinGIS\MapWinGIS.ocx  (quyền quản trị) và tạo %ProgramData%\HueTravel\server.txt."
 }

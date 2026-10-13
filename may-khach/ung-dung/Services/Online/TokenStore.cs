@@ -9,16 +9,16 @@ namespace Hue_travel.Services.Online
 {
     /// <summary>
     /// Keeps the session tokens between runs, encrypted with Windows DPAPI for the current Windows user, in
-    /// %LocalAppData%\CoDoGIS\session.dat. Another user (or another PC) cannot read the file.
+    /// %LocalAppData%\HueTravel\session.dat. Another user (or another PC) cannot read the file.
     /// </summary>
     public sealed class TokenStore
     {
-        private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("CoDoGIS.session.v1");
+        private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("HueTravel.session.v1");
         private readonly string path;
 
         public TokenStore(string path = null)
         {
-            this.path = path ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CoDoGIS", "session.dat");
+            this.path = path ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HueTravel", "session.dat");
         }
 
         public void Save(string access, string refresh)

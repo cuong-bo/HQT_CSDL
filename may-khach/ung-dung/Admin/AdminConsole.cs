@@ -90,12 +90,13 @@ namespace Hue_travel.Admin
         public AdminConsole(ApiClient api, UserInfo admin)
         {
             this.api = api;
-            Text = "Bảng quản trị — Cố Đô GIS";
+            Text = "Hue Travel — Quản trị";
             StartPosition = FormStartPosition.CenterParent;
             ClientSize = new Size(Ui.S(1180), Ui.S(740));
             MinimumSize = new Size(Ui.S(900), Ui.S(600));
             BackColor = Color.White;
             Font = ThemeFonts.Regular(11);
+            Icon = AppImages.AppIcon();
             ShowInTaskbar = false;
 
             var overview = new OverviewSection(api);
@@ -127,6 +128,12 @@ namespace Hue_travel.Admin
             var line = new Panel { Dock = DockStyle.Left, Width = 1, BackColor = ThemeColors.Slate200 };
             menu.Dock = DockStyle.Top;
             side.Controls.Add(menu);
+            // The same Hue Travel mark as the title bar and the sign-in screen, above the menu.
+            side.Controls.Add(new PictureBox
+            {
+                Dock = DockStyle.Top, Height = Ui.S(62), SizeMode = PictureBoxSizeMode.Zoom, BackColor = Color.White,
+                Image = AppImages.BrandMark(Ui.S(46)),
+            });
             Controls.Add(body);
             Controls.Add(line);
             Controls.Add(side);

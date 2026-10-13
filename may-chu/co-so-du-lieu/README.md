@@ -1,4 +1,4 @@
-# Cơ sở dữ liệu Cố Đô GIS (PostgreSQL 17 + PostGIS + pgRouting)
+# Cơ sở dữ liệu Hue Travel (PostgreSQL 17 + PostGIS + pgRouting)
 
 Hệ tọa độ duy nhất: **VN-2000 / UTM zone 48N (EPSG:3405)**, đơn vị mét. Mọi cột hình học đều có SRID 3405.
 

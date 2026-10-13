@@ -19,7 +19,7 @@ namespace Hue_travel
             {
                 System.Diagnostics.Debug.WriteLine(e.Exception);
                 MessageBox.Show("Đã xảy ra lỗi không mong muốn: " + e.Exception.Message + "\n\nỨng dụng vẫn chạy. Nếu lỗi lặp lại, hãy khởi động lại ứng dụng.",
-                    "Cố Đô GIS", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    "Hue Travel", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             };
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);

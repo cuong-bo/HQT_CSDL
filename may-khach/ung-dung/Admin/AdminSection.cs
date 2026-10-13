@@ -122,6 +122,11 @@ namespace Hue_travel.Admin
             return true;
         }
 
+        /// <summary>True when the server answered "no such page" (404/405): it is an older version that lacks this feature.</summary>
+        protected static bool IsMissing(ApiResponse response) => response.StatusCode == 404 || response.StatusCode == 405;
+
+        protected const string ServerTooOld = "Máy chủ đang chạy bản cũ nên chưa có chức năng này. Hãy cập nhật máy chủ (scripts/deploy.sh update) rồi mở lại.";
+
         protected static List<IDictionary<string, object>> Rows(ApiResponse r) =>
             (JsonHelper.AsList(r.Json) ?? new List<object>()).OfType<IDictionary<string, object>>().ToList();
 

@@ -40,6 +40,7 @@ namespace Hue_travel.Shell
             weatherUpdater = new WeatherUpdater(api != null ? (IWeatherService)new FallbackWeatherService(new ApiWeatherService(api), new OpenMeteoWeatherService()) : new OpenMeteoWeatherService());
 
             InitializeComponent();
+            Icon = AppImages.AppIcon();
             if (api != null) SetUpAccount();
             WireEvents();
             var all = new List<FloatingPanelForm>

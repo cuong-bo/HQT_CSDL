@@ -6,22 +6,32 @@ using System.IO;
 
 namespace Hue_travel.Theme
 {
-    /// <summary>Raster assets embedded in the assembly (the Cố Đô GIS logo from the mockup).</summary>
+    /// <summary>Raster assets embedded in the assembly: the Hue Travel logo (sign-in picture, brand mark, application icon).</summary>
     public static class AppImages
     {
-        private const string LogoResource = "Hue_travel.Resources.logo.jpg";
-        private static readonly Dictionary<int, Bitmap> LogoCache = new Dictionary<int, Bitmap>();
+        private const string IconResource = "Hue_travel.Resources.hue-travel.ico";
+        private static readonly object LogoCache = new object();
+        private static Icon appIcon;
 
-        /// <summary>The logo scaled to a square of <paramref name="px"/>; shared, do not dispose.</summary>
-        public static Bitmap Logo(int px)
+        /// <summary>The Hue Travel icon every window of the application shows (title bar, taskbar, Alt+Tab); shared, do not dispose.</summary>
+        public static Icon AppIcon()
         {
             lock (LogoCache)
             {
-                Bitmap cached;
-                if (LogoCache.TryGetValue(px, out cached)) return cached;
-                Bitmap created = ScaleLogo(px);
-                LogoCache[px] = created;
-                return created;
+                if (appIcon != null) return appIcon;
+                try
+                {
+                    using (Stream stream = typeof(AppImages).Assembly.GetManifestResourceStream(IconResource))
+                    {
+                        appIcon = stream == null ? SystemIcons.Application : new Icon(stream);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("AppImages.AppIcon: " + ex.Message);
+                    appIcon = SystemIcons.Application;
+                }
+                return appIcon;
             }
         }
 
@@ -148,31 +158,6 @@ namespace Hue_travel.Theme
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
             g.DrawImage(image, dest);
             g.Restore(state);
-        }
-
-        private static Bitmap ScaleLogo(int px)
-        {
-            var result = new Bitmap(px, px, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            try
-            {
-                using (Stream stream = typeof(AppImages).Assembly.GetManifestResourceStream(LogoResource))
-                {
-                    if (stream == null) return result;
-                    using (var source = new Bitmap(stream))
-                    using (var g = Graphics.FromImage(result))
-                    {
-                        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                        g.SmoothingMode = SmoothingMode.AntiAlias;
-                        g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                        g.DrawImage(source, new Rectangle(0, 0, px, px));
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("AppImages.Logo: " + ex.Message);
-            }
-            return result;
         }
     }
 }

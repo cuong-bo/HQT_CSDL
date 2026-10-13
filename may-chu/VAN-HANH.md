@@ -47,7 +47,7 @@ scripts/gen-signing-key.sh
 ```
 
 - Giá trị **riêng tư** đặt vào `.env` dòng `SIGNING_KEY=` rồi `scripts/deploy.sh up`.
-- Giá trị **công khai** đặt vào app: `ApiPublicKey` trong `Hue_travel.exe.config`, hoặc file `%ProgramData%\CoDoGIS\public.key`
+- Giá trị **công khai** đặt vào app: `ApiPublicKey` trong `Hue_travel.exe.config`, hoặc file `%ProgramData%\HueTravel\public.key`
   (bộ cài có ô nhập), hoặc biến `HUE_API_PUBLIC_KEY`. Khi app có khóa công khai, nó **từ chối** mọi phản hồi thiếu chữ ký hoặc sai chữ ký.
 - Chữ ký không che nội dung: mật khẩu và token vẫn đi dạng chữ thường. Đổi khóa thì phải phát hành lại khóa công khai cho mọi máy.
 
@@ -67,6 +67,10 @@ scripts/deploy.sh rollback   # quay về bản trước theo ý mình
 ```
 
 Migration mới (`co-so-du-lieu/migrations/V00N__*.sql`) được áp dụng khi chạy `deploy.sh import`; dữ liệu đã sửa qua app không bị ghi đè.
+
+**Cập nhật máy chủ trước khi dùng bản máy khách mới.** Bảng quản trị, ảnh địa điểm và "Đánh giá của tôi" cần máy chủ có
+migration V010 và API mới: sau `git pull`, chạy `scripts/deploy.sh update` rồi `scripts/deploy.sh import`. Máy chủ cũ trả 404/405 cho các
+trang này; ứng dụng sẽ báo "Máy chủ đang chạy bản cũ" thay vì hiện danh sách trống.
 
 ## 4. Tài khoản quản trị đầu tiên
 

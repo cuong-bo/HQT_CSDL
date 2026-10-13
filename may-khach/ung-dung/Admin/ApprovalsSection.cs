@@ -69,15 +69,18 @@ namespace Hue_travel.Admin
             { "dia_chi", "Địa chỉ" }, { "gio_mo_cua", "Giờ mở cửa" }, { "gia_text", "Giá vé / dịch vụ" }, { "sdt", "Số điện thoại" }, { "website", "Website" }, { "mo_ta", "Giới thiệu" },
         };
 
+        private const string DefaultEmpty = "Không có yêu cầu nào đang chờ.";
+
         private readonly SegmentTabs tabs = new SegmentTabs();
-        private readonly ItemList list = new ItemList { Selectable = true, SubtitleLines = 2, EmptyText = "Không có yêu cầu nào đang chờ." };
+        private readonly ItemList list = new ItemList { Selectable = true, SubtitleLines = 3, EmptyText = DefaultEmpty };
+        private string photosEmptyText = DefaultEmpty;
         private readonly List<ListItem>[] items = { new List<ListItem>(), new List<ListItem>(), new List<ListItem>() };
         private int loadVersion;
 
         public ApprovalsSection(ApiClient api) : base(api)
         {
             ListPane.Caption("Chờ duyệt");
-            tabs.SetTabs("Nhận địa điểm", "Chỉnh sửa", "Ảnh");
+            tabs.SetTabs("Chủ quản", "Chỉnh sửa", "Ảnh");
             ListPane.Add(tabs, 38, 10);
             ListPane.List(list);
             tabs.SelectedChanged += (s, e) => ShowList();
@@ -90,7 +93,10 @@ namespace Hue_travel.Admin
             ApiResponse claims = await Api.GetAsync("/v1/admin/claims");
             ApiResponse edits = await Api.GetAsync("/v1/admin/edit-requests");
             ApiResponse photos = await Api.GetAsync("/v1/admin/photos");
-            if (!Check(claims) || !Check(edits) || !Check(photos)) return;
+            // An older server has no photos: claims and edits still work, only the photo list stays empty.
+            bool photosMissing = IsMissing(photos);
+            if (!Check(claims) || !Check(edits) || (!photosMissing && !Check(photos))) return;
+            photosEmptyText = photosMissing ? ServerTooOld : DefaultEmpty;
 
             items[0] = Rows(claims).Select(d => new ListItem
             {
@@ -100,7 +106,7 @@ namespace Hue_travel.Admin
             {
                 Title = Str(d, "poiName"), Subtitle = "@" + Str(d, "requestedBy") + " đề nghị sửa " + (JsonHelper.Obj(d, "changes") == null ? 0 : JsonHelper.Obj(d, "changes").Count) + " mục\nGửi " + AccountKit.Day(Str(d, "createdAt")), Icon = "check_box", Pill = "Chờ duyệt", Tone = PillTone.Warn, Data = d,
             }).ToList();
-            items[2] = Rows(photos).Select(d => new ListItem
+            items[2] = (photosMissing ? new List<IDictionary<string, object>>() : Rows(photos)).Select(d => new ListItem
             {
                 Title = Str(d, "poiName"), Subtitle = "@" + Str(d, "uploadedBy") + " tải ảnh " + JsonHelper.Long(d, "width") + " x " + JsonHelper.Long(d, "height") + "\nGửi " + AccountKit.Day(Str(d, "createdAt")), Icon = "visibility", Pill = "Chờ duyệt", Tone = PillTone.Warn, Data = d,
             }).ToList();
@@ -110,6 +116,7 @@ namespace Hue_travel.Admin
 
         private void ShowList()
         {
+            list.EmptyText = tabs.SelectedIndex == 2 ? photosEmptyText : DefaultEmpty;
             list.SetItems(items[Math.Max(0, tabs.SelectedIndex)]);
             ListPane.Relayout();
             ShowNothing(Nothing);

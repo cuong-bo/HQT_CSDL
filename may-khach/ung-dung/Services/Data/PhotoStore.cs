@@ -8,14 +8,14 @@ namespace Hue_travel.Services.Data
 {
     /// <summary>
     /// The photos downloaded from the server, kept on this computer so a place shows them at once and without a network:
-    /// <c>%LocalAppData%\CoDoGIS\photos\&lt;place id&gt;\&lt;photo id&gt;.jpg</c>, with <c>order.txt</c> listing the photo ids in showing order.
+    /// <c>%LocalAppData%\HueTravel\photos\&lt;place id&gt;\&lt;photo id&gt;.jpg</c>, with <c>order.txt</c> listing the photo ids in showing order.
     /// </summary>
     public static class PhotoStore
     {
         private static readonly Regex SafeId = new Regex(@"^[A-Za-z0-9_\-]+$", RegexOptions.Compiled);
         private const string OrderFile = "order.txt";
 
-        public static string Root => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CoDoGIS", "photos");
+        public static string Root => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HueTravel", "photos");
 
         private static string FolderOf(string placeId) => Path.Combine(Root, placeId);
 

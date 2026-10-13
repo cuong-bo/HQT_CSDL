@@ -1,13 +1,13 @@
 ﻿<#
 .SYNOPSIS
-  Đóng gói phần MÁY CHỦ của Cố Đô GIS thành một tệp .tar.gz (cách thay thế cho "git clone" khi VPS không vào được GitHub).
+  Đóng gói phần MÁY CHỦ của Hue Travel thành một tệp .tar.gz (cách thay thế cho "git clone" khi VPS không vào được GitHub).
 
 .DESCRIPTION
   Gói chính là thư mục may-chu/ (Docker Compose, Caddy, mã API, cơ sở dữ liệu, dữ liệu shapefile, script vận hành,
   tài liệu). KHÔNG gồm ứng dụng Windows, bộ cài, tệp .env (bí mật) và thư mục bin/obj.
 
   Chạy từ bất kỳ đâu:   powershell -ExecutionPolicy Bypass -File may-chu\dong-goi.ps1 -Version 1.0.0
-  Kết quả:              dist\CoDoGIS-MayChu-1.0.0.tar.gz
+  Kết quả:              dist\HueTravel-MayChu-1.0.0.tar.gz
 
   Các tệp văn bản được đổi sang kết thúc dòng LF (Linux) khi đóng gói, nên chạy được trên VPS dù soạn trên Windows.
 #>
@@ -21,7 +21,7 @@ $serverDir = $PSScriptRoot
 $root = Split-Path -Parent $serverDir
 Set-Location $root
 
-$name = "CoDoGIS-MayChu-$Version"
+$name = "HueTravel-MayChu-$Version"
 $stage = Join-Path $root (Join-Path $OutDir $name)
 if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }
 New-Item -ItemType Directory -Force $stage | Out-Null

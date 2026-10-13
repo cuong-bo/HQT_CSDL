@@ -30,7 +30,7 @@ namespace Hue_travel.Services.Online
     }
 
     /// <summary>
-    /// HTTP + JSON client for the Cố Đô GIS API. Sends the access token, and when the server answers 401 it
+    /// HTTP + JSON client for the Hue Travel API. Sends the access token, and when the server answers 401 it
     /// trades the refresh token for a new pair once and repeats the request.
     /// </summary>
     public sealed class ApiClient : IDisposable

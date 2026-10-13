@@ -50,7 +50,7 @@ namespace Hue_travel.Shell
             this.panelBottomBorder.Height = 1;
             this.panelBottomBorder.BackColor = ThemeColors.SurfaceContainer;
 
-            // Logo (h-7 w-7) + "Cố Đô GIS" (text-xs font-bold).
+            // Logo (h-7 w-7) + "Hue Travel" (text-xs font-bold).
             this.picLogo.Location = new System.Drawing.Point(14, 5);
             this.picLogo.Size = new System.Drawing.Size((int)System.Math.Round(46 * AppImages.BrandMarkAspect), 46);
             this.picLogo.Image = AppImages.BrandMark(Ui.S(46));
