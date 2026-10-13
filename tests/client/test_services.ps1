@@ -226,6 +226,18 @@ Check 'utm: false easting on the equator is the central meridian' ([string]$utmA
 $utmArgs = [object[]]@([double]775000, [double]1822500, [double]0, [double]0)
 [void]$utm.Invoke($null, $utmArgs)
 Check 'utm: a point in Hue' ([string]([math]::Round($utmArgs[2], 3)) + ' ' + [string]([math]::Round($utmArgs[3], 3))) '107.576 16.468'
+$utmBack = (GetT 'Hue_travel.Services.Data.VnUtm').GetMethod('ToMetres')
+$backArgs = [object[]]@([double]107.57565, [double]16.46839, [double]0, [double]0)
+[void]$utmBack.Invoke($null, $backArgs)
+Check 'utm: degrees back to metres' ([string]([math]::Round($backArgs[2], 0)) + ' ' + [string]([math]::Round($backArgs[3], 0))) '775000 1822500'
+$dbfCol = (GetT 'Hue_travel.Services.Data.DbfColumn').GetMethod('Read')
+$kinds = $dbfCol.Invoke($null, @([string](Join-Path $dataDir 'diemLuuTru.dbf'), 'LoaiCS'))
+Check 'dbf column: one value per record' $kinds.Count '38'
+Check 'dbf column: first stay type' $kinds[0] 'Khách sạn'
+Check 'dbf column: unknown field gives nothing' ($dbfCol.Invoke($null, @([string](Join-Path $dataDir 'diemLuuTru.dbf'), 'KhongCo'))).Count '0'
+$rings = (GetT 'Hue_travel.Services.Data.ShapefilePolygonReader').GetMethod('Read').Invoke($null, @([string](Join-Path $dataDir 'DiaPhan_Tinh_2025.shp')))
+Check 'polygon reader: one record per province' $rings.Count '34'
+Check 'polygon reader: the first province has rings' ([int]($rings[0].Count -gt 0)) '1'
 $hv = $repo | ? { $_.Id -eq 'DL001' }
 Check 'repo DL001 name' $hv.Name 'Hải Vân Quan'
 Check 'repo DL001 hours' $hv.OpeningHours '07:00-17:30'

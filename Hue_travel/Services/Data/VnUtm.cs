@@ -14,6 +14,30 @@ namespace Hue_travel.Services.Data
         private const double Scale = 0.9996;
         private const double FalseEasting = 500000.0;
 
+        /// <summary>Map metres of a position in degrees (the other direction of <see cref="ToDegrees"/>).</summary>
+        public static void ToMetres(double longitude, double latitude, out double easting, out double northing)
+        {
+            double e2 = Flattening * (2 - Flattening);
+            double ep2 = e2 / (1 - e2);
+            double lat = latitude * Math.PI / 180;
+            double dLon = (longitude - CentralMeridianDegrees) * Math.PI / 180;
+
+            double sin = Math.Sin(lat), cos = Math.Cos(lat), tan = Math.Tan(lat);
+            double n = SemiMajor / Math.Sqrt(1 - e2 * sin * sin);
+            double t = tan * tan;
+            double c = ep2 * cos * cos;
+            double a = dLon * cos;
+            double m = SemiMajor * ((1 - e2 / 4 - 3 * e2 * e2 / 64 - 5 * e2 * e2 * e2 / 256) * lat
+                - (3 * e2 / 8 + 3 * e2 * e2 / 32 + 45 * e2 * e2 * e2 / 1024) * Math.Sin(2 * lat)
+                + (15 * e2 * e2 / 256 + 45 * e2 * e2 * e2 / 1024) * Math.Sin(4 * lat)
+                - (35 * e2 * e2 * e2 / 3072) * Math.Sin(6 * lat));
+
+            easting = FalseEasting + Scale * n * (a + (1 - t + c) * Math.Pow(a, 3) / 6
+                + (5 - 18 * t + t * t + 72 * c - 58 * ep2) * Math.Pow(a, 5) / 120);
+            northing = Scale * (m + n * tan * (a * a / 2 + (5 - t + 9 * c + 4 * c * c) * Math.Pow(a, 4) / 24
+                + (61 - 58 * t + t * t + 600 * c - 330 * ep2) * Math.Pow(a, 6) / 720));
+        }
+
         /// <summary>Longitude and latitude (degrees) of a point in map metres.</summary>
         public static void ToDegrees(double easting, double northing, out double longitude, out double latitude)
         {

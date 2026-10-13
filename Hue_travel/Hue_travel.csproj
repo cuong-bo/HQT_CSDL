@@ -148,6 +148,8 @@
     <Compile Include="Services\Data\ShapefilePointReader.cs" />
     <Compile Include="Services\Data\TourismGrouping.cs" />
     <Compile Include="Services\Data\VnUtm.cs" />
+    <Compile Include="Services\Data\DbfColumn.cs" />
+    <Compile Include="Services\Data\ShapefilePolygonReader.cs" />
     <Compile Include="Services\Data\ShapefilePoiRepository.cs" />
     <Compile Include="Services\Data\PoiCatalog.cs" />
     <Compile Include="Services\CoordinateFormatter.cs" />
@@ -302,7 +304,7 @@
     <None Include="Resources\LICENSES.md" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Data\shp\**\*.*" Exclude="Data\shp\DiaPhan_Tinh_2025.*;Data\shp\NutMangGiaoThong.*;Data\shp\*.xml;Data\shp\*.sbn;Data\shp\*.sbx">
+    <Content Include="Data\shp\**\*.*" Exclude="Data\shp\NutMangGiaoThong.*;Data\shp\*.xml;Data\shp\*.sbn;Data\shp\*.sbx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Data\Photos\README.txt">
