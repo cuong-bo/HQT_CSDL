@@ -588,6 +588,7 @@ namespace Hue_travel.MapEngine
 
             // Map units are metres (the target CRS, VN-2000 UTM zone 48N, is metric); 96 DPI scaled to the screen.
             double denominator = MapScale.Denominator(xMax - xMin, axMap.Width, 96.0 * Ui.Scale);
+            if (BaseMapCatalog.UseLocalData && LocalBaseMap.ApplyScale(denominator)) axMap.Redraw();   // small roads leave the map as it is zoomed out
             double centerX = (xMin + xMax) / 2, centerY = (yMin + yMax) / 2, longitude = 0, latitude = 0;
             axMap.ProjToDegrees(centerX, centerY, ref longitude, ref latitude);
             ViewChanged?.Invoke(this, new MapViewChangedEventArgs(centerX, centerY, longitude, latitude, denominator));

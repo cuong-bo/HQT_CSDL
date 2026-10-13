@@ -231,8 +231,36 @@ namespace Hue_travel.MapEngine
             }
         }
 
+        // The road layers, so the small roads can be hidden when the map is zoomed out.
+        private static readonly List<Shapefile> RoadLayers = new List<Shapefile>();
+        private static int roadDetail = 0;   // 0 every road, 1 no small roads, 2 only the main roads
+
+        private const double AllRoadsUntilScale = 80000;      // 1 : 80 000 and larger: every road
+        private const double MediumRoadsUntilScale = 250000;  // up to 1 : 250 000: main and medium roads
+
+        /// <summary>
+        /// Hides the small roads (and then the medium ones) as the map is zoomed out: the small roads are only clutter at that
+        /// scale. Changing the visibility of a road class is instant, the shapes keep their class.
+        /// </summary>
+        public static bool ApplyScale(double scaleDenominator)
+        {
+            int detail = scaleDenominator <= AllRoadsUntilScale ? 0 : scaleDenominator <= MediumRoadsUntilScale ? 1 : 2;
+            if (detail == roadDetail || RoadLayers.Count == 0) return false;
+            roadDetail = detail;
+            for (int i = 0; i < RoadLayers.Count; i++)
+            {
+                Shapefile roads = RoadLayers[i];
+                bool fill = i % 2 == 1;   // the layers come in pairs: casing, then fill
+                roads.Categories.get_Item(1).DrawingOptions.Visible = detail <= 1;   // medium
+                roads.Categories.get_Item(2).DrawingOptions.Visible = detail == 0;   // small
+                if (fill) roads.DefaultDrawingOptions.Visible = detail == 0;         // footpaths and the like
+            }
+            return true;
+        }
+
         private static void StyleRoads(Shapefile roads, bool casing, string[] types)
         {
+            RoadLayers.Add(roads);
             ShapeDrawingOptions other = roads.DefaultDrawingOptions;   // footpaths, steps, unknown
             other.LineVisible = true;
             other.LineColor = Ole(casing ? Color.FromArgb(243, 239, 230) : Color.FromArgb(214, 217, 224));
