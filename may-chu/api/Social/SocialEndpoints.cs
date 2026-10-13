@@ -148,6 +148,9 @@ public static class SocialEndpoints
         if (request.Rating is < 1 or > 5) return Bad("Điểm đánh giá từ 1 đến 5.");
         if (request.Comment is { Length: > MaxComment }) return Bad($"Nhận xét tối đa {MaxComment} ký tự.");
         if (!await PoiExistsAsync(db, poiId, ct)) return NotFound("Không tìm thấy địa điểm.");
+        // An owner rating their own place would skew its average; they answer reviews instead.
+        if (await db.ExistsAsync("select exists (select 1 from place_owner where user_id = @u and poi_id = @p and status = 'approved')", ct, ("u", user.UserId()), ("p", poiId)))
+            return Results.Problem(detail: "Chủ quản không đánh giá địa điểm của chính mình.", statusCode: StatusCodes.Status403Forbidden);
         await db.ExecAsync(
             "insert into review (user_id, poi_id, rating, comment) values (@u, @p, @r, @c) " +
             "on conflict (user_id, poi_id) do update set rating = excluded.rating, comment = excluded.comment, created_at = now()", ct,

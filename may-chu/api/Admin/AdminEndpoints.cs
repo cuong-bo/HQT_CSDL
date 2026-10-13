@@ -105,6 +105,10 @@ public static partial class AdminEndpoints
 
         await db.ExecAsync("update app_user set role = coalesce(@r, role), status = coalesce(@s, status) where id = @id", ct,
             ("r", update.Role), ("s", update.Status), ("id", id));
+        // Back to an ordinary user: the places they ran (or asked to run) stop being theirs, otherwise the owner screens would still answer.
+        if (update.Role == "user")
+            await db.ExecAsync("update place_owner set status = 'rejected', reviewed_by = @a, reviewed_at = now() where user_id = @id and status in ('approved', 'pending')", ct,
+                ("a", admin.UserId()), ("id", id));
         if (update.Status == "locked") await users.RevokeRefreshTokensAsync(id, ct);
         await db.RecordAsync(admin.UserId(), "user.update", "app_user", id.ToString(), new { before.Role, before.Status }, update, ct);
         return Results.NoContent();

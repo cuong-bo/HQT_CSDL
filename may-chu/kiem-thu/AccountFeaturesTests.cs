@@ -291,4 +291,25 @@ public class AccountFeaturesTests(ApiFixture fixture)
         Assert.Equal(HttpStatusCode.NotFound, (await user.DeleteAsync("/v1/pois/DL021/reviews")).StatusCode);
         Assert.Equal(0, (await Json(await user.GetAsync("/v1/me/reviews"))).GetArrayLength());
     }
+
+    [RequiresDbFact]
+    public async Task Reviews_AnOwnerCannotRateTheirOwnPlace_ButCanRateOthers()
+    {
+        (HttpClient owner, string place, _) = await OwnerOfNewPlaceAsync();
+        Assert.Equal(HttpStatusCode.Forbidden, (await owner.PostAsJsonAsync($"/v1/pois/{place}/reviews", new { rating = 5 })).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await owner.PostAsJsonAsync("/v1/pois/DL021/reviews", new { rating = 4 })).StatusCode);
+    }
+
+    [RequiresDbFact]
+    public async Task Users_DemotingAnOwnerToUser_TakesTheirPlacesAway()
+    {
+        (HttpClient owner, string place, HttpClient admin) = await OwnerOfNewPlaceAsync();
+        Assert.Single((await Json(await owner.GetAsync("/v1/owner/places"))).EnumerateArray());
+        long ownerId = (await Json(await owner.GetAsync("/v1/me"))).GetProperty("id").GetInt64();
+
+        Assert.Equal(HttpStatusCode.NoContent, (await admin.PutAsJsonAsync($"/v1/admin/users/{ownerId}", new { role = "user" })).StatusCode);
+
+        Assert.Equal(0, (await Json(await owner.GetAsync("/v1/owner/places"))).GetArrayLength());
+        Assert.Equal(HttpStatusCode.Forbidden, (await owner.PostAsJsonAsync($"/v1/owner/places/{place}/announcements", new { title = "t", body = "b" })).StatusCode);
+    }
 }
