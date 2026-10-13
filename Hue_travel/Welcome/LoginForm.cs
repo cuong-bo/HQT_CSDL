@@ -30,7 +30,7 @@ namespace Hue_travel.Welcome
         // Parts of the picture's card that hold baked text or controls: hidden behind a patch of the card's own colour.
         private static readonly RectangleF[] LoginPatches =
         {
-            new RectangleF(1046, 140, 290, 150),   // title and subtitle
+            new RectangleF(1046, 140, 270, 150),   // title and subtitle
             new RectangleF(1050, 296, 400, 66),    // user name box
             new RectangleF(1050, 380, 400, 66),    // password box
             new RectangleF(1050, 455, 400, 44),    // remember / forgot row
@@ -48,6 +48,7 @@ namespace Hue_travel.Welcome
         private readonly Label lblSubtitle = new Label();
         private readonly Label lblFooter = new Label();
         private readonly Label lblMessage = new Label();
+        private readonly Label lblInfo = new Label();
         private readonly Label lnkForgot = new Label();
         private readonly BrandCheckBox chkRemember = new BrandCheckBox();
         private readonly AuthField fieldName = new AuthField();
@@ -127,7 +128,11 @@ namespace Hue_travel.Welcome
 
         private void BuildControls()
         {
-            foreach (Label l in new[] { lblTitle, lblSubtitle, lblFooter, lblMessage, lnkForgot })
+            lblInfo.Text = "Bạn vẫn xem được bản đồ, tra cứu địa điểm và lên lộ trình tham quan. Tài khoản, địa điểm yêu thích và lộ trình đã lưu cần có máy chủ.";
+            lblInfo.ForeColor = Color.FromArgb(73, 69, 98);
+            lblInfo.TextAlign = ContentAlignment.MiddleLeft;
+            lblInfo.Visible = false;
+            foreach (Label l in new[] { lblTitle, lblSubtitle, lblFooter, lblMessage, lblInfo, lnkForgot })
             {
                 l.AutoSize = false;
                 l.UseMnemonic = false;
@@ -181,7 +186,7 @@ namespace Hue_travel.Welcome
 
             Control[] all =
             {
-                lblTitle, lblSubtitle, lblFooter, lblMessage, lnkForgot, chkRemember, fieldName, fieldUser, fieldPass, fieldPass2,
+                lblTitle, lblSubtitle, lblFooter, lblMessage, lblInfo, lnkForgot, chkRemember, fieldName, fieldUser, fieldPass, fieldPass2,
                 btnPrimary, btnSecondary, btnMinimize, btnMaximize, btnClose,
             };
             foreach (Control c in all) Controls.Add(c);
@@ -312,11 +317,17 @@ namespace Hue_travel.Welcome
             }
             else
             {
-                lblSubtitle.Bounds = R(1054, 240, 392, 150);
-                btnPrimary.Bounds = R(1054, 420, 392, 57);
-                lblMessage.Bounds = R(1030, 500, 440, 44);
-                lblFooter.Bounds = R(1006, 812, 488, 28);
+                // Offline: the same card as the sign-in (title, one box of explanation, the button in the same place).
+                lblSubtitle.Font = ThemeFonts.Regular(FontPx(21));
+                lblSubtitle.Bounds = R(1054, 236, 392, 130);
+                lblInfo.Font = ThemeFonts.Regular(FontPx(18));
+                lblInfo.Bounds = R(1078, 396, 344, 164);
+                btnPrimary.Bounds = R(1054, 592, 392, 57);
+                lblMessage.Bounds = R(1030, 668, 440, 40);
+                lblFooter.TextAlign = ContentAlignment.MiddleLeft;
+                lblFooter.Bounds = R(1088, 778, 396, 32);
             }
+            if (mode != Mode.Offline) lblSubtitle.Font = ThemeFonts.Regular(FontPx(23));
         }
 
         // ------------------------------------------------------------------ modes
@@ -332,6 +343,7 @@ namespace Hue_travel.Welcome
             chkRemember.Visible = lnkForgot.Visible = login;
             btnPrimary.Visible = true;
             btnSecondary.Visible = login || register;
+            lblInfo.Visible = next == Mode.Offline;
 
             if (login)
             {
@@ -355,6 +367,7 @@ namespace Hue_travel.Welcome
             {
                 lblTitle.Text = "Chào mừng";
                 lblSubtitle.Text = "Chưa cấu hình địa chỉ máy chủ nên chưa có tài khoản. Ứng dụng sẽ chạy ngoại tuyến với dữ liệu đi kèm.";
+                btnPrimary.TrailingIconName = "arrow_forward";
                 btnPrimary.IconName = ""; btnPrimary.Text = "Tiếp tục ngoại tuyến";
             }
             if (backdrop != null) { ApplyModeLayout(); Invalidate(); }
@@ -495,8 +508,8 @@ namespace Hue_travel.Welcome
             if (backdrop != null) g.DrawImageUnscaled(backdrop, 0, 0);
             else g.Clear(BackColor);
 
-            if (mode == Mode.Login) PaintLoginPatches(g);
-            else PaintCardCover(g);
+            if (mode == Mode.Register) PaintCardCover(g);
+            else PaintLoginPatches(g);
         }
 
         // The picture's card already shows the sign-in design; only the parts with baked text get a patch of its own colour.
@@ -511,6 +524,22 @@ namespace Hue_travel.Welcome
                 {
                     g.FillRectangle(brush, r);
                 }
+            }
+
+            if (mode == Mode.Offline)
+            {
+                // The explanation sits in a soft purple box where the fields were.
+                Rectangle box = R(1054, 386, 392, 184);
+                using (GraphicsPath path = Ui.RoundedRect(box, 14f * scale))
+                using (var fill = new SolidBrush(ThemeColors.BrandPurpleLight))
+                using (var pen = new Pen(Color.FromArgb(70, 91, 42, 134), 1.2f))
+                {
+                    g.FillPath(fill, path);
+                    g.DrawPath(pen, path);
+                }
+                int bar = Math.Max(3, Ui.S(4));
+                using (var accent = new SolidBrush(ThemeColors.BrandPurple)) g.FillRectangle(accent, box.X + Ui.S(14), box.Y + Ui.S(18), bar, box.Height - Ui.S(36));
+                return;
             }
 
             // "Hoặc" between the two buttons.
