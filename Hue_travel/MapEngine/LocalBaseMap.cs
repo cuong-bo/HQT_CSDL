@@ -9,17 +9,30 @@ using Hue_travel.Theme;
 namespace Hue_travel.MapEngine
 {
     /// <summary>
-    /// The base map drawn from the project's own Shapefiles (province and commune boundaries, rivers, roads) instead of web tiles.
-    /// The layers go in below the places, in the order land, boundary, water, road casing, roads.
+    /// The base map drawn from the project's own Shapefiles (Data\shp) instead of web tiles. From the bottom: the sea, the land of the
+    /// neighbouring countries, the communes, the water (lakes, rivers) and the roads (a wider casing under a narrower filling).
+    /// Layers that are only for calculation (the road network's nodes) or not needed yet are left out.
     /// </summary>
     internal static class LocalBaseMap
     {
-        public const string FolderName = "NenBanDo";
+        public const string FolderName = "shp";
 
-        // Road classes by the OpenStreetMap highway value kept in the "loai_doi_t" field.
-        private static readonly string[] Major = { "motorway", "motorway_link", "trunk", "trunk_link", "primary", "primary_link" };
-        private static readonly string[] Medium = { "secondary", "secondary_link", "tertiary", "tertiary_link" };
-        private static readonly string[] Minor = { "residential", "unclassified", "service", "living_street", "pedestrian" };
+        // Road classes by the "road_type" field of the road network; any other value (footpaths, steps, ...) is drawn thin.
+        private static readonly string[] Major =
+        {
+            "cao_toc", "nhanh_noi_cao_toc", "duong_truc_chinh", "nhanh_noi_duong_truc_chinh", "duong_chinh_cap_1", "nhanh_noi_duong_chinh_cap_1",
+        };
+
+        private static readonly string[] Medium =
+        {
+            "duong_chinh_cap_2", "nhanh_noi_duong_chinh_cap_2", "duong_chinh_cap_3", "nhanh_noi_duong_chinh_cap_3",
+        };
+
+        private static readonly string[] Minor =
+        {
+            "duong_khu_dan_cu", "duong_noi_bo", "duong_chua_phan_cap", "duong_dan_sinh",
+            "duong_chuyen_dung", "duong_chuyen_dung_cap_1", "duong_chuyen_dung_cap_2", "duong_chuyen_dung_cap_3", "duong_chuyen_dung_cap_4", "duong_chuyen_dung_cap_5",
+        };
 
         public static string Folder => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", FolderName);
 
@@ -32,40 +45,32 @@ namespace Hue_travel.MapEngine
                 string folder = Folder;
                 if (!Directory.Exists(folder)) return handles;
 
+                Shapefile sea = Open(folder, "NenBien");
+                if (sea != null)
+                {
+                    StyleArea(sea, Color.FromArgb(207, 232, 245), Color.FromArgb(207, 232, 245), 0f);
+                    Register(map, sea, handles);
+                }
+
+                Shapefile abroad = Open(folder, "DL_Nc_Ngoai");
+                if (abroad != null)
+                {
+                    StyleArea(abroad, Color.FromArgb(232, 230, 224), Color.FromArgb(214, 211, 203), 1f);
+                    Register(map, abroad, handles);
+                }
+
                 Shapefile communes = Open(folder, "rgXa");
                 if (communes != null)
                 {
-                    ShapeDrawingOptions style = communes.DefaultDrawingOptions;
-                    style.FillVisible = true;
-                    style.FillColor = Ole(Color.FromArgb(243, 239, 230));
-                    style.LineVisible = true;
-                    style.LineColor = Ole(Color.FromArgb(214, 207, 190));
-                    style.LineWidth = 1f;
-                    AddLabels(communes, "tenXa", 150000);
+                    StyleArea(communes, Color.FromArgb(243, 239, 230), Color.FromArgb(188, 176, 214), 1.2f);
+                    AddLabels(communes, "ten_xa", 150000);
                     Register(map, communes, handles);
-                }
-
-                Shapefile province = Open(folder, "rgTinh");
-                if (province != null)
-                {
-                    ShapeDrawingOptions style = province.DefaultDrawingOptions;
-                    style.FillVisible = false;
-                    style.LineVisible = true;
-                    style.LineColor = Ole(Color.FromArgb(167, 139, 250));
-                    style.LineWidth = Ui.S(2.2f);
-                    style.LineStipple = tkDashStyle.dsDash;
-                    Register(map, province, handles);
                 }
 
                 Shapefile lakes = Open(folder, "song_2n");
                 if (lakes != null)
                 {
-                    ShapeDrawingOptions style = lakes.DefaultDrawingOptions;
-                    style.FillVisible = true;
-                    style.FillColor = Ole(Color.FromArgb(165, 212, 238));
-                    style.LineVisible = true;
-                    style.LineColor = Ole(Color.FromArgb(140, 196, 228));
-                    style.LineWidth = 1f;
+                    StyleArea(lakes, Color.FromArgb(165, 212, 238), Color.FromArgb(140, 196, 228), 1f);
                     Register(map, lakes, handles);
                 }
 
@@ -79,13 +84,13 @@ namespace Hue_travel.MapEngine
                     Register(map, streams, handles);
                 }
 
-                Shapefile casing = Open(folder, "duongGiaothong");
+                Shapefile casing = Open(folder, "MangGiaoThong");
                 if (casing != null)
                 {
                     StyleRoads(casing, true);
                     Register(map, casing, handles);
                 }
-                Shapefile roads = Open(folder, "duongGiaothong");
+                Shapefile roads = Open(folder, "MangGiaoThong");
                 if (roads != null)
                 {
                     StyleRoads(roads, false);
@@ -115,6 +120,16 @@ namespace Hue_travel.MapEngine
             if (handle >= 0) handles.Add(handle);
         }
 
+        private static void StyleArea(Shapefile shapefile, Color fill, Color line, float lineWidth)
+        {
+            ShapeDrawingOptions style = shapefile.DefaultDrawingOptions;
+            style.FillVisible = true;
+            style.FillColor = Ole(fill);
+            style.LineVisible = lineWidth > 0;
+            style.LineColor = Ole(line);
+            style.LineWidth = lineWidth;
+        }
+
         private static uint Ole(Color color) => (uint)ColorTranslator.ToOle(color);
 
         private static void AddLabels(Shapefile shapefile, string field, double maxScale)
@@ -139,7 +154,7 @@ namespace Hue_travel.MapEngine
         // Roads in two layers over each other: the wider "casing" below and the narrower filling above, per road class.
         private static void StyleRoads(Shapefile roads, bool casing)
         {
-            ShapeDrawingOptions other = roads.DefaultDrawingOptions;   // tracks, paths, footways, steps
+            ShapeDrawingOptions other = roads.DefaultDrawingOptions;   // footpaths, steps, unknown
             other.LineVisible = true;
             other.LineColor = Ole(casing ? Color.FromArgb(243, 239, 230) : Color.FromArgb(214, 217, 224));
             other.LineWidth = casing ? 0f : Ui.S(1f);
@@ -154,7 +169,7 @@ namespace Hue_travel.MapEngine
         private static void AddClass(Shapefile roads, string name, string[] values, Color color, float width)
         {
             ShapefileCategory category = roads.Categories.Add(name);
-            category.Expression = "[loai_doi_t] = \"" + string.Join("\" OR [loai_doi_t] = \"", values) + "\"";
+            category.Expression = "[road_type] = \"" + string.Join("\" OR [road_type] = \"", values) + "\"";
             ShapeDrawingOptions options = category.DrawingOptions;
             options.LineVisible = true;
             options.LineColor = Ole(color);

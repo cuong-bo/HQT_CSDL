@@ -147,6 +147,7 @@
     </Compile>
     <Compile Include="Services\Data\ShapefilePointReader.cs" />
     <Compile Include="Services\Data\TourismGrouping.cs" />
+    <Compile Include="Services\Data\VnUtm.cs" />
     <Compile Include="Services\Data\ShapefilePoiRepository.cs" />
     <Compile Include="Services\Data\PoiCatalog.cs" />
     <Compile Include="Services\CoordinateFormatter.cs" />
@@ -202,7 +203,6 @@
     <Compile Include="Theme\ToggleSwitch.cs" />
     <Compile Include="MapEngine\HighlightRing.cs" />
     <Compile Include="MapEngine\LocalBaseMap.cs" />
-
     <Compile Include="MapEngine\PoiMarkerIcons.cs" />
     <Compile Include="Shell\StatusBar.cs">
       <SubType>UserControl</SubType>
@@ -302,7 +302,7 @@
     <None Include="Resources\LICENSES.md" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Data\NenBanDo\**\*.*">
+    <Content Include="Data\shp\**\*.*" Exclude="Data\shp\DiaPhan_Tinh_2025.*;Data\shp\NutMangGiaoThong.*;Data\shp\*.xml;Data\shp\*.sbn;Data\shp\*.sbx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Data\Photos\README.txt">
@@ -312,66 +312,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Data\Photos\**\*.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Data\diemDuLich.shp">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Data\diemDuLich.shx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Data\diemDuLich.dbf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Data\diemDuLich.prj">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Data\diemDuLich.cpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Data\diemLuuTru.shp">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Data\diemLuuTru.shx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Data\diemLuuTru.dbf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Data\diemLuuTru.prj">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Data\diemLuuTru.cpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Data\diemDVDuLich.shp">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Data\diemDVDuLich.shx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Data\diemDVDuLich.dbf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Data\diemDVDuLich.prj">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Data\diemDVDuLich.cpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Data\diemDMGiaoThong.shp">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Data\diemDMGiaoThong.shx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Data\diemDMGiaoThong.dbf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Data\diemDMGiaoThong.prj">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Data\diemDMGiaoThong.cpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

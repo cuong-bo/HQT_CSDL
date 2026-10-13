@@ -11,7 +11,7 @@ namespace Hue_travel.Services.Data
     {
         private static IReadOnlyList<Poi> current;
 
-        public static string DefaultDataDir => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data");
+        public static string DefaultDataDir => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "shp");
 
         /// <summary>Why the real data could not be used (null when it loaded, or has not been tried).</summary>
         public static string LastError { get; private set; }

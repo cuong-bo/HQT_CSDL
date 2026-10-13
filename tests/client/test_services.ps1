@@ -189,13 +189,13 @@ Check 'null set means all' (($apply.Invoke($null, @($pois, $null, $null))).Count
 
 
 # ---- Real tourism data (Phase 1): Shapefile reader, grouping, repository
-$dataDir = Join-Path $repoRoot 'Hue_travel\Data'
+$dataDir = Join-Path $repoRoot 'Hue_travel\Data\shp'
 $reader = GetT 'Hue_travel.Services.Data.ShapefilePointReader'
 $stay = $reader.GetMethod('Read').Invoke($null, @([string](Join-Path $dataDir 'diemLuuTru.shp')))
 Check 'stay layer record count' $stay.Count '38'
 Check 'stay first name decodes Vietnamese' $stay[0].Attributes['TenCS'] 'Azerai La Residence Hue'
 Check 'stay first geometry is UTM easting' ([int]($stay[0].X -gt 700000 -and $stay[0].X -lt 900000)) '1'
-Check 'stay first Lon attribute' ([math]::Round($reader.GetMethod('ParseNumber').Invoke($null, @($stay[0].Attributes['Lon'])), 3)) '107.58'
+Check 'stay layer has no Lon attribute' ([int]$stay[0].Attributes.ContainsKey('Lon')) '0'
 $grp = (GetT 'Hue_travel.Services.Data.TourismGrouping').GetMethod('GroupOf')
 function G($s) { "$($grp.Invoke($null, @($s)))" }
 Check 'group lang tam' (G 'Di tích lịch sử - lăng tẩm') 'Heritage'
@@ -209,23 +209,32 @@ Check 'group lang nghe' (G 'Làng nghề - trải nghiệm') 'Heritage'
 Check 'group empty' (G '') 'Heritage'
 $repo = (GetT 'Hue_travel.Services.Data.ShapefilePoiRepository').GetMethod('Load').Invoke($null, @([string]$dataDir))
 function CountOf($c) { @($repo | ? { "$($_.Category)" -eq $c }).Count }
-Check 'repo total' $repo.Count '109'
+Check 'repo total' $repo.Count '191'
 Check 'repo stay' (CountOf 'Stay') '38'
 Check 'repo service' (CountOf 'Service') '12'
-Check 'repo transport' (CountOf 'Transport') '9'
-Check 'repo heritage+scenery' ((CountOf 'Heritage') + (CountOf 'Scenery')) '50'
-Check 'repo no food yet' (CountOf 'Food') '0'
+Check 'repo transport' (CountOf 'Transport') '11'
+Check 'repo heritage+scenery' ((CountOf 'Heritage') + (CountOf 'Scenery')) '49'
+Check 'repo food' (CountOf 'Food') '81'
 Check 'repo all have location' (@($repo | ? { -not $_.HasLocation }).Count) '0'
-Check 'repo ids unique' (@($repo | % { $_.Id } | sort -Unique).Count) '109'
+Check 'repo ids unique' (@($repo | % { $_.Id } | sort -Unique).Count) '191'
+$lt1 = $repo | ? { $_.Id -eq 'LT001' }
+Check 'stay without Lon/Lat gets degrees from its UTM point' ([string]([math]::Round($lt1.Longitude, 2)) + ' ' + [string]([math]::Round($lt1.Latitude, 2))) '107.58 16.46'
+$utm = (GetT 'Hue_travel.Services.Data.VnUtm').GetMethod('ToDegrees')
+$utmArgs = [object[]]@([double]500000, [double]0, [double]0, [double]0)
+[void]$utm.Invoke($null, $utmArgs)
+Check 'utm: false easting on the equator is the central meridian' ([string]$utmArgs[2] + ' ' + [string]$utmArgs[3]) '105 0'
+$utmArgs = [object[]]@([double]775000, [double]1822500, [double]0, [double]0)
+[void]$utm.Invoke($null, $utmArgs)
+Check 'utm: a point in Hue' ([string]([math]::Round($utmArgs[2], 3)) + ' ' + [string]([math]::Round($utmArgs[3], 3))) '107.576 16.468'
 $hv = $repo | ? { $_.Id -eq 'DL001' }
 Check 'repo DL001 name' $hv.Name 'Hải Vân Quan'
 Check 'repo DL001 hours' $hv.OpeningHours '07:00-17:30'
 Check 'repo DL001 utm x plausible' ([int]($hv.X -gt 700000 -and $hv.X -lt 900000)) '1'
 Check 'repo DL001 lat' ([math]::Round($hv.Latitude, 4)) '16.1908'
 $poiCat = (GetT 'Hue_travel.Services.Data.PoiCatalog').GetMethod('Load').Invoke($null, @([string]$dataDir))
-Check 'catalog loads real data' $poiCat.Count '109'
+Check 'catalog loads real data' $poiCat.Count '191'
 $poiMissing = (GetT 'Hue_travel.Services.Data.PoiCatalog').GetMethod('Load').Invoke($null, @('Z:\missing\dir'))
-Check 'catalog falls back to samples' ([int]($poiMissing.Count -gt 0 -and $poiMissing.Count -lt 109)) '1'
+Check 'catalog falls back to samples' ([int]($poiMissing.Count -gt 0 -and $poiMissing.Count -lt 191)) '1'
 
 
 # ---- Online services (server settings, JSON, place mapping, route parsing, tokens, API client, sign-in)
