@@ -322,6 +322,22 @@ namespace Hue_travel.MapEngine
             labels.MaxVisibleScale = LabelMaxScaleDenominator;
         }
 
+        private int mapCursorState = -1;   // 0 open hand, 1 dragging, 2 over a place, 3 the tool's own cursor
+
+        // Familiar pointers: an open hand over the map, a closed-looking hand while dragging, the pointing hand over a place.
+        private void UpdateMapCursor(int pixelX, int pixelY)
+        {
+            int state = axMap.CursorMode != tkCursorMode.cmPan ? 3
+                : pressX != int.MinValue ? 1
+                : FindPoiAt(pixelX, pixelY) != null ? 2 : 0;
+            if (state == mapCursorState) return;
+            mapCursorState = state;
+            if (state == 3) { axMap.MapCursor = tkCursor.crsrMapDefault; return; }
+            IntPtr handle = state == 1 ? MapCursors.Grabbing : state == 2 ? MapCursors.Pointing : MapCursors.OpenHand;
+            axMap.UDCursorHandle = handle.ToInt32();
+            axMap.MapCursor = tkCursor.crsrUserDefined;
+        }
+
         // The nearest visible marker within HitRadius of a pixel, or null.
         private Poi FindPoiAt(int pixelX, int pixelY)
         {
@@ -352,6 +368,7 @@ namespace Hue_travel.MapEngine
         {
             int downX = pressX, downY = pressY;
             pressX = pressY = int.MinValue;
+            UpdateMapCursor(pixelX, pixelY);
             if (button != LeftButton || axMap.CursorMode != tkCursorMode.cmPan) return;
             if (downX == int.MinValue) return;   // no press was seen: do not guess
             if (Math.Abs(pixelX - downX) > ClickSlopPixels || Math.Abs(pixelY - downY) > ClickSlopPixels) return;
@@ -530,7 +547,7 @@ namespace Hue_travel.MapEngine
             MapCrs.Apply(axMap);
             viewTracker.Tick += (s, e) => PublishViewIfChanged();
             viewTracker.Start();
-            axMap.MouseMoveEvent += (s, e) => PublishCursor(e.x, e.y);
+            axMap.MouseMoveEvent += (s, e) => { PublishCursor(e.x, e.y); UpdateMapCursor(e.x, e.y); };
             pressFilter.Pressed += (s, screen) => NotePress(screen);
             Application.AddMessageFilter(pressFilter);
             axMap.MouseUpEvent += (s, e) => OnMapMouseUp(e.button, e.x, e.y);

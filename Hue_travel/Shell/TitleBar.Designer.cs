@@ -51,19 +51,20 @@ namespace Hue_travel.Shell
             this.panelBottomBorder.BackColor = ThemeColors.SurfaceContainer;
 
             // Logo (h-7 w-7) + "Cố Đô GIS" (text-xs font-bold).
-            this.picLogo.Location = new System.Drawing.Point(14, 8);
-            this.picLogo.Size = new System.Drawing.Size(40, 40);
-            this.picLogo.Image = AppImages.Logo(Ui.S(40));
+            this.picLogo.Location = new System.Drawing.Point(14, 5);
+            this.picLogo.Size = new System.Drawing.Size((int)System.Math.Round(46 * AppImages.BrandMarkAspect), 46);
+            this.picLogo.Image = AppImages.BrandMark(Ui.S(46));
+            this.picLogo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.picLogo.BackColor = System.Drawing.Color.Transparent;
             this.picLogo.MouseDown += new System.Windows.Forms.MouseEventHandler(this.panelRoot_MouseDown);
 
-            this.lblLogo.Text = "Cố Đô GIS";
+            this.lblLogo.Text = string.Empty;
             this.lblLogo.Font = ThemeFonts.Bold(16);
             this.lblLogo.ForeColor = ThemeColors.OnSurface;
             this.lblLogo.BackColor = System.Drawing.Color.Transparent;
             this.lblLogo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.lblLogo.Location = new System.Drawing.Point(64, 0);
-            this.lblLogo.Size = new System.Drawing.Size(160, 55);
+            this.lblLogo.Location = new System.Drawing.Point(186, 0);   // empty spacer after the mark: the search box is placed relative to it
+            this.lblLogo.Size = new System.Drawing.Size(12, 55);
             this.lblLogo.MouseDown += new System.Windows.Forms.MouseEventHandler(this.panelRoot_MouseDown);
 
             // Search box in the middle of the bar (pill, slate-100; white with a blue ring while typing). Placed by TitleBar.LayoutSearch().

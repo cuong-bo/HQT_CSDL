@@ -50,6 +50,54 @@ namespace Hue_travel.Theme
             }
         }
 
+
+        // The brand mark of the sign-in picture (house icon and "Hue Travel"), in source pixels of dangnhap.jpg.
+        private static readonly Rectangle BrandMarkSource = new Rectangle(575, 195, 1110, 320);
+        private static readonly Dictionary<int, Bitmap> BrandCache = new Dictionary<int, Bitmap>();
+
+        /// <summary>Width / height of the brand mark.</summary>
+        public static float BrandMarkAspect => BrandMarkSource.Width / (float)BrandMarkSource.Height;
+
+        /// <summary>
+        /// The "Hue Travel" mark cut out of the sign-in picture, with the sky around it made transparent, <paramref name="height"/> pixels
+        /// high (shared, do not dispose).
+        /// </summary>
+        public static Bitmap BrandMark(int height)
+        {
+            lock (LogoCache)
+            {
+                Bitmap cached;
+                if (BrandCache.TryGetValue(height, out cached)) return cached;
+                int width = (int)Math.Round(height * BrandMarkAspect);
+                var result = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                try
+                {
+                    using (var g = Graphics.FromImage(result))
+                    {
+                        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                        g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                        g.DrawImage(LoginBackground(), new Rectangle(0, 0, width, height), BrandMarkSource, GraphicsUnit.Pixel);
+                    }
+                    // The mark is dark purple and gold on a light sky: the darker the pixel, the more opaque it is.
+                    for (int y = 0; y < height; y++)
+                    {
+                        for (int x = 0; x < width; x++)
+                        {
+                            Color c = result.GetPixel(x, y);
+                            double alpha = Math.Max(0, Math.Min(1, (208 - Math.Min(c.R, Math.Min(c.G, c.B))) / 55.0));
+                            result.SetPixel(x, y, Color.FromArgb((int)Math.Round(alpha * 255), c.R, c.G, c.B));
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("AppImages.BrandMark: " + ex.Message);
+                }
+                BrandCache[height] = result;
+                return result;
+            }
+        }
+
         private static Bitmap poiThumbnail;
 
         /// <summary>The Đại Nội photo the mockup uses for result cards and the identify card (shared, do not dispose).</summary>

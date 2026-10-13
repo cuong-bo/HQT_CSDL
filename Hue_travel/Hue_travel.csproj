@@ -203,7 +203,8 @@
     <Compile Include="Panels\Explore\ExplorePanel.cs" />
     <Compile Include="Shell\SearchDropdown.cs" />
     <Compile Include="Theme\ToggleSwitch.cs" />
-    <Compile Include="MapEngine\HighlightRing.cs" />
+    <Compile Include="MapEngine\HighlightRing.cs" />
+    <Compile Include="MapEngine\MapCursors.cs" />
     <Compile Include="MapEngine\PoiMarkerIcons.cs" />
     <Compile Include="Shell\StatusBar.cs">
       <SubType>UserControl</SubType>
