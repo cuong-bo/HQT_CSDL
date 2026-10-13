@@ -92,7 +92,8 @@ namespace Hue_travel.Shell
             this.layerPanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
             this.routeOptimizerPanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
             this.travelGuidePanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
-            this.poiIdentifyCard.AttachTo(this, new System.Drawing.Point(522, 584), System.Windows.Forms.AnchorStyles.Bottom);
+            // The place card sits at the bottom right of the map, clear of the map's control column (400px wide card, 92px from the right).
+            this.poiIdentifyCard.AttachTo(this, new System.Drawing.Point(1044, 198), System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right);
 
             this.Controls.Add(this.statusBar);
 

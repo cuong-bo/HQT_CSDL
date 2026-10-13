@@ -114,6 +114,34 @@ namespace Hue_travel.Theme
             }
         }
 
+        // "Schedule": a clock face with two hands.
+        private static void DrawClock(Bitmap bmp, int px, Color color)
+        {
+            float s = px / 16f;
+            using (Graphics g = Graphics.FromImage(bmp))
+            using (var pen = new Pen(color, Math.Max(1.2f, 1.5f * s)) { StartCap = System.Drawing.Drawing2D.LineCap.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round, LineJoin = System.Drawing.Drawing2D.LineJoin.Round })
+            {
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                g.DrawEllipse(pen, 2f * s, 2f * s, 12f * s, 12f * s);
+                g.DrawLines(pen, new[] { new PointF(8f * s, 4.6f * s), new PointF(8f * s, 8f * s), new PointF(10.6f * s, 9.6f * s) });
+            }
+        }
+
+        // "Sell": a price tag with a hole.
+        private static void DrawTag(Bitmap bmp, int px, Color color)
+        {
+            float s = px / 16f;
+            PointF[] tag = { new PointF(2.2f * s, 2.2f * s), new PointF(8.6f * s, 2.2f * s), new PointF(14f * s, 7.6f * s), new PointF(8.6f * s, 13f * s), new PointF(2.2f * s, 6.6f * s) };
+            using (Graphics g = Graphics.FromImage(bmp))
+            using (var pen = new Pen(color, Math.Max(1.2f, 1.5f * s)) { LineJoin = System.Drawing.Drawing2D.LineJoin.Round })
+            using (var dot = new SolidBrush(color))
+            {
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                g.DrawPolygon(pen, tag);
+                g.FillEllipse(dot, 4.2f * s, 4.2f * s, 2.2f * s, 2.2f * s);
+            }
+        }
+
         // "Landscape": two mountains and a sun.
         private static void DrawLandscape(Bitmap bmp, int px, Color color)
         {
@@ -149,6 +177,16 @@ namespace Hue_travel.Theme
             if (name == "landscape")
             {
                 DrawLandscape(bmp, px, color);
+                return bmp;
+            }
+            if (name == "schedule")
+            {
+                DrawClock(bmp, px, color);
+                return bmp;
+            }
+            if (name == "sell")
+            {
+                DrawTag(bmp, px, color);
                 return bmp;
             }
             if (name == "chevron_right")

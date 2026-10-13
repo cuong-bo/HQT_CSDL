@@ -34,6 +34,10 @@ namespace Hue_travel.MapEngine
         private readonly List<PoiMarker> markers = new List<PoiMarker>();
         private readonly LeftPressFilter pressFilter = new LeftPressFilter();
         private int routeHandle = -1;
+        private int placeholderHandle = -1;
+        private readonly HighlightRing highlightRing = new HighlightRing(HighlightDesignPixels);
+        private Poi highlighted;
+        private const int HighlightDesignPixels = 54;
         private IReadOnlyList<Poi> lastPois = new List<Poi>();
         private readonly HashSet<string> hiddenPoiIds = new HashSet<string>();
         private const int MarkerDesignPixels = 34;               // the round badge on the map
@@ -157,9 +161,54 @@ namespace Hue_travel.MapEngine
                 markers.AddRange(group.Select(p => new PoiMarker(p, handle)));
                 AddPoiLayer(group.Key, handle);
             }
+            // With every place switched off no layer is left, and a map without layers loses its tiles: keep one empty layer.
+            int oldPlaceholder = placeholderHandle;
+            placeholderHandle = poiLayers.Handles.Count == 0 ? AddEmptyLayer() : -1;
+            if (oldPlaceholder >= 0) axMap.RemoveLayer(oldPlaceholder);
+
             foreach (int handle in oldLayers) axMap.RemoveLayer(handle);
+            DrawHighlight();
             if (keptView != null) axMap.Extents = keptView;
             axMap.Redraw();
+        }
+
+        private int AddEmptyLayer()
+        {
+            var layer = new Shapefile();
+            return layer.CreateNew(string.Empty, ShpfileType.SHP_POINT) ? axMap.AddLayer(layer, false) : -1;
+        }
+
+        /// <summary>Rings the place the map was zoomed to or the card shows, until <see cref="ClearHighlight"/>.</summary>
+        public void HighlightPoi(Poi poi)
+        {
+            highlighted = poi;
+            DrawHighlight();
+            axMap.Redraw();
+        }
+
+        public void ClearHighlight()
+        {
+            if (highlighted == null) return;
+            highlighted = null;
+            DrawHighlight();
+            axMap.Redraw();
+        }
+
+        // The ring is a small control above the map (a layer with a single point is not drawn by the map engine); it follows the place as the map moves.
+        private void DrawHighlight()
+        {
+            if (highlighted == null || (highlighted.X == 0 && highlighted.Y == 0) || hiddenPoiIds.Contains(highlighted.Id))
+            {
+                highlightRing.Visible = false;
+                return;
+            }
+            double px = 0, py = 0;
+            axMap.ProjToPixel(highlighted.X, highlighted.Y, ref px, ref py);
+            // The marker picture stands on its point (its bottom centre is the place), so the ring is centred half a marker above it.
+            int size = highlightRing.Width;
+            int centerY = (int)Math.Round(py) - Ui.S(MarkerDesignPixels) / 2 - 2;
+            highlightRing.Location = new System.Drawing.Point((int)Math.Round(px) - size / 2, centerY - size / 2);
+            highlightRing.Visible = ClientRectangle.IntersectsWith(highlightRing.Bounds);
         }
 
         /// <summary>Places that are switched off in the layer list: they are left out of the map until switched on again.</summary>
@@ -223,9 +272,12 @@ namespace Hue_travel.MapEngine
         }
 
         // The badge of the group as the point symbol (a picture drawn at the screen's own resolution, so it stays sharp).
-        private static bool UsePictureMarker(ShapeDrawingOptions style, PoiCategory category)
+        private static bool UsePictureMarker(ShapeDrawingOptions style, PoiCategory category) =>
+            UsePicture(style, PoiMarkerIcons.FilePath(category, Ui.S(MarkerDesignPixels)));
+
+        // A picture file as the point symbol.
+        private static bool UsePicture(ShapeDrawingOptions style, string path)
         {
-            string path = PoiMarkerIcons.FilePath(category, Ui.S(MarkerDesignPixels));
             if (path == null) return false;
             try
             {
@@ -357,7 +409,6 @@ namespace Hue_travel.MapEngine
             style.LineVisible = true;
             style.FillVisible = false;
             routeHandle = axMap.AddLayer(layer, true);
-            foreach (int handle in poiLayers.Handles) axMap.MoveLayerTop(handle);   // markers stay on top of the line
 
             double padX = Math.Max((maxX - minX) * 0.15, 300), padY = Math.Max((maxY - minY) * 0.15, 300);
             var view = new Extents();
@@ -471,7 +522,14 @@ namespace Hue_travel.MapEngine
             axMap.SendMouseUp = true;
             axMap.BackColor = System.Drawing.ColorTranslator.FromHtml("#E2E8F0");
             MapCrs.Apply(axMap);
-            viewTracker.Tick += (s, e) => PublishViewIfChanged();
+            Controls.Add(highlightRing);
+            highlightRing.BringToFront();
+            stackTools.BringToFront();
+            stackZoom.BringToFront();
+            compass.BringToFront();
+            stackBaseMaps.BringToFront();
+            attribution.BringToFront();
+            viewTracker.Tick += (s, e) => { PublishViewIfChanged(); if (highlightRing.Visible) DrawHighlight(); };
             viewTracker.Start();
             axMap.MouseMoveEvent += (s, e) => PublishCursor(e.x, e.y);
             pressFilter.Pressed += (s, screen) => NotePress(screen);

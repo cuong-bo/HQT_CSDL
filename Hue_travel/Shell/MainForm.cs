@@ -144,6 +144,7 @@ namespace Hue_travel.Shell
             // The Explore panel follows the map: it lists what is in the window, refreshed shortly after the map stops moving.
             exploreTimer.Tick += (s, e) => { exploreTimer.Stop(); RefreshExplore(); };
             explorePanel.PoiSelected += (s, poi) => ShowPoiCard(poi);
+            poiIdentifyCard.VisibleChanged += (s, e) => { if (!poiIdentifyCard.Visible) mapHost.ClearHighlight(); };
 
             for (int i = 0; i < sidePanels.Length; i++)
             {
@@ -233,10 +234,9 @@ namespace Hue_travel.Shell
         private void UpdateSearchResults(string text)
         {
             if (string.IsNullOrWhiteSpace(text)) { searchDropdown.Dismiss(); return; }
-            var compare = System.Globalization.CultureInfo.CurrentCulture.CompareInfo;
-            const System.Globalization.CompareOptions loose = System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreNonSpace;
+            string wanted = Hue_travel.Panels.SearchPoi.PoiSearchFilter.Fold(text);
             List<Poi> matches = Hue_travel.Panels.SearchPoi.PoiSearchFilter.Apply(PoiCatalog.All.Where(p => p.X != 0 || p.Y != 0), text.Trim(), null)
-                .OrderBy(p => compare.IsPrefix(p.Name ?? "", text.Trim(), loose) ? 0 : 1)
+                .OrderBy(p => Hue_travel.Panels.SearchPoi.PoiSearchFilter.Fold(p.Name).StartsWith(wanted, StringComparison.Ordinal) ? 0 : 1)
                 .ThenBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
             System.Drawing.Rectangle box = titleBar.SearchBoxBounds;
             box.Offset(titleBar.Location);
@@ -263,6 +263,7 @@ namespace Hue_travel.Shell
         private void ShowPoiCard(Poi poi)
         {
             poiIdentifyCard.FavoriteIds = favoriteIds;
+            mapHost.HighlightPoi(poi);   // the place the card is about is ringed on the map until the card is closed
             poiIdentifyCard.ShowPoi(poi);
         }
 
@@ -361,6 +362,7 @@ namespace Hue_travel.Shell
 
         private void ShowOnMap(Poi poi)
         {
+            mapHost.HighlightPoi(poi);
             if (poi.X != 0 || poi.Y != 0) mapHost.ZoomToProjected(poi.X, poi.Y);
             else if (poi.HasLocation) mapHost.ZoomTo(poi.Longitude, poi.Latitude);
         }
