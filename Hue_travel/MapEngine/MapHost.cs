@@ -16,7 +16,7 @@ namespace Hue_travel.MapEngine
     public partial class MapHost : UserControl
     {
         private const int RightMargin = 16;   // right-4
-        private const int ColumnTop = 64;     // top-16
+        private const int ColumnTop = 16;     // top-4 of the map, under the filter bar
         private const int StackGap = 6;       // gap-1.5
         private const double CityHalfWidthMetres = 5000;
         private const int ClickSlopPixels = 4;    // a press and release this close together is a click, not a drag
@@ -50,6 +50,7 @@ namespace Hue_travel.MapEngine
             InitializeComponent();
 
             // Controls added after the ActiveX map must be lifted above it explicitly.
+            stackTools.BringToFront();
             stackZoom.BringToFront();
             compass.BringToFront();
             stackBaseMaps.BringToFront();
@@ -322,6 +323,7 @@ namespace Hue_travel.MapEngine
             }
             axMap.CursorMode = stop ? tkCursorMode.cmPan : tkCursorMode.cmMeasure;
             stackZoom.ActiveIndex = stop ? 2 : -1;
+            stackTools.ActiveIndex = stop ? -1 : (kind == MeasureKind.Area ? 2 : 1);
             return stop ? MeasureKind.None : kind;
         }
 
@@ -419,6 +421,7 @@ namespace Hue_travel.MapEngine
             stackBaseMaps.Location = new System.Drawing.Point(x, Ui.S(ColumnTop));
             compass.Location = new System.Drawing.Point(x + (stackBaseMaps.Width - compass.Width) / 2, stackBaseMaps.Bottom + Ui.S(StackGap + 4));
             stackZoom.Location = new System.Drawing.Point(x, compass.Bottom + Ui.S(StackGap));
+            stackTools.Location = new System.Drawing.Point(x, stackZoom.Bottom + Ui.S(StackGap + 4));
             attribution.Location = new System.Drawing.Point(Width - attribution.Width - Ui.S(8), Height - attribution.Height - Ui.S(8));
         }
 
@@ -432,7 +435,15 @@ namespace Hue_travel.MapEngine
             {
                 PanMode(true);
                 stackZoom.ActiveIndex = 2;
+                stackTools.ActiveIndex = -1;
             }
+        }
+
+        // Whole-city view and the two measuring tools (a second click on a measuring tool goes back to panning).
+        private void stackTools_ItemClicked(object sender, int index)
+        {
+            if (index == 0) ZoomToFull();
+            else ToggleMeasure(index == 2 ? MeasureKind.Area : MeasureKind.Distance);
         }
 
         private void compass_Click(object sender, EventArgs e) => ZoomToFull();

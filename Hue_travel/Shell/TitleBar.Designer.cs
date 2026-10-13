@@ -9,6 +9,11 @@ namespace Hue_travel.Shell
         private System.Windows.Forms.Panel panelBottomBorder;
         private System.Windows.Forms.PictureBox picLogo;
         private System.Windows.Forms.Label lblLogo;
+        private RoundedPanel boxSearch;
+        private IconButton iconSearch;
+        private System.Windows.Forms.TextBox txtSearch;
+        private System.Windows.Forms.Label lblSearchHint;
+        private IconButton btnClearSearch;
         private IconButton btnAuth;
         private IconButton btnMinimize;
         private IconButton btnMaximize;
@@ -26,6 +31,11 @@ namespace Hue_travel.Shell
             this.panelBottomBorder = new System.Windows.Forms.Panel();
             this.picLogo = new System.Windows.Forms.PictureBox();
             this.lblLogo = new System.Windows.Forms.Label();
+            this.boxSearch = new RoundedPanel();
+            this.iconSearch = new IconButton();
+            this.txtSearch = new System.Windows.Forms.TextBox();
+            this.lblSearchHint = new System.Windows.Forms.Label();
+            this.btnClearSearch = new IconButton();
             this.btnAuth = new IconButton();
             this.btnMinimize = new IconButton();
             this.btnMaximize = new IconButton();
@@ -57,6 +67,64 @@ namespace Hue_travel.Shell
             this.lblLogo.Location = new System.Drawing.Point(64, 0);
             this.lblLogo.Size = new System.Drawing.Size(160, 55);
             this.lblLogo.MouseDown += new System.Windows.Forms.MouseEventHandler(this.panelRoot_MouseDown);
+
+            // Search box in the middle of the bar (pill, slate-100; white with a blue ring while typing). Placed by TitleBar.LayoutSearch().
+            this.boxSearch.Radius = 19;
+            this.boxSearch.FillColor = ThemeColors.Slate100;
+            this.boxSearch.BorderColor = ThemeColors.Slate200;
+            this.boxSearch.Size = new System.Drawing.Size(520, 38);
+            this.boxSearch.Location = new System.Drawing.Point(300, 9);
+
+            this.iconSearch.AutoWidth = false;
+            this.iconSearch.IconName = "search";
+            this.iconSearch.IconSize = 18;
+            this.iconSearch.IconColor = ThemeColors.Slate500;
+            this.iconSearch.FillColor = System.Drawing.Color.Transparent;
+            this.iconSearch.HoverFillColor = System.Drawing.Color.Transparent;
+            this.iconSearch.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.iconSearch.Size = new System.Drawing.Size(18, 18);
+            this.iconSearch.Location = new System.Drawing.Point(14, 10);
+
+            this.txtSearch.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.txtSearch.BackColor = ThemeColors.Slate100;
+            this.txtSearch.ForeColor = ThemeColors.Slate800;
+            this.txtSearch.Font = ThemeFonts.Regular(13);
+            this.txtSearch.Size = new System.Drawing.Size(420, 20);
+            this.txtSearch.Location = new System.Drawing.Point(40, 9);
+            this.txtSearch.TextChanged += new System.EventHandler(this.txtSearch_TextChanged);
+            this.txtSearch.Enter += new System.EventHandler(this.txtSearch_FocusChanged);
+            this.txtSearch.Leave += new System.EventHandler(this.txtSearch_FocusChanged);
+            this.txtSearch.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtSearch_KeyDown);
+
+            // The hint is a label, not the TextBox's own cue banner: the banner is drawn without font fallback and loses Vietnamese marks.
+            this.lblSearchHint.Text = "Tìm địa điểm, di tích, khách sạn, quán ăn…";
+            this.lblSearchHint.Font = ThemeFonts.Regular(13);
+            this.lblSearchHint.ForeColor = ThemeColors.Slate400;
+            this.lblSearchHint.BackColor = System.Drawing.Color.Transparent;
+            this.lblSearchHint.UseMnemonic = false;
+            this.lblSearchHint.AutoSize = false;
+            this.lblSearchHint.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.lblSearchHint.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.lblSearchHint.Size = new System.Drawing.Size(420, 20);
+            this.lblSearchHint.Location = new System.Drawing.Point(40, 9);
+            this.lblSearchHint.Click += new System.EventHandler(this.lblSearchHint_Click);
+
+            this.btnClearSearch.AutoWidth = false;
+            this.btnClearSearch.IconName = "close";
+            this.btnClearSearch.IconSize = 14;
+            this.btnClearSearch.IconColor = ThemeColors.Slate500;
+            this.btnClearSearch.FillColor = System.Drawing.Color.Transparent;
+            this.btnClearSearch.HoverFillColor = ThemeColors.Slate200;
+            this.btnClearSearch.Radius = 11;
+            this.btnClearSearch.Size = new System.Drawing.Size(22, 22);
+            this.btnClearSearch.Location = new System.Drawing.Point(488, 8);
+            this.btnClearSearch.Visible = false;
+            this.btnClearSearch.Click += new System.EventHandler(this.btnClearSearch_Click);
+
+            this.boxSearch.Controls.Add(this.lblSearchHint);
+            this.boxSearch.Controls.Add(this.iconSearch);
+            this.boxSearch.Controls.Add(this.txtSearch);
+            this.boxSearch.Controls.Add(this.btnClearSearch);
 
             // Right group, positions refined by TitleBar.LayoutRightGroup() from real text widths.
             this.btnClose.AutoWidth = false;
@@ -110,6 +178,7 @@ namespace Hue_travel.Shell
             this.btnAuth.HorizontalPadding = 16;
             this.btnAuth.FillColor = ThemeColors.Sky600;
             this.btnAuth.HoverFillColor = ThemeColors.Sky700;
+            this.btnAuth.Elevated = true;
             this.btnAuth.Radius = 4;
             this.btnAuth.Size = new System.Drawing.Size(210, 38);
             this.btnAuth.Location = new System.Drawing.Point(736, 9);
@@ -118,6 +187,7 @@ namespace Hue_travel.Shell
 
             this.panelRoot.Controls.Add(this.picLogo);
             this.panelRoot.Controls.Add(this.lblLogo);
+            this.panelRoot.Controls.Add(this.boxSearch);
             this.panelRoot.Controls.Add(this.btnAuth);
             this.panelRoot.Controls.Add(this.btnMinimize);
             this.panelRoot.Controls.Add(this.btnMaximize);

@@ -16,6 +16,7 @@ namespace Hue_travel.Theme
     public class FloatingPanelForm : Form
     {
         private const int CornerRadius = 8;
+        private const int MinStretchedHeight = 360;   // a side panel never gets shorter than this (design pixels)
         private const double FadeStep = 0.2;
         private const int DwmNcRenderingPolicy = 2;
         private const int DwmWindowCornerPreference = 33;
@@ -46,6 +47,7 @@ namespace Hue_travel.Theme
         private int expandedHeight;
         private bool isCollapsed;
         private bool isScaled;
+        private bool stretchesVertically;
 
         public FloatingPanelForm()
         {
@@ -76,6 +78,24 @@ namespace Hue_travel.Theme
             bottomOffset = client.Height - (clientLocation.Y + Height);
             centerXOffset = clientLocation.X + Width / 2 - client.Width / 2;
             centerYOffset = clientLocation.Y + Height / 2 - client.Height / 2;
+            host.LocationChanged += (s, e) => Reposition();
+            host.SizeChanged += (s, e) => Reposition();
+            ScaleToScreen();
+        }
+
+        /// <summary>
+        /// Pins the panel to the left side of the host like a web map's side panel: <paramref name="left"/> and
+        /// <paramref name="top"/> from the host's client corner, <paramref name="bottom"/> above its bottom edge, all in
+        /// design pixels. The panel is as tall as that leaves, so it follows the window when it is resized.
+        /// </summary>
+        public void AttachToSide(Form hostForm, int left, int top, int bottom)
+        {
+            host = hostForm;
+            anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            leftOffset = left;
+            topOffset = top;
+            bottomOffset = bottom;
+            stretchesVertically = true;
             host.LocationChanged += (s, e) => Reposition();
             host.SizeChanged += (s, e) => Reposition();
             ScaleToScreen();
@@ -114,6 +134,12 @@ namespace Hue_travel.Theme
             Size client = host.ClientSize;
             bool left = (anchor & AnchorStyles.Left) != 0, right = (anchor & AnchorStyles.Right) != 0;
             bool top = (anchor & AnchorStyles.Top) != 0, bottom = (anchor & AnchorStyles.Bottom) != 0;
+
+            if (stretchesVertically && !isCollapsed)
+            {
+                int stretched = client.Height - Ui.S(topOffset) - Ui.S(bottomOffset);
+                if (stretched >= Ui.S(MinStretchedHeight) && stretched != Height) Height = stretched;
+            }
 
             int x = left ? origin.X + Ui.S(leftOffset)
                   : right ? origin.X + client.Width - Ui.S(rightOffset) - Width

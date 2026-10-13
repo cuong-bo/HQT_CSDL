@@ -14,6 +14,7 @@ namespace Hue_travel.MapEngine
         private MapToolStack stackBaseMaps;
         private CompassButton compass;
         private MapToolStack stackZoom;
+        private MapToolStack stackTools;
 
         protected override void Dispose(bool disposing)
         {
@@ -31,6 +32,7 @@ namespace Hue_travel.MapEngine
             this.stackBaseMaps = new MapToolStack();
             this.compass = new CompassButton();
             this.stackZoom = new MapToolStack();
+            this.stackTools = new MapToolStack();
             this.attribution = new Label();
             ((System.ComponentModel.ISupportInitialize)(this.axMap)).BeginInit();
             this.SuspendLayout();
@@ -57,6 +59,15 @@ namespace Hue_travel.MapEngine
             this.stackZoom.Location = new Point(1020, 226);
             this.stackZoom.ItemClicked += new System.EventHandler<int>(this.stackZoom_ItemClicked);
 
+            // Whole-city view and measuring, moved here from the old ribbon.
+            this.stackTools.IconList = "travel_explore,straighten,measure_area";
+            this.stackTools.ToolTipList = "Xem toàn cảnh Huế|Đo khoảng cách|Đo diện tích";
+            this.stackTools.ActiveIndex = -1;
+            this.stackTools.ActiveFill = ThemeColors.Sky50;
+            this.stackTools.ActiveIconColor = ThemeColors.Sky600;
+            this.stackTools.Location = new Point(1020, 350);
+            this.stackTools.ItemClicked += new System.EventHandler<int>(this.stackTools_ItemClicked);
+
             // Credit line for tile base maps (bottom-right, positioned in LayoutOverlays).
             this.attribution.AutoSize = true;
             this.attribution.Visible = false;
@@ -67,6 +78,7 @@ namespace Hue_travel.MapEngine
             this.attribution.Padding = new Padding(4, 1, 4, 1);
 
             this.Controls.Add(this.attribution);
+            this.Controls.Add(this.stackTools);
             this.Controls.Add(this.stackZoom);
             this.Controls.Add(this.compass);
             this.Controls.Add(this.stackBaseMaps);

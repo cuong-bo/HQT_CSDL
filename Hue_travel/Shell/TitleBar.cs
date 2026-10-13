@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
@@ -19,6 +20,13 @@ namespace Hue_travel.Shell
         public event EventHandler MinimizeClicked;
         public event EventHandler MaximizeClicked;
         public event EventHandler CloseClicked;
+
+        /// <summary>Raised as the text of the search box changes (also when it is cleared).</summary>
+        public event EventHandler<string> SearchTextChanged;
+
+        /// <summary>Raised when Enter is pressed in the search box.</summary>
+        public event EventHandler<string> SearchSubmitted;
+
 
         private const int EdgePadding = 0;       // window buttons touch the edge
 
@@ -63,6 +71,76 @@ namespace Hue_travel.Shell
             btnMinimize.Left = btnMaximize.Left - btnMinimize.Width;
 
             btnAuth.Left = btnMinimize.Left - Hue_travel.Theme.Ui.S(10) - btnAuth.Width;
+            LayoutSearch();
+        }
+
+        // The search box is centred in the bar and shrinks before it would touch the logo or the account button.
+        private void LayoutSearch()
+        {
+            int gap = Hue_travel.Theme.Ui.S(24);
+            int free = btnAuth.Left - gap - (lblLogo.Right + gap);
+            int width = System.Math.Max(Hue_travel.Theme.Ui.S(200), System.Math.Min(Hue_travel.Theme.Ui.S(560), free));
+            int height = Hue_travel.Theme.Ui.S(38);
+            int left = System.Math.Max(lblLogo.Right + gap, (Width - width) / 2);
+            if (left + width > btnAuth.Left - gap) left = btnAuth.Left - gap - width;
+            boxSearch.SetBounds(left, (Height - 1 - height) / 2, width, height);
+            boxSearch.Radius = 19;
+
+            int pad = Hue_travel.Theme.Ui.S(14);
+            iconSearch.Location = new System.Drawing.Point(pad, (height - iconSearch.Height) / 2);
+            int clearSize = Hue_travel.Theme.Ui.S(22);
+            btnClearSearch.SetBounds(width - pad - clearSize + Hue_travel.Theme.Ui.S(4), (height - clearSize) / 2, clearSize, clearSize);
+            int textLeft = iconSearch.Right + Hue_travel.Theme.Ui.S(10);
+            int textRight = width - pad - clearSize - Hue_travel.Theme.Ui.S(6);
+            // Tall enough for the whole line, or the tails of g, y, p are cut off.
+            txtSearch.AutoSize = false;
+            int textHeight = txtSearch.Font.Height + Hue_travel.Theme.Ui.S(4);
+            txtSearch.SetBounds(textLeft, (height - textHeight) / 2, System.Math.Max(Hue_travel.Theme.Ui.S(40), textRight - textLeft), textHeight);
+            lblSearchHint.Bounds = txtSearch.Bounds;
+        }
+
+        // Clicking the hint text puts the caret in the box, like clicking the box itself.
+        private void lblSearchHint_Click(object sender, EventArgs e) => txtSearch.Focus();
+
+        /// <summary>Empties the search box without raising a search for the empty text.</summary>
+        public void ClearSearch() => txtSearch.Clear();
+
+        private void txtSearch_TextChanged(object sender, EventArgs e)
+        {
+            btnClearSearch.Visible = txtSearch.TextLength > 0;
+            lblSearchHint.Visible = txtSearch.TextLength == 0;
+            SearchTextChanged?.Invoke(this, txtSearch.Text);
+        }
+
+        private void txtSearch_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true;
+                SearchSubmitted?.Invoke(this, txtSearch.Text);
+            }
+            else if (e.KeyCode == Keys.Escape)
+            {
+                e.SuppressKeyPress = true;
+                txtSearch.Clear();
+            }
+        }
+
+        // Web-style focus: the pill turns white with a blue ring while it has the caret.
+        private void txtSearch_FocusChanged(object sender, EventArgs e)
+        {
+            bool focused = txtSearch.Focused;
+            Color fill = focused ? Hue_travel.Theme.ThemeColors.SurfaceContainerLowest : Hue_travel.Theme.ThemeColors.Slate100;
+            boxSearch.FillColor = fill;
+            boxSearch.BorderColor = focused ? Hue_travel.Theme.ThemeColors.Primary : Hue_travel.Theme.ThemeColors.Slate200;
+            txtSearch.BackColor = fill;
+            boxSearch.Invalidate();
+        }
+
+        private void btnClearSearch_Click(object sender, EventArgs e)
+        {
+            txtSearch.Clear();
+            txtSearch.Focus();
         }
 
         /// <summary>Lets the user drag the borderless MainForm by its title bar (FormBorderStyle.None has no built-in move handle).</summary>

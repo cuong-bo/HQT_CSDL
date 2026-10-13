@@ -173,6 +173,7 @@ namespace Hue_travel.Panels.PoiIdentify
             this.btnAddToRoute.IconColor = Color.White;
             this.btnAddToRoute.FillColor = ThemeColors.Primary;
             this.btnAddToRoute.HoverFillColor = ThemeColors.PrimaryContainer;
+            this.btnAddToRoute.Elevated = true;
             this.btnAddToRoute.Radius = 4;
             this.btnAddToRoute.HorizontalPadding = 10;
             this.btnAddToRoute.Gap = 4;

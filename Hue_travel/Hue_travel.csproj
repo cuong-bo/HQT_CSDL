@@ -184,18 +184,9 @@
     <Compile Include="Shell\TitleBar.Designer.cs">
       <DependentUpon>TitleBar.cs</DependentUpon>
     </Compile>
-    <Compile Include="Shell\RibbonBar.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Shell\RibbonBar.Designer.cs">
-      <DependentUpon>RibbonBar.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Shell\CategoryRail.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Shell\CategoryRail.Designer.cs">
-      <DependentUpon>CategoryRail.cs</DependentUpon>
-    </Compile>
+    <Compile Include="Shell\NavRail.cs" />
+    <Compile Include="Shell\FilterBar.cs" />
+    <Compile Include="Theme\PressFeedback.cs" />
     <Compile Include="Shell\StatusBar.cs">
       <SubType>UserControl</SubType>
     </Compile>

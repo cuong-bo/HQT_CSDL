@@ -48,6 +48,7 @@ namespace Hue_travel.Shell
         }
 
         private readonly FloatingPanelForm[] panels;
+        private FloatingPanelForm[] sidePanels;   // in NavRail tab order: explore, route, guide
         private readonly WeatherUpdater weatherUpdater;
         private readonly ApiClient api;
         private readonly AuthService auth;
@@ -95,22 +96,30 @@ namespace Hue_travel.Shell
             titleBar.CloseClicked += (s, e) => Close();
             titleBar.AuthClicked += (s, e) => OnAccountButton();
 
-            ribbonBar.RouteOptimizerToggled += (s, e) => TogglePanel(routeOptimizerPanel);
-            ribbonBar.SearchPoiToggled += (s, e) => TogglePanel(searchPoiPanel);
-            ribbonBar.TravelGuideToggled += (s, e) => TogglePanel(travelGuidePanel);
-            ribbonBar.ZoomInClicked += (s, e) => mapHost.ZoomIn();
-            ribbonBar.ZoomOutClicked += (s, e) => mapHost.ZoomOut();
-            ribbonBar.ZoomFullClicked += (s, e) => mapHost.ZoomToFull();
-            ribbonBar.MeasureToggled += (s, e) => mapHost.ToggleMeasure(MeasureKind.Distance);
-            ribbonBar.MeasureAreaToggled += (s, e) => mapHost.ToggleMeasure(MeasureKind.Area);
+            // Left rail: one tab per tool; the tools' panels share the side slot, so opening one closes the others.
+            sidePanels = new FloatingPanelForm[] { searchPoiPanel, routeOptimizerPanel, travelGuidePanel };
+            navRail.ItemClicked += (s, index) => ShowSidePanel(sidePanels[index].Visible ? -1 : index);
 
+            // The chips under the header show only the picked kind of place on the map.
+            filterBar.CategorySelected += (s, category) => mapHost.ShowOnlyCategory(category);
 
-            // The left rail shows only the picked kind of object on the map.
-            categoryRail.CategorySelected += (s, category) => mapHost.ShowOnlyCategory(category);
+            // The header search box opens the search panel and hands it the text.
+            titleBar.SearchTextChanged += (s, text) =>
+            {
+                if (text.Length > 0) ShowSidePanel(NavRail.Explore);
+                searchPoiPanel.SetKeyword(text);
+            };
+            titleBar.SearchSubmitted += (s, text) => ShowSidePanel(NavRail.Explore);
 
-            routeOptimizerPanel.CloseRequested += (s, e) => routeOptimizerPanel.Visible = false;
-            searchPoiPanel.CloseRequested += (s, e) => searchPoiPanel.Visible = false;
-            travelGuidePanel.CloseRequested += (s, e) => travelGuidePanel.Visible = false;
+            for (int i = 0; i < sidePanels.Length; i++)
+            {
+                int index = i;
+                sidePanels[i].CloseRequested += (s, e) =>
+                {
+                    sidePanels[index].Visible = false;
+                    if (navRail.ActiveIndex == index) navRail.ActiveIndex = -1;
+                };
+            }
             authModal.CloseRequested += (s, e) => authModal.Visible = false;
             registerPanel.CloseRequested += (s, e) => registerPanel.Visible = false;
             authModal.RegisterRequested += (s, e) => ShowAuthCard(registerPanel);
@@ -156,7 +165,7 @@ namespace Hue_travel.Shell
             routeOptimizerPanel.RouteComputed += (s, route) => mapHost.ShowRoute(route.Legs.Select(l => l.Path).ToList());
             poiIdentifyCard.AddToRouteRequested += (s, poi) =>
             {
-                TogglePanel(routeOptimizerPanel, true);
+                ShowSidePanel(NavRail.Route);
                 if (routeOptimizerPanel.TrySelectStop(poi)) toast.ShowMessage("Đã thêm vào lộ trình: " + poi.Name, ToastKind.Success);
                 else toast.ShowMessage("Địa điểm này chưa có vị trí trên bản đồ nên chưa thêm được vào lộ trình", ToastKind.Info);
             };
@@ -169,10 +178,17 @@ namespace Hue_travel.Shell
             if (titleBar != null) titleBar.SetMaximized(WindowState == FormWindowState.Maximized);
         }
 
-        private void TogglePanel(Control panel, bool forceVisible = false)
+        // Shows the tool panel of one rail tab (NavRail.Explore / Route / Guide) and closes the other two; -1 closes all.
+        private void ShowSidePanel(int index)
         {
-            panel.Visible = forceVisible || !panel.Visible;
-            if (panel.Visible) panel.BringToFront();
+            for (int i = 0; i < sidePanels.Length; i++)
+            {
+                if (i != index) sidePanels[i].Visible = false;
+            }
+            // No BringToFront here: for a window of its own it activates the panel and takes the keyboard from whoever is
+            // typing (the header search box). The panels are owned by this window, so they stay above it anyway.
+            if (index >= 0) sidePanels[index].Visible = true;
+            navRail.ActiveIndex = index;
         }
 
         // The auth button toggles whichever auth card is open (login by default).

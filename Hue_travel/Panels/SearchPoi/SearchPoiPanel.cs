@@ -56,6 +56,12 @@ namespace Hue_travel.Panels.SearchPoi
             RefreshResults();
         }
 
+        /// <summary>Puts text in the panel's search box (the header search box sends what is typed there).</summary>
+        public void SetKeyword(string keyword)
+        {
+            if (txtKeyword.Text != keyword) txtKeyword.Text = keyword ?? string.Empty;
+        }
+
         /// <summary>Rebuilds the result cards from the current places (the server's list replaced the bundled one).</summary>
         public void ReloadPois()
         {

@@ -12,9 +12,14 @@ namespace Hue_travel.Shell
     {
         private System.ComponentModel.IContainer components = null;
 
+        // Side panel slot, in design pixels: rail (80) + 12; header (56) + filter bar (48) + 12; status bar (28) + 12.
+        private const int SideLeft = 92;
+        private const int SideTop = 116;
+        private const int SideBottom = 40;
+
         private TitleBar titleBar;
-        private RibbonBar ribbonBar;
-        private CategoryRail categoryRail;
+        private FilterBar filterBar;
+        private NavRail navRail;
         private AppStatusBar statusBar;
         private MapHost mapHost;
 
@@ -35,8 +40,8 @@ namespace Hue_travel.Shell
         private void InitializeComponent()
         {
             this.titleBar = new TitleBar();
-            this.ribbonBar = new RibbonBar();
-            this.categoryRail = new CategoryRail();
+            this.filterBar = new FilterBar();
+            this.navRail = new NavRail();
             this.statusBar = new AppStatusBar();
             this.mapHost = new MapHost();
             this.routeOptimizerPanel = new RouteOptimizerPanel();
@@ -58,11 +63,13 @@ namespace Hue_travel.Shell
             this.titleBar.Dock = System.Windows.Forms.DockStyle.Top;
             this.titleBar.Size = new System.Drawing.Size(1536, 56);
 
-            this.ribbonBar.Dock = System.Windows.Forms.DockStyle.Top;
-            this.ribbonBar.Size = new System.Drawing.Size(1536, 40);
+            // Category chips under the header (the filter bar of a web map).
+            this.filterBar.Dock = System.Windows.Forms.DockStyle.Top;
+            this.filterBar.Size = new System.Drawing.Size(1536, 48);
 
-            this.categoryRail.Dock = System.Windows.Forms.DockStyle.Left;
-            this.categoryRail.Size = new System.Drawing.Size(48, 724);
+            // Navigation rail on the left: explore, route, guide.
+            this.navRail.Dock = System.Windows.Forms.DockStyle.Left;
+            this.navRail.Size = new System.Drawing.Size(80, 724);
 
             this.statusBar.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.statusBar.Size = new System.Drawing.Size(1536, 28);
@@ -71,16 +78,18 @@ namespace Hue_travel.Shell
 
             this.Controls.Add(this.mapHost);
 
-            this.Controls.Add(this.categoryRail);
-            this.Controls.Add(this.ribbonBar);
+            this.Controls.Add(this.navRail);
+            this.Controls.Add(this.filterBar);
             this.Controls.Add(this.titleBar);
 
             // Floating panels are real Forms owned by this window (not child controls): top-level windows
             // can carry the system's soft shadow and anti-aliased corners over the MapWinGIS map.
             // AttachTo records where each sits in this window and which edges it follows when resized.
-            this.searchPoiPanel.AttachTo(this, new System.Drawing.Point(348, 144), System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left);
-            this.routeOptimizerPanel.AttachTo(this, new System.Drawing.Point(1136, 144), System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right);
-            this.travelGuidePanel.AttachTo(this, new System.Drawing.Point(1136, 272), System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right);
+            // The three tool panels share one slot beside the rail (a web map's side panel): 12px from the rail,
+            // below the filter bar, down to just above the status bar. Opening one closes the others.
+            this.searchPoiPanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
+            this.routeOptimizerPanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
+            this.travelGuidePanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
             this.poiIdentifyCard.AttachTo(this, new System.Drawing.Point(522, 584), System.Windows.Forms.AnchorStyles.Bottom);
 
             // Auth cards share one spot (top-16, centred over the map); only one is visible at a time.
@@ -89,7 +98,7 @@ namespace Hue_travel.Shell
 
             this.Controls.Add(this.statusBar);
 
-            this.toast.TopOffset = 104;
+            this.toast.TopOffset = 116;
             this.Controls.Add(this.toast);
 
             this.ResumeLayout(false);

@@ -249,6 +249,7 @@ namespace Hue_travel.Panels.RouteOptimizer
             this.btnFindRoute.IconColor = Color.White;
             this.btnFindRoute.FillColor = ThemeColors.Primary;
             this.btnFindRoute.HoverFillColor = ThemeColors.PrimaryContainer;
+            this.btnFindRoute.Elevated = true;
             this.btnFindRoute.Radius = 6;
             this.btnFindRoute.Gap = 6;
             this.btnFindRoute.Size = new Size(356, 36);

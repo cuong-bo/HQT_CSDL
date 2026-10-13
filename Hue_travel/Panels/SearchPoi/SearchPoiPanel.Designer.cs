@@ -101,8 +101,9 @@ namespace Hue_travel.Panels.SearchPoi
             this.txtKeyword.ForeColor = ThemeColors.Slate800;
             this.txtKeyword.Font = ThemeFonts.Regular(12);
             this.txtKeyword.Text = string.Empty;
-            this.txtKeyword.Size = new Size(296, 18);
-            this.txtKeyword.Location = new Point(32, 8);
+            this.txtKeyword.AutoSize = false;   // the height is set below; auto size would cut the tails of g, y, p
+            this.txtKeyword.Size = new Size(296, 24);
+            this.txtKeyword.Location = new Point(32, 4);
             this.txtKeyword.TextChanged += new System.EventHandler(this.txtKeyword_TextChanged);
             this.boxSearch.Controls.Add(this.iconSearch);
             this.boxSearch.Controls.Add(this.txtKeyword);

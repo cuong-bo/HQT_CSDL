@@ -21,6 +21,7 @@ namespace Hue_travel.MapEngine.Overlays
         private int hoverIndex = -1;
         private string[] tips = new string[0];
         private readonly ToolTip tooltip = new ToolTip();
+        private readonly PressFeedback press;
 
         public event EventHandler<int> ItemClicked;
 
@@ -32,6 +33,7 @@ namespace Hue_travel.MapEngine.Overlays
             Cursor = Cursors.Hand;
             ActiveFill = ThemeColors.Sky100;
             ActiveIconColor = ThemeColors.Primary;
+            press = new PressFeedback(this);
         }
 
         /// <summary>Comma-separated icon names, top to bottom (e.g. "add,remove,pan_tool").</summary>
@@ -61,7 +63,10 @@ namespace Hue_travel.MapEngine.Overlays
         [Category("Appearance")]
         public int ActiveIndex { get { return activeIndex; } set { activeIndex = value; Invalidate(); } }
 
-        private int IndexAt(Point p) => p.Y < 1 ? -1 : Math.Min(icons.Length - 1, (p.Y - 1) / (ItemSize + 1));
+        // Item height follows the real height of the control, so it fits at any screen scale (the design size is 36).
+        private int ItemPx => icons.Length == 0 ? ItemSize : Math.Max(8, (Height - 2 - (icons.Length - 1)) / icons.Length);
+
+        private int IndexAt(Point p) => p.Y < 1 ? -1 : Math.Min(icons.Length - 1, (p.Y - 1) / (ItemPx + 1));
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
@@ -77,10 +82,28 @@ namespace Hue_travel.MapEngine.Overlays
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing) tooltip.Dispose();
+            if (disposing)
+            {
+                tooltip.Dispose();
+                press.Dispose();
+            }
             base.Dispose(disposing);
         }
-        protected override void OnMouseLeave(EventArgs e) { hoverIndex = -1; Invalidate(); base.OnMouseLeave(e); }
+
+        protected override void OnMouseLeave(EventArgs e) { hoverIndex = -1; press.Up(); Invalidate(); base.OnMouseLeave(e); }
+
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            int index = IndexAt(e.Location);
+            if (e.Button == MouseButtons.Left && index >= 0 && index < icons.Length) press.Down(index, e.Location);
+            base.OnMouseDown(e);
+        }
+
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            press.Up();
+            base.OnMouseUp(e);
+        }
 
         protected override void OnMouseClick(MouseEventArgs e)
         {
@@ -94,7 +117,9 @@ namespace Hue_travel.MapEngine.Overlays
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             var box = new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f);
-            using (GraphicsPath path = Ui.RoundedRect(box, 8))
+            int itemPx = ItemPx;
+            int iconPx = itemPx / 2;
+            using (GraphicsPath path = Ui.RoundedRect(box, Ui.S(8)))
             {
                 using (var fill = new SolidBrush(Color.White)) g.FillPath(fill, path);
 
@@ -102,14 +127,21 @@ namespace Hue_travel.MapEngine.Overlays
                 g.SetClip(path, CombineMode.Intersect);
                 for (int i = 0; i < icons.Length; i++)
                 {
-                    int top = 1 + i * (ItemSize + 1);
-                    Color back = i == activeIndex ? ActiveFill : (i == hoverIndex ? ThemeColors.Slate100 : Color.White);
-                    using (var brush = new SolidBrush(back)) g.FillRectangle(brush, 1, top, Width - 2, ItemSize);
+                    int top = 1 + i * (itemPx + 1);
+                    Color rest = i == activeIndex ? ActiveFill : (i == hoverIndex ? ThemeColors.Slate100 : Color.White);
+                    Color back = press.Fill(i, rest, i == activeIndex ? ThemeColors.Sky200 : ThemeColors.Slate200);
+                    using (var brush = new SolidBrush(back)) g.FillRectangle(brush, 1, top, Width - 2, itemPx);
+                    var itemBox = new Rectangle(1, top, Width - 2, itemPx);
+                    using (var itemPath = new GraphicsPath())
+                    {
+                        itemPath.AddRectangle(itemBox);
+                        press.PaintRipple(g, i, itemPath, ThemeColors.Sky700, 70);
+                    }
                     Color iconColor = i == activeIndex ? ActiveIconColor : ThemeColors.Slate700;
-                    g.DrawImage(IconFont.Get(icons[i], 18, iconColor), (Width - 18) / 2, top + (ItemSize - 18) / 2, 18, 18);
+                    g.DrawImage(IconFont.Get(icons[i], iconPx, iconColor), (Width - iconPx) / 2, top + (itemPx - iconPx) / 2 + press.SinkFor(i), iconPx, iconPx);
                     if (i < icons.Length - 1)
                     {
-                        using (var pen = new Pen(ThemeColors.Slate200)) g.DrawLine(pen, 1, top + ItemSize, Width - 2, top + ItemSize);
+                        using (var pen = new Pen(ThemeColors.Slate200)) g.DrawLine(pen, 1, top + itemPx, Width - 2, top + itemPx);
                     }
                 }
                 g.Restore(state);
