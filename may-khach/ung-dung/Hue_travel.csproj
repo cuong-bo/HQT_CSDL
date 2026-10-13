@@ -8,6 +8,7 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>Hue_travel</RootNamespace>
     <AssemblyName>Hue_travel</AssemblyName>
+    <ApplicationIcon>Resources\hue-travel.ico</ApplicationIcon>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -134,9 +135,32 @@
     <Compile Include="Account\OwnerTab.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Account\AdminTab.cs">
+    <Compile Include="Account\AccountKit.cs" />
+    <Compile Include="Account\ItemList.cs" />
+    <Compile Include="Account\PhotoGrid.cs" />
+    <Compile Include="Account\ReviewsDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Admin\AdminSection.cs" />
+    <Compile Include="Admin\ApprovalsSection.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Admin\AuditSection.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="Admin\ModerationSection.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Admin\PlacesSection.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Admin\UsersSection.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Admin\AdminConsole.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Services\Data\PlaceFileReader.cs" />
     <Compile Include="Account\AccountPanel.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -249,6 +273,8 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Services\Data\PoiPhotos.cs" />
+    <Compile Include="Services\Data\PhotoStore.cs" />
+    <Compile Include="Services\Online\PhotoSync.cs" />
     <Compile Include="Auth\AuthValidation.cs" />
     <Compile Include="Welcome\AuthField.cs">
       <SubType>Component</SubType>
@@ -312,8 +338,8 @@
     <EmbeddedResource Include="Resources\poi_thumb.jpg">
       <LogicalName>Hue_travel.Resources.poi_thumb.jpg</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Resources\logo.jpg">
-      <LogicalName>Hue_travel.Resources.logo.jpg</LogicalName>
+    <EmbeddedResource Include="Resources\hue-travel.ico">
+      <LogicalName>Hue_travel.Resources.hue-travel.ico</LogicalName>
     </EmbeddedResource>
     <None Include="Resources\LICENSES.md" />
   </ItemGroup>

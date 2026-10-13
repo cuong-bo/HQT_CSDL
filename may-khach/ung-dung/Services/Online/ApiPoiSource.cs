@@ -31,10 +31,10 @@ namespace Hue_travel.Services.Online
         }
     }
 
-    /// <summary>The last list of places received from the server, in %LocalAppData%\CoDoGIS\pois.json.</summary>
+    /// <summary>The last list of places received from the server, in %LocalAppData%\HueTravel\pois.json.</summary>
     public static class PoiCache
     {
-        private static string DefaultPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CoDoGIS", "pois.json");
+        private static string DefaultPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HueTravel", "pois.json");
 
         public static void TrySave(IReadOnlyList<Poi> pois, string server, string path = null)
         {

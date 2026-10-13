@@ -1,12 +1,12 @@
 # Phân chia máy chủ và máy khách
 
-Cố Đô GIS gồm **hai phần cài riêng**. Phần nặng (dữ liệu, tìm đường, tài khoản) nằm trên máy chủ; máy khách chỉ là ứng dụng
+Hue Travel gồm **hai phần cài riêng**. Phần nặng (dữ liệu, tìm đường, tài khoản) nằm trên máy chủ; máy khách chỉ là ứng dụng
 Windows nhẹ, hiển thị bản đồ và gọi máy chủ khi cần.
 
 ```
  Máy khách (Windows)                         Máy chủ (VPS Ubuntu)
  ┌───────────────────────────┐   HTTP     ┌──────────────────────────────────────────────┐
- │ Ứng dụng Cố Đô GIS        │──cổng 80──▶│ Caddy ─▶ API .NET 8 ─▶ PostgreSQL            │
+ │ Ứng dụng Hue Travel        │──cổng 80──▶│ Caddy ─▶ API .NET 8 ─▶ PostgreSQL            │
  │  - bản đồ nền (vẽ cục bộ) │            │                         + PostGIS + pgRouting│
  │  - hiển thị địa điểm      │◀───────────│  - địa điểm, tài khoản, yêu thích            │
  │  - xe chạy trên tuyến     │  JSON      │  - tìm đường, xếp thứ tự điểm đến            │
@@ -46,7 +46,7 @@ Các lớp dữ liệu máy chủ cần: `diemDuLich`, `diemAnUong`, `diemLuuTru
 
 Cài đặt: `git clone` rồi làm theo [may-chu/HUONG-DAN-CAI-DAT.md](../may-chu/HUONG-DAN-CAI-DAT.md). Nếu VPS không vào được GitHub: `powershell -ExecutionPolicy Bypass -File may-chu/dong-goi.ps1 -Version 1.0.0` tạo gói `.tar.gz`.
 
-### Máy khách: thư mục `may-khach/` (bộ cài `CoDoGIS-Setup-<phiên bản>.exe`)
+### Máy khách: thư mục `may-khach/` (bộ cài `HueTravel-Setup-<phiên bản>.exe`)
 
 | Thành phần | Ghi chú |
 |---|---|
@@ -54,8 +54,8 @@ Cài đặt: `git clone` rồi làm theo [may-chu/HUONG-DAN-CAI-DAT.md](../may-c
 | **MapWinGIS** (kèm GDAL) | Bộ cài tự đăng ký `MapWinGIS.ocx`; máy khách không phải cài riêng |
 | `Data\shp\` (bản đồ nền + địa điểm dự phòng) | `NenBien`, `DL_Nc_Ngoai`, `rgXa`, `song_1n`, `song_2n`, `MangGiaoThong`, `DiaPhan_Tinh_2025`, `diem*`. **Không** có `NutMangGiaoThong` |
 | `Data\Photos\` | Ảnh địa điểm (nếu có), theo mã địa điểm |
-| Địa chỉ máy chủ | Bộ cài hỏi và lưu vào `%ProgramData%\CoDoGIS\server.txt` |
-| Khóa công khai (không bắt buộc) | Lưu vào `%ProgramData%\CoDoGIS\public.key` để kiểm tra phản hồi của máy chủ |
+| Địa chỉ máy chủ | Bộ cài hỏi và lưu vào `%ProgramData%\HueTravel\server.txt` |
+| Khóa công khai (không bắt buộc) | Lưu vào `%ProgramData%\HueTravel\public.key` để kiểm tra phản hồi của máy chủ |
 
 Tạo bộ cài: `powershell -ExecutionPolicy Bypass -File may-khach/dong-goi.ps1 -Version 1.0.0 -Server http://IP_VPS` (xem [may-khach/HUONG-DAN-CAI-DAT.md](../may-khach/HUONG-DAN-CAI-DAT.md)).
 

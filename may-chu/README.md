@@ -1,4 +1,4 @@
-# Máy chủ Cố Đô GIS
+# Máy chủ Hue Travel
 
 Phần chạy trên VPS Ubuntu: **Caddy** (cổng 80) → **API .NET 8** → **PostgreSQL 17 + PostGIS + pgRouting**, toàn bộ trong Docker Compose.
 Thư mục này **tự đủ**: `git clone` kho mã, `cd may-chu`, rồi làm theo hướng dẫn. Không cần thư mục `may-khach/`.

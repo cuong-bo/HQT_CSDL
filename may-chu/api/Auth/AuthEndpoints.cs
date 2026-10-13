@@ -1,4 +1,7 @@
 using System.Security.Claims;
+using Hue_travel.Api.Audit;
+using Hue_travel.Api.Data;
+using Npgsql;
 
 namespace Hue_travel.Api.Auth;
 
@@ -19,16 +22,41 @@ public static class AuthEndpoints
         app.MapGet("/v1/me", MeAsync).RequireAuthorization();
     }
 
-    private static async Task<IResult> RegisterAsync(RegisterRequest request, UserRepository users, TokenService tokens, CancellationToken ct)
+    private const int MaxPlacesAtRegistration = 5;
+
+    private static async Task<IResult> RegisterAsync(RegisterRequest request, UserRepository users, TokenService tokens, NpgsqlDataSource db, CancellationToken ct)
     {
         string? problem = AuthValidation.ValidateRegistration(request.Username, request.Password, request.DisplayName);
         if (problem != null) return Results.Problem(detail: problem, statusCode: StatusCodes.Status400BadRequest);
+
+        // An owner names the places they run. They start as an ordinary user; an admin approves each claim before they can manage the place.
+        string accountType = request.AccountType ?? "user";
+        if (accountType is not ("user" or "owner"))
+            return Results.Problem(detail: "Loại tài khoản phải là user hoặc owner.", statusCode: StatusCodes.Status400BadRequest);
+        string[] placeIds = (request.PlaceIds ?? []).Select(p => p.Trim()).Where(p => p.Length > 0).Distinct().ToArray();
+        if (accountType == "owner")
+        {
+            if (placeIds.Length is < 1 or > MaxPlacesAtRegistration)
+                return Results.Problem(detail: $"Chủ quản cần chọn từ 1 đến {MaxPlacesAtRegistration} địa điểm mình quản lý.", statusCode: StatusCodes.Status400BadRequest);
+            long found = (long)(await db.ScalarAsync("select count(*) from poi where id = any(@ids) and deleted_at is null and status = 'visible'", ct, ("ids", placeIds)))!;
+            if (found != placeIds.Length)
+                return Results.Problem(detail: "Có địa điểm không tồn tại hoặc đang ẩn.", statusCode: StatusCodes.Status404NotFound);
+        }
+        else
+        {
+            placeIds = [];
+        }
 
         string username = request.Username!.Trim();
         AppUser? user = await users.CreateAsync(
             username, PasswordHasher.Hash(request.Password!), AuthValidation.DisplayNameOrUsername(request.DisplayName, username), ct);
         if (user == null) return Results.Problem(detail: "Tên đăng nhập đã có người dùng.", statusCode: StatusCodes.Status409Conflict);
 
+        foreach (string placeId in placeIds)
+        {
+            await db.ExecAsync("insert into place_owner (user_id, poi_id) values (@u, @p) on conflict do nothing", ct, ("u", user.Id), ("p", placeId));
+            await db.RecordAsync(user.Id, "claim.create", "place_owner", placeId, null, new { poiId = placeId, atRegistration = true }, ct);
+        }
         return Results.Json(await IssueAsync(user, users, tokens, ct), statusCode: StatusCodes.Status201Created);
     }
 

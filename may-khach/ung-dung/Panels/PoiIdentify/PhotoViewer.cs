@@ -26,6 +26,7 @@ namespace Hue_travel.Panels.PoiIdentify
             this.paths = paths;
             this.index = Math.Max(0, Math.Min(paths.Count - 1, index));
             this.title = title ?? "";
+            Icon = AppImages.AppIcon();
             FormBorderStyle = FormBorderStyle.None;
             StartPosition = FormStartPosition.Manual;
             ShowInTaskbar = false;

@@ -1,4 +1,4 @@
-# Kế hoạch đưa dự án Cố Đô GIS lên VPS Ubuntu
+# Kế hoạch đưa dự án Hue Travel lên VPS Ubuntu
 
 Ngày lập: 12/10/2026. Phạm vi: chuyển dự án từ "app desktop đọc dữ liệu mẫu" sang "app desktop cài trên máy
 người dùng, dữ liệu và xử lý nằm trên VPS Ubuntu". Không dùng tên miền riêng.
@@ -19,14 +19,14 @@ Bộ cài đã dựng được bằng Inno Setup (19 MB).
 | 3. pgRouting | Xong | ma trận 8 điểm 0,24 giây; tuyến Ga Huế đến Đại Nội 2,9 km |
 | 4. API (.NET 8) | Xong | đăng nhập, địa điểm, tìm đường, ba vai trò (R1 đến R4), nhật ký kiểm toán; đã rà soát bảo mật và sửa |
 | 5. App trực tuyến | Xong | tài khoản, địa điểm từ máy chủ có lưu tạm, tìm đường bộ thật vẽ lên bản đồ, thời tiết và tên xã từ máy chủ, giao diện người dùng / chủ quản / quản trị |
-| 6. Bộ cài | Dựng được, chưa cài thử | `may-khach/bo-cai/CoDoGIS.iss` biên dịch thành công; chưa cài trên máy Windows sạch (cài thật sẽ đăng ký lại MapWinGIS.ocx của máy dựng nên không thử ở đây) |
+| 6. Bộ cài | Dựng được, chưa cài thử | `may-khach/bo-cai/HueTravel.iss` biên dịch thành công; chưa cài trên máy Windows sạch (cài thật sẽ đăng ký lại MapWinGIS.ocx của máy dựng nên không thử ở đây) |
 | 7. Triển khai VPS | Đã chạy thật bằng Docker Desktop | Compose, Caddy (HTTP), sao lưu, khôi phục, quay lui đã thử; `setup-vps.sh` (cài Docker, tường lửa) chưa chạy trên Ubuntu thật |
 | 8. CI/CD, tài liệu | Có file, chưa chạy trên GitHub | `.github/workflows`, README, từ điển dữ liệu |
 
 **Các quyết định đã chốt (không còn là câu hỏi mở của mục 10.8):**
 chủ quản không sửa dữ liệu trực tiếp mà gửi yêu cầu chỉnh sửa, quản trị viên duyệt; tài khoản chủ quản có hai đường (gửi yêu cầu nhận địa điểm
 rồi được duyệt, hoặc quản trị viên tạo sẵn); một địa điểm có thể có nhiều chủ quản; đánh giá hiển thị ngay và quản trị viên ẩn khi cần;
-chưa làm tải ảnh lên; nên có ít nhất 2 quản trị viên; dùng HTTP, không HTTPS, không đăng nhập Google, không OTP.
+ảnh địa điểm tải lên lưu trong cơ sở dữ liệu và chờ quản trị viên duyệt (bản V010); nên có ít nhất 2 quản trị viên; dùng HTTP, không HTTPS, không đăng nhập Google, không OTP.
 
 **Chưa làm hoặc còn rủi ro** (đã biết, chưa che hết):
 1. HTTP: mật khẩu và token đi dạng chữ thường (không che được bằng chữ ký). Phản hồi đã được ký ECDSA P-256 và app kiểm tra, nên dữ liệu bị sửa giữa đường sẽ bị từ chối; cần tạo cặp khóa và đặt khóa công khai vào app (`may-chu/VAN-HANH.md`).
@@ -41,7 +41,7 @@ chưa làm tải ảnh lên; nên có ít nhất 2 quản trị viên; dùng HTT
 ```
 Máy người dùng (Windows)                         VPS Ubuntu
 ┌────────────────────────────┐   HTTPS (JSON)   ┌─────────────────────────────────────┐
-│ Cố Đô GIS (WinForms +      │ ───────────────► │ Caddy (HTTPS) → API (.NET 8)        │
+│ Hue Travel (WinForms +      │ ───────────────► │ Caddy (HTTPS) → API (.NET 8)        │
 │ MapWinGIS)                 │ ◄─────────────── │        └─► PostgreSQL 17 + PostGIS +│
 │ - vẽ bản đồ, đo, tọa độ    │                  │            pgRouting (Docker)       │
 │ - hiển thị kết quả         │                  │ sao lưu hằng ngày, tường lửa        │

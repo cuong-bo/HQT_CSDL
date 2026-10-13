@@ -1,5 +1,5 @@
 ﻿; Inno Setup script for the Windows client. Build with:
-;   ISCC.exe installer\CoDoGIS.iss /DAppVersion=1.0.0
+;   ISCC.exe installer\HueTravel.iss /DAppVersion=1.0.0
 ; Needs: a Release build of Hue_travel, and the MapWinGIS folder (the one the MapWinGIS installer creates).
 ; Optional: bo-cai/redist/vc_redist.x86.exe (Microsoft Visual C++ Redistributable, x86) is run when present.
 
@@ -18,21 +18,22 @@
 #ifndef DefaultPublicKey
   #define DefaultPublicKey ""
 #endif
-#define AppName "Cố Đô GIS"
+#define AppName "Hue Travel"
 
 [Setup]
 AppId={{6F1B7C1A-5B52-4D9B-9E0C-3F0E2A8B7D41}
 AppName={#AppName}
 AppVersion={#AppVersion}
-AppPublisher=Cố Đô GIS
-DefaultDirName={autopf}\CoDoGIS
+AppPublisher=Hue Travel
+DefaultDirName={autopf}\HueTravel
 DefaultGroupName={#AppName}
 PrivilegesRequired=admin
 OutputDir=output
-OutputBaseFilename=CoDoGIS-Setup-{#AppVersion}
+OutputBaseFilename=HueTravel-Setup-{#AppVersion}
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+SetupIconFile=..\ung-dung\Resources\hue-travel.ico
 UninstallDisplayIcon={app}\Hue_travel.exe
 ; 32-bit installer on purpose: the app and MapWinGIS are 32-bit, so {sys} is SysWOW64 and regsvr32 registers the 32-bit control.
 
@@ -76,14 +77,21 @@ begin
 end;
 
 procedure InitializeWizard;
+var
+  Legacy: AnsiString;
 begin
   ServerPage := CreateInputQueryPage(wpSelectDir, 'Máy chủ dữ liệu',
-    'Địa chỉ máy chủ Cố Đô GIS',
+    'Địa chỉ máy chủ Hue Travel',
     'Nhập địa chỉ do quản trị viên cung cấp, ví dụ http://203.0.113.10 . Để trống để chỉ dùng dữ liệu ngoại tuyến.');
   ServerPage.Add('Địa chỉ:', False);
   ServerPage.Add('Khóa công khai của máy chủ (không bắt buộc, dùng để kiểm tra dữ liệu không bị sửa):', False);
   ServerPage.Values[0] := '{#DefaultServer}';
   ServerPage.Values[1] := '{#DefaultPublicKey}';
+  // A machine set up with an earlier version keeps its server: that version's folder was called CoDoGIS.
+  if (ServerPage.Values[0] = '') and LoadStringFromFile(ExpandConstant('{commonappdata}\CoDoGIS\server.txt'), Legacy) then
+    ServerPage.Values[0] := Trim(Legacy);
+  if (ServerPage.Values[1] = '') and LoadStringFromFile(ExpandConstant('{commonappdata}\CoDoGIS\public.key'), Legacy) then
+    ServerPage.Values[1] := Trim(Legacy);
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
@@ -92,7 +100,7 @@ var
 begin
   if CurStep = ssPostInstall then
   begin
-    Dir := ExpandConstant('{commonappdata}\CoDoGIS');
+    Dir := ExpandConstant('{commonappdata}\HueTravel');
     ForceDirectories(Dir);
     SaveStringToFile(Dir + '\server.txt', Trim(ServerPage.Values[0]), False);
     SaveStringToFile(Dir + '\public.key', Trim(ServerPage.Values[1]), False);

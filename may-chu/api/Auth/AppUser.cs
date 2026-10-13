@@ -16,7 +16,8 @@ public sealed record MeDto(long Id, string Username, string DisplayName, string 
 
 public sealed record UserDto(long Id, string Username, string DisplayName, string Role);
 
-public sealed record RegisterRequest(string? Username, string? Password, string? DisplayName);
+// AccountType is "user" (the default) or "owner"; an owner names the places they run (PlaceIds), each becoming a claim an admin decides on.
+public sealed record RegisterRequest(string? Username, string? Password, string? DisplayName, string? AccountType = null, string[]? PlaceIds = null);
 
 public sealed record LoginRequest(string? Username, string? Password);
 

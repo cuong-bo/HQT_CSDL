@@ -47,7 +47,7 @@ scripts/gen-signing-key.sh
 ```
 
 - Giá trị **riêng tư** đặt vào `.env` dòng `SIGNING_KEY=` rồi `scripts/deploy.sh up`.
-- Giá trị **công khai** đặt vào app: `ApiPublicKey` trong `Hue_travel.exe.config`, hoặc file `%ProgramData%\CoDoGIS\public.key`
+- Giá trị **công khai** đặt vào app: `ApiPublicKey` trong `Hue_travel.exe.config`, hoặc file `%ProgramData%\HueTravel\public.key`
   (bộ cài có ô nhập), hoặc biến `HUE_API_PUBLIC_KEY`. Khi app có khóa công khai, nó **từ chối** mọi phản hồi thiếu chữ ký hoặc sai chữ ký.
 - Chữ ký không che nội dung: mật khẩu và token vẫn đi dạng chữ thường. Đổi khóa thì phải phát hành lại khóa công khai cho mọi máy.
 
@@ -68,6 +68,10 @@ scripts/deploy.sh rollback   # quay về bản trước theo ý mình
 
 Migration mới (`co-so-du-lieu/migrations/V00N__*.sql`) được áp dụng khi chạy `deploy.sh import`; dữ liệu đã sửa qua app không bị ghi đè.
 
+**Cập nhật máy chủ trước khi dùng bản máy khách mới.** Bảng quản trị, ảnh địa điểm và "Đánh giá của tôi" cần máy chủ có
+migration V010 và API mới: sau `git pull`, chạy `scripts/deploy.sh update` rồi `scripts/deploy.sh import`. Máy chủ cũ trả 404/405 cho các
+trang này; ứng dụng sẽ báo "Máy chủ đang chạy bản cũ" thay vì hiện danh sách trống.
+
 ## 4. Tài khoản quản trị đầu tiên
 
 Chưa có quản trị viên khi mới dựng. Đăng ký một tài khoản trong app, rồi cấp quyền một lần bằng SQL:
@@ -77,7 +81,10 @@ docker compose exec db psql -U huegis -d huegis \
   -c "update app_user set role = 'admin' where username = 'ten_dang_nhap'"
 ```
 
-Từ đó quản trị viên tạo tài khoản chủ quản, duyệt yêu cầu nhận địa điểm và duyệt chỉnh sửa trong app.
+Từ đó quản trị viên vào **Hồ sơ → Bảng quản trị** trong app: duyệt chủ quản, chỉnh sửa và ảnh; quản lý người dùng (đổi vai trò,
+vô hiệu hóa, đặt lại mật khẩu, xóa tài khoản đã vô hiệu hóa); sửa, thêm, xóa địa điểm hoặc nhập hàng loạt từ tệp CSV/GeoJSON.
+Người đăng ký làm chủ quản chọn sẵn địa điểm của mình; tài khoản đó dùng như người dùng thường cho tới khi quản trị viên duyệt.
+Ảnh địa điểm lưu trong cơ sở dữ liệu (mỗi ảnh khoảng 100 đến 400 KB sau khi nén, tối đa 8 ảnh mỗi địa điểm), nên bản sao lưu lớn dần theo số ảnh.
 Không có "quên mật khẩu" qua email: quản trị viên đặt lại mật khẩu tạm (hiện một lần), người dùng phải đổi ngay.
 **Nên có ít nhất 2 quản trị viên**: sai mật khẩu 5 lần khóa tài khoản 15 phút, nên một người biết tên đăng nhập quản trị có thể làm
 tài khoản đó tạm khóa. Mở khóa ngay bằng SQL: `update app_user set locked_until = null, failed_logins = 0 where username = '...'`.

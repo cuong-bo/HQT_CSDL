@@ -33,6 +33,7 @@ Hàm: `route_cost_matrix(ids, by_time)` (tối đa 50 địa điểm), `route_pa
 | `review` | điểm 1 đến 5, nhận xét, ẩn bởi quản trị viên, phản hồi của chủ quản (mỗi người một đánh giá cho mỗi địa điểm) |
 | `report` | báo sai thông tin (`wrong_info`, `closed`, `wrong_location`, `other`) |
 | `announcement` | thông báo của chủ quản, có thời hạn |
+| `poi_photo` | ảnh địa điểm lưu thẳng trong cơ sở dữ liệu (`bytea`, JPEG tối đa 1600 px, sau khi máy chủ nén lại); `status` `pending` / `approved` / `rejected`; ảnh chủ quản gửi phải được quản trị viên duyệt, ảnh quản trị viên tải lên hiện ngay |
 | `poi_stats_daily` | lượt xem và lượt đưa vào lộ trình mỗi ngày |
 | `audit_log` | ai, khi nào, làm gì, trên bản ghi nào, giá trị cũ và mới (mọi thay đổi dữ liệu dùng chung) |
 
@@ -41,8 +42,11 @@ Hàm: `route_cost_matrix(ids, by_time)` (tối đa 50 địa điểm), `route_pa
 Công khai: `GET /pois` (`group` nhiều lần, `q` không dấu, `bbox`, `page`, `pageSize`), `GET /pois/{id}`, `GET /pois/{id}/reviews`,
 `GET /pois/{id}/announcements`, `GET /area?lon&lat`, `POST /route`, `GET /weather`, `GET /config`, `GET /healthz`.
 Tài khoản: `POST /auth/register|login|refresh`, `GET|PUT /me`, `POST /me/password`.
-Người dùng: `/favorites`, `/itineraries`, `POST /pois/{id}/reviews|reports`.
-Chủ quản: `/owner/claims`, `/owner/places`, `POST /owner/places/{id}/edit-requests|announcements`, `.../reviews/{id}/reply`, `GET .../stats`.
-Quản trị: `/admin/users`, `/admin/claims`, `/admin/edit-requests`, `/admin/reviews`, `/admin/reports`, `/admin/pois`, `/admin/audit`, `/admin/stats`.
+Ảnh: `GET /pois/{id}/photos` (ảnh đã duyệt), `GET /photos/{id}` (ảnh gốc, JPEG).
+Người dùng: `/favorites`, `/itineraries`, `GET /me/reviews`, `POST|DELETE /pois/{id}/reviews`, `POST /pois/{id}/reports`.
+Đăng ký: `POST /auth/register` nhận thêm `accountType` (`user` / `owner`) và `placeIds` (1 đến 5 địa điểm khi là chủ quản); tài khoản chủ quản bắt đầu là `user` kèm yêu cầu chờ duyệt, quản trị viên duyệt thì thành `owner`.
+Chủ quản: `/owner/claims`, `/owner/places`, `POST /owner/places/{id}/edit-requests|announcements`, `.../reviews/{id}/reply`, `GET .../stats`, `GET|POST|DELETE /owner/places/{id}/photos`.
+Quản trị: `/admin/users` (lọc `role`, `status`; `DELETE` chỉ khi tài khoản đã bị khóa), `/admin/claims`, `/admin/edit-requests`, `/admin/reviews`, `/admin/reports`, `/admin/pois`, `POST /admin/pois/import` (CSV hoặc GeoJSON đã đọc thành JSON, tối đa 500 địa điểm, `dryRun` để xem trước), `/admin/photos`, `/admin/audit`, `/admin/stats`.
+Nhập từ tệp: cột `id` (bắt buộc), `group`, `name`, `lon`, `lat`, `type`, `address`, `openingHours`, `priceText`, `phone`, `website`, `summary`; ô trống nghĩa là giữ nguyên. Dữ liệu đường đi (shp, đồ thị) vẫn nhập bằng dòng lệnh (`deploy.sh import`).
 
 Lỗi trả theo ProblemDetails (`application/problem+json`). Mọi phản hồi có `Cache-Control: no-store`.

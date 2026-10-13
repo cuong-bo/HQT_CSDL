@@ -6,6 +6,7 @@ using Hue_travel.Api.Auth;
 using Hue_travel.Api.Meta;
 using Hue_travel.Api.Options;
 using Hue_travel.Api.Owner;
+using Hue_travel.Api.Photos;
 using Hue_travel.Api.Pois;
 using Hue_travel.Api.Routing;
 using Hue_travel.Api.Security;
@@ -111,6 +112,15 @@ app.Use(async (context, next) =>
     context.Response.Headers.XContentTypeOptions = "nosniff";
     await next();
 });
+app.Use(async (context, next) =>
+{
+    // Only photo uploads and the place import carry more than a few kilobytes.
+    long? bigger = PhotoEndpoints.IsUploadRequest(context.Request) ? PhotoEndpoints.MaxBodyBytes
+        : HttpMethods.IsPost(context.Request.Method) && context.Request.Path == "/v1/admin/pois/import" ? Hue_travel.Api.Admin.AdminEndpoints.MaxImportBodyBytes : null;
+    var sizeLimit = bigger == null ? null : context.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>();
+    if (sizeLimit is { IsReadOnly: false }) sizeLimit.MaxRequestBodySize = bigger;   // the in-memory test server has no such limit
+    await next();
+});
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -124,6 +134,7 @@ app.MapRouteEndpoints();
 app.MapWeatherEndpoints();
 app.MapSocialEndpoints();
 app.MapOwnerEndpoints();
+app.MapPhotoEndpoints();
 app.MapAdminEndpoints();
 
 app.Run();

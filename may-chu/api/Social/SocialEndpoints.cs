@@ -12,7 +12,8 @@ public sealed record PasswordRequest(string? CurrentPassword, string? NewPasswor
 public sealed record ItineraryRequest(string? Name, string[]? PoiIds);
 public sealed record ItineraryDto(long Id, string Name, string[] PoiIds);
 public sealed record ReviewRequest(int Rating, string? Comment);
-public sealed record ReviewDto(long Id, int Rating, string? Comment, string Author, DateTimeOffset CreatedAt, string? OwnerReply);
+public sealed record ReviewDto(long Id, int Rating, string? Comment, string Author, DateTimeOffset CreatedAt, string? OwnerReply, bool Mine = false);
+public sealed record MyReviewDto(string PoiId, string PoiName, int Rating, string? Comment, DateTimeOffset CreatedAt, string? OwnerReply, string Status);
 public sealed record ReviewList(double Average, long Count, IReadOnlyList<ReviewDto> Items);
 public sealed record ReportRequest(string? Kind, string? Content);
 public sealed record AnnouncementDto(long Id, string Title, string Body, DateTimeOffset StartsAt, DateTimeOffset? EndsAt);
@@ -43,6 +44,8 @@ public static class SocialEndpoints
         me.MapPut("/itineraries/{id:long}", UpdateItineraryAsync);
         me.MapDelete("/itineraries/{id:long}", DeleteItineraryAsync);
         me.MapPost("/pois/{poiId}/reviews", SaveReviewAsync);
+        me.MapDelete("/pois/{poiId}/reviews", DeleteReviewAsync);
+        me.MapGet("/me/reviews", ListMyReviewsAsync);
         me.MapPost("/pois/{poiId}/reports", ReportAsync);
 
         app.MapGet("/v1/pois/{poiId}/reviews", ListReviewsAsync);
@@ -145,12 +148,27 @@ public static class SocialEndpoints
         if (request.Rating is < 1 or > 5) return Bad("Điểm đánh giá từ 1 đến 5.");
         if (request.Comment is { Length: > MaxComment }) return Bad($"Nhận xét tối đa {MaxComment} ký tự.");
         if (!await PoiExistsAsync(db, poiId, ct)) return NotFound("Không tìm thấy địa điểm.");
+        // An owner rating their own place would skew its average; they answer reviews instead.
+        if (await db.ExistsAsync("select exists (select 1 from place_owner where user_id = @u and poi_id = @p and status = 'approved')", ct, ("u", user.UserId()), ("p", poiId)))
+            return Results.Problem(detail: "Chủ quản không đánh giá địa điểm của chính mình.", statusCode: StatusCodes.Status403Forbidden);
         await db.ExecAsync(
             "insert into review (user_id, poi_id, rating, comment) values (@u, @p, @r, @c) " +
             "on conflict (user_id, poi_id) do update set rating = excluded.rating, comment = excluded.comment, created_at = now()", ct,
             ("u", user.UserId()), ("p", poiId), ("r", (short)request.Rating), ("c", request.Comment?.Trim()));
         return Results.NoContent();
     }
+
+    private static async Task<IResult> DeleteReviewAsync(string poiId, ClaimsPrincipal user, NpgsqlDataSource db, CancellationToken ct)
+    {
+        int rows = await db.ExecAsync("delete from review where user_id = @u and poi_id = @p", ct, ("u", user.UserId()), ("p", poiId));
+        return rows == 0 ? NotFound("Bạn chưa đánh giá địa điểm này.") : Results.NoContent();
+    }
+
+    private static async Task<IResult> ListMyReviewsAsync(ClaimsPrincipal user, NpgsqlDataSource db, CancellationToken ct) =>
+        Results.Ok(await db.ListAsync(
+            "select r.poi_id, p.ten, r.rating, r.comment, r.created_at, r.owner_reply, r.status from review r join poi p on p.id = r.poi_id " +
+            "where r.user_id = @u and p.deleted_at is null order by r.created_at desc limit 100",
+            r => new MyReviewDto(r.GetString(0), r.GetString(1), r.GetInt16(2), r.Text(3), r.GetFieldValue<DateTimeOffset>(4), r.Text(5), r.GetString(6)), ct, ("u", user.UserId())));
 
     private static async Task<IResult> ReportAsync(string poiId, ReportRequest request, ClaimsPrincipal user, NpgsqlDataSource db, CancellationToken ct)
     {
@@ -164,19 +182,22 @@ public static class SocialEndpoints
         return Results.Json(new { status = "received" }, statusCode: StatusCodes.Status201Created);
     }
 
-    private static async Task<IResult> ListReviewsAsync(string poiId, NpgsqlDataSource db, CancellationToken ct)
+    private static async Task<IResult> ListReviewsAsync(string poiId, ClaimsPrincipal user, NpgsqlDataSource db, CancellationToken ct)
     {
         double average = 0;
         long count = 0;
+        // Anyone may read; a signed-in reader also learns which review is theirs (their own comes first).
+        long? me = user.Identity?.IsAuthenticated == true ? user.UserId() : null;
         List<ReviewDto> items = await db.ListAsync(
-            "select r.id, r.rating, r.comment, u.display_name, r.created_at, r.owner_reply, avg(r.rating) over (), count(*) over () " +
-            "from review r join app_user u on u.id = r.user_id where r.poi_id = @p and r.status = 'visible' order by r.created_at desc limit 50",
+            "select r.id, r.rating, r.comment, u.display_name, r.created_at, r.owner_reply, avg(r.rating) over (), count(*) over (), r.user_id = @me " +
+            "from review r join app_user u on u.id = r.user_id where r.poi_id = @p and r.status = 'visible' " +
+            "order by (r.user_id = @me) desc nulls last, r.created_at desc limit 50",
             r =>
             {
                 average = r.GetDouble(6);
                 count = r.GetInt64(7);
-                return new ReviewDto(r.GetInt64(0), r.GetInt16(1), r.Text(2), r.GetString(3), r.GetFieldValue<DateTimeOffset>(4), r.Text(5));
-            }, ct, ("p", poiId));
+                return new ReviewDto(r.GetInt64(0), r.GetInt16(1), r.Text(2), r.GetString(3), r.GetFieldValue<DateTimeOffset>(4), r.Text(5), !r.IsDBNull(8) && r.GetBoolean(8));
+            }, ct, ("p", poiId), ("me", me));
         return Results.Ok(new ReviewList(Math.Round(average, 2), count, items));
     }
 

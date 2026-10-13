@@ -1,4 +1,4 @@
-# Cố Đô GIS - bản đồ du lịch Huế
+# Hue Travel - bản đồ du lịch Huế
 
 Ứng dụng Windows (WinForms + MapWinGIS) cho khách tham quan Huế: bản đồ nền vẽ từ dữ liệu của dự án, tìm địa điểm theo nhóm,
 sắp xếp lộ trình ngắn nhất theo đường bộ thật, xe chạy mô phỏng trên tuyến, thời tiết, đo khoảng cách/diện tích.
@@ -44,9 +44,9 @@ Hai phần chỉ giao tiếp qua HTTP/JSON; mỗi phần dựng, kiểm thử v�
 |---|---|
 | `ung-dung/` | ứng dụng WinForms (.NET Framework 4.7.2, x86) kèm `Data/shp` (bản đồ nền và địa điểm dự phòng, **không** có nút giao thông) |
 | `Hue_travel.sln` | solution Visual Studio |
-| `bo-cai/` | bộ cài Inno Setup (`CoDoGIS.iss`) |
+| `bo-cai/` | bộ cài Inno Setup (`HueTravel.iss`) |
 | `kiem-thu/` | test dịch vụ của ứng dụng (PowerShell 32-bit) |
-| `dong-goi.ps1` | dựng bộ cài `CoDoGIS-Setup-<phiên bản>.exe` |
+| `dong-goi.ps1` | dựng bộ cài `HueTravel-Setup-<phiên bản>.exe` |
 | `HUONG-DAN-CAI-DAT.md` | cài đặt cho người dùng và cho người làm bộ cài |
 
 ## Cài đặt nhanh
@@ -60,7 +60,7 @@ bash /opt/hue-travel/may-chu/scripts/setup-vps.sh       # cài Docker, tường 
 ```
 Chi tiết, kèm kiểm tra từng bước và xử lý sự cố: [may-chu/HUONG-DAN-CAI-DAT.md](may-chu/HUONG-DAN-CAI-DAT.md).
 
-**Máy khách (Windows):** chạy `CoDoGIS-Setup-<phiên bản>.exe` và nhập địa chỉ máy chủ; hoặc dựng từ mã nguồn:
+**Máy khách (Windows):** chạy `HueTravel-Setup-<phiên bản>.exe` và nhập địa chỉ máy chủ; hoặc dựng từ mã nguồn:
 `powershell -ExecutionPolicy Bypass -File may-khach\dong-goi.ps1 -Version 1.0.0 -Server http://IP_VPS`
 (xem [may-khach/HUONG-DAN-CAI-DAT.md](may-khach/HUONG-DAN-CAI-DAT.md)).
 
@@ -84,7 +84,7 @@ set HUE_API_URL=http://localhost:5000   # bỏ trống để chạy ngoại tuy�
 may-khach\ung-dung\bin\Debug\Hue_travel.exe
 ```
 
-Địa chỉ máy chủ của ứng dụng lấy theo thứ tự: biến môi trường `HUE_API_URL`, tệp `%ProgramData%\CoDoGIS\server.txt` (bộ cài ghi), rồi
+Địa chỉ máy chủ của ứng dụng lấy theo thứ tự: biến môi trường `HUE_API_URL`, tệp `%ProgramData%\HueTravel\server.txt` (bộ cài ghi), rồi
 `ApiBaseUrl` trong `Hue_travel.exe.config`. Không có địa chỉ nào thì ứng dụng chạy **ngoại tuyến** (xem bản đồ và địa điểm; không
 đăng nhập, không tìm đường).
 

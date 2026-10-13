@@ -28,17 +28,19 @@ namespace Hue_travel.Services.Data
         {
             if (string.IsNullOrEmpty(placeId) || !SafeId.IsMatch(placeId)) return new string[0];   // an id never reaches outside the photo folder
             string folder = Path.Combine(Folder, placeId);
+            IReadOnlyList<string> downloaded = PhotoStore.PathsFor(placeId);   // the server's approved photos come first
             try
             {
-                if (!Directory.Exists(folder)) return new string[0];
-                return Directory.GetFiles(folder)
+                if (!Directory.Exists(folder)) return downloaded;
+                IEnumerable<string> shipped = Directory.GetFiles(folder)
                     .Where(f => Extensions.Contains(Path.GetExtension(f), StringComparer.OrdinalIgnoreCase))
-                    .OrderBy(f => f, StringComparer.OrdinalIgnoreCase).Take(MaxPhotos).ToList();
+                    .OrderBy(f => f, StringComparer.OrdinalIgnoreCase);
+                return downloaded.Concat(shipped).Take(MaxPhotos).ToList();
             }
             catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
             {
                 System.Diagnostics.Debug.WriteLine("PoiPhotos.PathsFor: " + ex.Message);
-                return new string[0];
+                return downloaded;
             }
         }
 

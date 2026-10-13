@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -7,7 +8,10 @@ using Hue_travel.Theme;
 
 namespace Hue_travel.Account
 {
-    /// <summary>Base of the screens inside the account panel: has the API, reports messages and loads its data.</summary>
+    /// <summary>
+    /// Base of the screens inside the account panel: has the API, reports messages and loads its data. A screen is a
+    /// <see cref="VStack"/> (a scrolling column) filled with captions, hints, fields, lists and buttons through the Add helpers.
+    /// </summary>
     internal abstract class AccountTab : UserControl
     {
         protected AccountTab(ApiClient api)
@@ -15,10 +19,13 @@ namespace Hue_travel.Account
             Api = api;
             Dock = DockStyle.Fill;
             BackColor = Color.White;
-            Padding = new Padding(12);
+            Stack = new VStack();
+            Controls.Add(Stack);
         }
 
         protected ApiClient Api { get; }
+
+        protected VStack Stack { get; }
 
         public event EventHandler<ToastMessage> MessageRaised;
 
@@ -38,18 +45,60 @@ namespace Hue_travel.Account
             return true;
         }
 
-        /// <summary>A row of buttons docked at the bottom of the tab.</summary>
-        protected FlowLayoutPanel ButtonRow(params IconButton[] buttons)
+        // ------------------------------------------------------------------ building a screen
+
+        protected Label AddCaption(string text, int gap = 4)
         {
-            var row = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 40, Padding = new Padding(0, 8, 0, 0), WrapContents = true };
-            foreach (IconButton b in buttons)
-            {
-                b.Margin = new Padding(0, 0, 8, 4);
-                row.Controls.Add(b);
-            }
-            return row;
+            Label label = AccountKit.Caption(text);
+            Stack.Add(label, 26, gap);
+            return label;
         }
 
-        protected string SelectedTag(ListView list) => list.SelectedItems.Count == 0 ? null : list.SelectedItems[0].Tag as string;
+        /// <summary>A grey explanation; its height follows the text and the width of the screen.</summary>
+        protected Label AddHint(string text, int gap = 10)
+        {
+            Label label = AccountKit.Hint(text);
+            Stack.Add(label, width => HintHeight(label, width), gap);
+            return label;
+        }
+
+        protected static int HintHeight(Label label, int width) =>
+            string.IsNullOrEmpty(label.Text) ? 0 : TextRenderer.MeasureText(label.Text, label.Font, new Size(width, 0), TextFormatFlags.WordBreak | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Height + Ui.S(4);
+
+        protected IconButton AddButton(IconButton button, int height = 44, int gap = 10)
+        {
+            Stack.Add(button, height, gap);
+            return button;
+        }
+
+        protected ItemList AddList(ItemList list, int gap = 10)
+        {
+            Stack.Add(list, width => list.WantedHeight, gap, false);
+            return list;
+        }
+
+        protected InputField AddField(string label, InputField field, int height = 40, int gap = 12)
+        {
+            Stack.Add(AccountKit.FieldLabel(label), 24, 2);
+            Stack.Add(field, height, gap);
+            return field;
+        }
+
+        protected void AddDivider(int gap = 12) => Stack.Add(AccountKit.Divider(), 1, gap);
+
+        /// <summary>Two buttons side by side in one row.</summary>
+        protected void AddButtonPair(IconButton left, IconButton right, int height = 44, int gap = 10)
+        {
+            var row = new Panel { BackColor = Color.White };
+            row.Controls.Add(left);
+            row.Controls.Add(right);
+            row.Resize += (s, e) =>
+            {
+                int half = (row.Width - Ui.S(10)) / 2;
+                left.SetBounds(0, 0, half, row.Height);
+                right.SetBounds(half + Ui.S(10), 0, row.Width - half - Ui.S(10), row.Height);
+            };
+            Stack.Add(row, height, gap);
+        }
     }
 }

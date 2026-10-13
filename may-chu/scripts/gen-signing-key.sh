@@ -2,7 +2,7 @@
 # Makes the key pair that lets the app check that API replies were not changed on the way (HTTP has no other protection).
 #   scripts/gen-signing-key.sh
 # Put the PRIVATE value in .env as SIGNING_KEY (server only, never in Git).
-# Put the PUBLIC value in the app: the ApiPublicKey setting in Hue_travel.exe.config, or %ProgramData%\CoDoGIS\public.key,
+# Put the PUBLIC value in the app: the ApiPublicKey setting in Hue_travel.exe.config, or %ProgramData%\HueTravel\public.key,
 # or the HUE_API_PUBLIC_KEY environment variable. Anyone may see the public value; losing the private one means making a new pair.
 set -euo pipefail
 command -v openssl >/dev/null || { echo "openssl is needed" >&2; exit 1; }

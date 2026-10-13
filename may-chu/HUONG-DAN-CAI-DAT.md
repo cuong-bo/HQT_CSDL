@@ -44,7 +44,7 @@ Mất vài phút. **Đọc script trước khi chạy nếu bạn muốn biết 
 
 > Nếu VPS không vào được GitHub, dùng gói `.tar.gz`: trên máy Windows có kho mã chạy
 > `powershell -ExecutionPolicy Bypass -File may-chu\dong-goi.ps1 -Version 1.0.0`, `scp` tệp trong `dist\` lên VPS, rồi
-> `mkdir -p /opt/hue-travel && tar -xzf CoDoGIS-MayChu-1.0.0.tar.gz -C /opt/hue-travel --strip-components=1`.
+> `mkdir -p /opt/hue-travel && tar -xzf HueTravel-MayChu-1.0.0.tar.gz -C /opt/hue-travel --strip-components=1`.
 > Các bước sau giống hệt.
 
 ### Khóa SSH (khuyên dùng, làm sau khi mọi thứ chạy)
