@@ -1,74 +1,97 @@
 # Cố Đô GIS - bản đồ du lịch Huế
 
-Ứng dụng Windows (WinForms + MapWinGIS) cho khách tham quan Huế: bản đồ vệ tinh/đường phố, tìm địa điểm theo nhóm,
-sắp xếp lộ trình ngắn nhất theo đường bộ thật, thời tiết, đo khoảng cách/diện tích. Dữ liệu và xử lý nằm trên một máy chủ
-(VPS Ubuntu); app vẫn chạy được ngoại tuyến bằng dữ liệu đi kèm.
-
-Ba nhóm người dùng: **người dùng** (yêu thích, lộ trình đã lưu, đánh giá, báo sai), **chủ quản địa điểm** (gửi yêu cầu
-chỉnh sửa, thông báo, trả lời đánh giá, xem thống kê) và **quản trị viên** (duyệt, kiểm duyệt, quản lý tài khoản và dữ liệu, nhật ký).
+Ứng dụng Windows (WinForms + MapWinGIS) cho khách tham quan Huế: bản đồ nền vẽ từ dữ liệu của dự án, tìm địa điểm theo nhóm,
+sắp xếp lộ trình ngắn nhất theo đường bộ thật, xe chạy mô phỏng trên tuyến, thời tiết, đo khoảng cách/diện tích.
+Dữ liệu và xử lý nặng (tìm đường, tài khoản) nằm trên một **máy chủ** (VPS Ubuntu); **máy khách** là ứng dụng Windows nhẹ.
 
 ```
-Máy người dùng (Windows)                  VPS Ubuntu (Docker Compose)
+Máy khách (Windows)                       Máy chủ (VPS Ubuntu, Docker Compose)
 ┌──────────────────────────┐  HTTP/JSON  ┌────────────────────────────────────┐
 │ Hue_travel (WinForms,     │ ──────────► │ Caddy :80 → API .NET 8             │
 │ MapWinGIS)                │ ◄────────── │       └─► PostgreSQL 17 + PostGIS  │
-│ ngoại tuyến: shapefile    │             │           + pgRouting              │
+│ vẽ bản đồ nền cục bộ      │             │           + pgRouting              │
 └──────────────────────────┘             └────────────────────────────────────┘
 ```
 
 Hệ tọa độ thống nhất: **VN-2000 / UTM 48N (EPSG:3405)**, đơn vị mét.
 
-## Cấu trúc
+## Kho mã chia làm hai phần độc lập
 
-| Thư mục | Nội dung |
+| Thư mục | Là gì | Ai cần | Cài đặt |
+|---|---|---|---|
+| [`may-chu/`](may-chu) | **Máy chủ**: API, cơ sở dữ liệu, dữ liệu shapefile, Docker Compose, script vận hành | Người quản trị VPS (chỉ cần `git clone` rồi `cd may-chu`) | [may-chu/HUONG-DAN-CAI-DAT.md](may-chu/HUONG-DAN-CAI-DAT.md) |
+| [`may-khach/`](may-khach) | **Máy khách**: ứng dụng Windows, bộ cài Inno Setup, test | Người dùng cuối (nhận bộ cài `.exe`) và người dựng bộ cài | [may-khach/HUONG-DAN-CAI-DAT.md](may-khach/HUONG-DAN-CAI-DAT.md) |
+| [`tai-lieu/`](tai-lieu) | Tài liệu chung: phân chia hai phần, kế hoạch triển khai, từ điển dữ liệu | Cả hai | [tai-lieu/phan-chia-may-chu-may-khach.md](tai-lieu/phan-chia-may-chu-may-khach.md) |
+
+Hai phần chỉ giao tiếp qua HTTP/JSON; mỗi phần dựng, kiểm thử và cài riêng, không phần nào cần mã của phần kia.
+
+### Bên trong `may-chu/`
+
+| Mục | Nội dung |
 |---|---|
-| `Hue_travel/` | app Windows (.NET Framework 4.7.2, x86) |
-| `src/Hue_travel.Api/` | API .NET 8 (đăng nhập JWT, địa điểm, tìm đường, ba vai trò) |
-| `tests/Hue_travel.Api.Tests/` | test API (đơn vị + tích hợp với CSDL thật) |
-| `tests/client/` | test các dịch vụ của app (PowerShell, chạy bằng PowerShell 32-bit) |
-| `db/` | migration, nạp shapefile, đồ thị pgRouting, kiểm tra — xem `db/README.md` |
-| `deploy/` | Docker Compose, Caddy (HTTP), script cài VPS / cập nhật / sao lưu — xem `deploy/README.md` |
-| `installer/` | bộ cài Inno Setup — xem `installer/README.md` |
-| `scripts/` | đóng gói: `dong-goi-may-chu.ps1` (gói đưa lên VPS), `dong-goi-may-khach.ps1` (bộ cài Windows) |
-| `docs/` | hướng dẫn cài đặt máy chủ và máy khách, phân chia hai phần, kế hoạch, từ điển dữ liệu |
-| `Hue_travel/Data/shp/` | dữ liệu shapefile (điểm du lịch, ẩm thực, lưu trú, mạng giao thông, nút giao thông, ranh giới; khoảng 75 MB, lưu thẳng trong Git) |
+| `api/` | API .NET 8 (đăng nhập JWT, địa điểm, tìm đường, ba vai trò) |
+| `co-so-du-lieu/` | migration, nạp shapefile, đồ thị pgRouting, kiểm tra — xem [README](may-chu/co-so-du-lieu/README.md) |
+| `du-lieu/shp/` | shapefile máy chủ cần (địa điểm, mạng đường, **nút giao thông**, ranh giới) |
+| `docker-compose.yml`, `Caddyfile`, `.env.example`, `docker-csdl/` | dựng 3 dịch vụ: Caddy, API, PostgreSQL |
+| `scripts/` | `setup-vps.sh` (cài VPS), `deploy.sh` (up/import/update/rollback), `backup.sh`, `restore.sh`, `gen-signing-key.sh` |
+| `kiem-thu/` | test API (đơn vị + tích hợp với CSDL thật) |
+| `dong-goi.ps1` | (tùy chọn) đóng gói `.tar.gz` khi VPS không vào được GitHub |
+| `HUONG-DAN-CAI-DAT.md`, `VAN-HANH.md` | cài đặt từng bước; vận hành hằng ngày |
 
-## Cài đặt (máy chủ và máy khách tách riêng)
+### Bên trong `may-khach/`
 
-| Tài liệu | Dành cho |
+| Mục | Nội dung |
 |---|---|
-| [`docs/phan-chia-may-chu-may-khach.md`](docs/phan-chia-may-chu-may-khach.md) | Hiểu phần nào chạy ở máy chủ, phần nào ở máy khách, tệp nào đi đâu |
-| [`docs/huong-dan-cai-dat-may-chu.md`](docs/huong-dan-cai-dat-may-chu.md) | Cài VPS Ubuntu từng bước (đóng gói `scripts\dong-goi-may-chu.ps1`) |
-| [`docs/huong-dan-cai-dat-may-khach.md`](docs/huong-dan-cai-dat-may-khach.md) | Cài ứng dụng Windows; làm bộ cài (`scripts\dong-goi-may-khach.ps1`) |
+| `ung-dung/` | ứng dụng WinForms (.NET Framework 4.7.2, x86) kèm `Data/shp` (bản đồ nền và địa điểm dự phòng, **không** có nút giao thông) |
+| `Hue_travel.sln` | solution Visual Studio |
+| `bo-cai/` | bộ cài Inno Setup (`CoDoGIS.iss`) |
+| `kiem-thu/` | test dịch vụ của ứng dụng (PowerShell 32-bit) |
+| `dong-goi.ps1` | dựng bộ cài `CoDoGIS-Setup-<phiên bản>.exe` |
+| `HUONG-DAN-CAI-DAT.md` | cài đặt cho người dùng và cho người làm bộ cài |
 
-## Chạy thử nhanh
+## Cài đặt nhanh
+
+**Máy chủ (VPS Ubuntu 22.04/24.04, quyền root):**
+```bash
+git clone https://github.com/cuong-bo/HQT_CSDL.git /opt/hue-travel
+bash /opt/hue-travel/may-chu/scripts/setup-vps.sh       # cài Docker, tường lửa, tạo người dùng deploy
+# rồi đăng nhập bằng deploy:  cd /opt/hue-travel/may-chu && cp .env.example .env && nano .env
+#   scripts/deploy.sh up && scripts/deploy.sh import && scripts/deploy.sh status
+```
+Chi tiết, kèm kiểm tra từng bước và xử lý sự cố: [may-chu/HUONG-DAN-CAI-DAT.md](may-chu/HUONG-DAN-CAI-DAT.md).
+
+**Máy khách (Windows):** chạy `CoDoGIS-Setup-<phiên bản>.exe` và nhập địa chỉ máy chủ; hoặc dựng từ mã nguồn:
+`powershell -ExecutionPolicy Bypass -File may-khach\dong-goi.ps1 -Version 1.0.0 -Server http://IP_VPS`
+(xem [may-khach/HUONG-DAN-CAI-DAT.md](may-khach/HUONG-DAN-CAI-DAT.md)).
+
+## Chạy thử trên máy phát triển
 
 Cần: Visual Studio 2019 (hoặc MSBuild), MapWinGIS 5.x đã cài và đăng ký, .NET 8 SDK, PostgreSQL 17 với PostGIS và pgRouting.
 
 ```bash
-# 1. CSDL (xem db/README.md)
-createdb huegis && PGDATABASE=huegis ./db/run.sh
+# 1. CSDL (xem may-chu/co-so-du-lieu/README.md)
+createdb huegis && PGDATABASE=huegis ./may-chu/co-so-du-lieu/run.sh
 
 # 2. API + test
 export ConnectionStrings__Default="Host=localhost;Database=huegis;Username=postgres;Password=..."
 export Jwt__Key="$(openssl rand -base64 32)"
-dotnet run --project src/Hue_travel.Api
-HUE_TEST_DB="Host=localhost;Database=huegis;Username=postgres;Password=..." dotnet test tests/Hue_travel.Api.Tests
+dotnet run --project may-chu/api
+HUE_TEST_DB="Host=localhost;Database=huegis;Username=postgres;Password=..." dotnet test may-chu/kiem-thu
 
-# 3. App (Windows): mở Hue_travel.sln hoặc
-msbuild Hue_travel/Hue_travel.csproj /restore /p:Configuration=Debug
+# 3. Ứng dụng (Windows): mở may-khach/Hue_travel.sln hoặc
+msbuild may-khach/ung-dung/Hue_travel.csproj /restore /p:Configuration=Debug
 set HUE_API_URL=http://localhost:5000   # bỏ trống để chạy ngoại tuyến
-Hue_travel\bin\Debug\Hue_travel.exe
+may-khach\ung-dung\bin\Debug\Hue_travel.exe
 ```
 
-Địa chỉ máy chủ của app lấy theo thứ tự: biến môi trường `HUE_API_URL`, file `%ProgramData%\CoDoGIS\server.txt` (bộ cài ghi), rồi
-`ApiBaseUrl` trong `Hue_travel.exe.config`. Không có địa chỉ nào thì app chạy **ngoại tuyến** bằng dữ liệu đi kèm (đăng nhập tắt).
+Địa chỉ máy chủ của ứng dụng lấy theo thứ tự: biến môi trường `HUE_API_URL`, tệp `%ProgramData%\CoDoGIS\server.txt` (bộ cài ghi), rồi
+`ApiBaseUrl` trong `Hue_travel.exe.config`. Không có địa chỉ nào thì ứng dụng chạy **ngoại tuyến** (xem bản đồ và địa điểm; không
+đăng nhập, không tìm đường).
 
-Tài khoản quản trị đầu tiên: đăng ký trong app rồi cấp quyền một lần bằng SQL (xem `deploy/README.md`, mục 4).
+Tài khoản quản trị đầu tiên: đăng ký trong ứng dụng rồi cấp quyền một lần bằng SQL (xem [may-chu/HUONG-DAN-CAI-DAT.md](may-chu/HUONG-DAN-CAI-DAT.md), mục 8).
 
 ## Nguồn và ghi công
 
-- Bản đồ nền: Google (tạm thời, dùng cho phát triển; cần nhà cung cấp hợp lệ khi phát hành rộng rãi, ví dụ MapTiler hoặc Esri). Máy chủ có thể thông báo địa chỉ tile khác cho app, không cần phát hành lại: xem `deploy/README.md`, mục "Bản đồ nền".
 - Dữ liệu đường và sông: © OpenStreetMap contributors (ODbL).
 - Thời tiết: [Open-Meteo](https://open-meteo.com) (CC BY 4.0, phi thương mại).
 - Bản đồ và hình học: [MapWinGIS](https://mapwingis.github.io/) (MPL).

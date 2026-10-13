@@ -1,0 +1,9 @@
+**/bin/
+**/obj/
+.git/
+kiem-thu/
+du-lieu/
+co-so-du-lieu/
+docker-csdl/
+*.md
+.env

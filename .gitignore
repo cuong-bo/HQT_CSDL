@@ -1,6 +1,6 @@
 bin/
 obj/
-installer/output/
+may-khach/bo-cai/output/
 *.user
 .vs/
 .superpowers/
@@ -21,5 +21,14 @@ appsettings.Local.json
 *.sr.lock
 *.lock
 
-# gói phát hành dựng ra từ scripts/
+# gói phát hành dựng ra bởi các tệp dong-goi.ps1
 dist/
+
+# thư mục cũ trước khi chia máy chủ / máy khách (chỉ còn là bản sao cục bộ, không đưa lên GitHub)
+/Hue_travel/
+/deploy/
+/docs/
+/src/
+/tests/
+/scripts/
+/installer/

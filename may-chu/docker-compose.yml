@@ -1,0 +1,89 @@
+# Cố Đô GIS on one VPS: PostGIS + pgRouting, the API, and Caddy as the only thing that listens on the network.
+# Plain HTTP on port 80 (no TLS) by decision; see VAN-HANH.md for what that means.
+name: hue-travel
+
+services:
+  db:
+    build: ./docker-csdl
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: huegis
+      POSTGRES_USER: huegis
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?set APP_DB_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U huegis -d huegis"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  api:
+    image: hue-travel-api:latest
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    restart: unless-stopped
+    # No "ports": the API is reachable only from Caddy, over the internal network.
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Host=db;Database=huegis;Username=huegis_app;Password=${APP_DB_PASSWORD}
+      Jwt__Key: ${JWT_KEY:?set JWT_KEY in .env (at least 32 characters)}
+      Client__MinimumVersion: ${MIN_CLIENT_VERSION:-1.0.0}
+      # Optional base map tile addresses announced to the app (GET /v1/config); empty keeps the app's built-in ones.
+      Client__TileAttribution: ${TILE_ATTRIBUTION:-}
+      Client__TileUrls__roadmap: ${TILE_URL_ROADMAP:-}
+      Client__TileUrls__satellite: ${TILE_URL_SATELLITE:-}
+      Client__TileUrls__hybrid: ${TILE_URL_HYBRID:-}
+      Client__TileUrls__terrain: ${TILE_URL_TERRAIN:-}
+      # Optional but recommended over HTTP: replies are signed with this ECDSA key (scripts/gen-signing-key.sh).
+      Signing__PrivateKeyPkcs8: ${SIGNING_KEY:-}
+      # Only Caddy (inside this subnet) may tell the API the client address (X-Forwarded-For).
+      Proxy__KnownNetworks__0: 172.30.0.0/24
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [internal]
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      - api
+    networks: [internal]
+
+  # One-off job: builds the database from the shapefiles. Run with: docker compose --profile tools run --rm tools
+  tools:
+    profiles: ["tools"]
+    build: ./docker-csdl
+    entrypoint: ["bash", "/work/co-so-du-lieu/run.sh", "/work/data"]
+    environment:
+      PGHOST: db
+      PGUSER: huegis
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: huegis
+    volumes:
+      - ./co-so-du-lieu:/work/co-so-du-lieu:ro
+      - ./du-lieu/shp:/work/data:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [internal]
+
+networks:
+  internal:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+
+volumes:
+  pgdata: {}
+  caddy_data: {}
