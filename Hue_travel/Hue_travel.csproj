@@ -199,11 +199,21 @@
     </Compile>
     <Compile Include="Theme\PressFeedback.cs" />
     <Compile Include="Panels\Shared\PoiRowList.cs" />
-    <Compile Include="Panels\Layers\LayerPanel.cs" />
-    <Compile Include="Panels\Explore\ExplorePanel.cs" />
-    <Compile Include="Shell\SearchDropdown.cs" />
-    <Compile Include="Theme\ToggleSwitch.cs" />
-    <Compile Include="MapEngine\HighlightRing.cs" />
+    <Compile Include="Panels\Layers\LayerPanel.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Panels\Explore\ExplorePanel.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Shell\SearchDropdown.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Theme\ToggleSwitch.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="MapEngine\HighlightRing.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="MapEngine\LocalBaseMap.cs" />
     <Compile Include="MapEngine\PoiMarkerIcons.cs" />
     <Compile Include="Shell\StatusBar.cs">
@@ -217,7 +227,9 @@
     <Compile Include="Panels\RouteOptimizer\RouteOptimizerPanel.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Panels\RouteOptimizer\StopList.cs" />
+    <Compile Include="Panels\RouteOptimizer\StopList.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Panels\RouteOptimizer\TripResultPanel.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -233,7 +245,9 @@
     <Compile Include="Panels\PoiIdentify\PoiIdentifyCard.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Panels\PoiIdentify\PhotoGallery.cs" />
+    <Compile Include="Panels\PoiIdentify\PhotoGallery.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Panels\PoiIdentify\PhotoViewer.cs">
       <SubType>Form</SubType>
     </Compile>
