@@ -101,12 +101,32 @@ namespace Hue_travel.Shell
             SearchTextChanged?.Invoke(this, txtSearch.Text);
         }
 
+        /// <summary>Raised for the up (-1) and down (+1) keys, to move through the results shown under the box.</summary>
+        public event EventHandler<int> SearchMoved;
+
+        /// <summary>Raised when the caret leaves the box (the results under it are then dismissed).</summary>
+        public event EventHandler SearchFocusLost;
+
+        /// <summary>Raised when the caret comes back into a box that already has text (the results show again).</summary>
+        public event EventHandler SearchFocusGained;
+
+        /// <summary>Where the search box is, in the title bar's coordinates (the bar sits at the top-left of the window).</summary>
+        public Rectangle SearchBoxBounds => boxSearch.Bounds;
+
+        /// <summary>The text in the search box.</summary>
+        public string SearchText => txtSearch.Text;
+
         private void txtSearch_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
             {
                 e.SuppressKeyPress = true;
                 SearchSubmitted?.Invoke(this, txtSearch.Text);
+            }
+            else if (e.KeyCode == Keys.Down || e.KeyCode == Keys.Up)
+            {
+                e.SuppressKeyPress = true;
+                SearchMoved?.Invoke(this, e.KeyCode == Keys.Down ? 1 : -1);
             }
             else if (e.KeyCode == Keys.Escape)
             {
@@ -119,6 +139,8 @@ namespace Hue_travel.Shell
         private void txtSearch_FocusChanged(object sender, EventArgs e)
         {
             bool focused = txtSearch.Focused;
+            if (focused && txtSearch.TextLength > 0) SearchFocusGained?.Invoke(this, EventArgs.Empty);
+            else if (!focused) SearchFocusLost?.Invoke(this, EventArgs.Empty);
             Color fill = focused ? Hue_travel.Theme.ThemeColors.SurfaceContainerLowest : Hue_travel.Theme.ThemeColors.Slate100;
             boxSearch.FillColor = fill;
             boxSearch.BorderColor = focused ? Hue_travel.Theme.ThemeColors.Primary : Hue_travel.Theme.ThemeColors.Slate200;

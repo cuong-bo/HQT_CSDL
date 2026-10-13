@@ -99,9 +99,6 @@
     <Compile Include="Theme\InputField.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Panels\SearchPoi\PoiResultCard.cs">
-      <SubType>Component</SubType>
-    </Compile>
     <Compile Include="Panels\TravelGuide\TourCard.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -201,6 +198,12 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Theme\PressFeedback.cs" />
+    <Compile Include="Panels\Shared\PoiRowList.cs" />
+    <Compile Include="Panels\Layers\LayerPanel.cs" />
+    <Compile Include="Panels\Explore\ExplorePanel.cs" />
+    <Compile Include="Shell\SearchDropdown.cs" />
+    <Compile Include="Theme\ToggleSwitch.cs" />
+    <Compile Include="MapEngine\PoiMarkerIcons.cs" />
     <Compile Include="Shell\StatusBar.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -208,12 +211,6 @@
       <DependentUpon>StatusBar.cs</DependentUpon>
     </Compile>
     <Compile Include="Panels\SearchPoi\PoiSearchFilter.cs" />
-    <Compile Include="Panels\SearchPoi\SearchPoiPanel.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Panels\SearchPoi\SearchPoiPanel.Designer.cs">
-      <DependentUpon>SearchPoiPanel.cs</DependentUpon>
-    </Compile>
     <Compile Include="Panels\RouteOptimizer\RouteSelection.cs" />
     <Compile Include="Panels\RouteOptimizer\RouteOptimizerPanel.cs">
       <SubType>Form</SubType>

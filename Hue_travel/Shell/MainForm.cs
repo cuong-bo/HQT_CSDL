@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -44,7 +44,7 @@ namespace Hue_travel.Shell
             WireEvents();
             var all = new List<FloatingPanelForm>
             {
-                searchPoiPanel, routeOptimizerPanel, travelGuidePanel, poiIdentifyCard,
+                explorePanel, routeOptimizerPanel, travelGuidePanel, poiIdentifyCard, layerPanel,
             };
             if (accountPanel != null) all.Add(accountPanel);
             panels = all.ToArray();
@@ -52,6 +52,8 @@ namespace Hue_travel.Shell
         }
 
         private readonly FloatingPanelForm[] panels;
+        private const int LayerSlot = 4;   // the layer list: in the side slot but not a rail tab
+        private readonly System.Windows.Forms.Timer exploreTimer = new System.Windows.Forms.Timer { Interval = 250 };
         private FloatingPanelForm[] sidePanels;   // in NavRail tab order: explore, route, guide, profile (null while offline)
         private readonly AppSession session;
         private readonly WeatherUpdater weatherUpdater;
@@ -102,7 +104,7 @@ namespace Hue_travel.Shell
             titleBar.CloseClicked += (s, e) => Close();
 
             // Left rail: one tab per tool; the tools' panels share the side slot, so opening one closes the others.
-            sidePanels = new FloatingPanelForm[] { searchPoiPanel, routeOptimizerPanel, travelGuidePanel, accountPanel };
+            sidePanels = new FloatingPanelForm[] { explorePanel, routeOptimizerPanel, travelGuidePanel, accountPanel, layerPanel };
             navRail.ItemClicked += (s, index) =>
             {
                 if (sidePanels[index] == null)
@@ -113,16 +115,35 @@ namespace Hue_travel.Shell
                 ShowSidePanel(sidePanels[index].Visible ? -1 : index);
             };
 
-            // The chips under the header show only the picked kind of place on the map.
-            filterBar.CategorySelected += (s, category) => mapHost.ShowOnlyCategory(category);
-
-            // The header search box opens the search panel and hands it the text.
-            titleBar.SearchTextChanged += (s, text) =>
+            // The chips under the header pick a group: the map shows only that group and its places are listed with switches.
+            filterBar.CategorySelected += (s, category) =>
             {
-                if (text.Length > 0) ShowSidePanel(NavRail.Explore);
-                searchPoiPanel.SetKeyword(text);
+                mapHost.ShowOnlyCategory(category);
+                layerPanel.SetCategory(category);
+                ShowSidePanel(LayerSlot);
             };
-            titleBar.SearchSubmitted += (s, text) => ShowSidePanel(NavRail.Explore);
+            layerPanel.HiddenChanged += (s, e) => mapHost.SetHiddenPois(layerPanel.HiddenIds);
+            layerPanel.PoiSelected += (s, poi) => { ShowOnMap(poi); ShowPoiCard(poi); };
+
+            // The search box lists its results right under itself (no new window).
+            titleBar.SearchTextChanged += (s, text) => UpdateSearchResults(text);
+            titleBar.SearchFocusGained += (s, e) => UpdateSearchResults(titleBar.SearchText);
+            titleBar.SearchFocusLost += (s, e) => searchDropdown.Dismiss();
+            titleBar.SearchMoved += (s, delta) => searchDropdown.MoveSelection(delta);
+            titleBar.SearchSubmitted += (s, text) =>
+            {
+                if (!searchDropdown.ChooseSelected()) UpdateSearchResults(text);
+            };
+            searchDropdown.PoiChosen += (s, poi) =>
+            {
+                searchDropdown.Dismiss();
+                ShowOnMap(poi);
+                ShowPoiCard(poi);
+            };
+
+            // The Explore panel follows the map: it lists what is in the window, refreshed shortly after the map stops moving.
+            exploreTimer.Tick += (s, e) => { exploreTimer.Stop(); RefreshExplore(); };
+            explorePanel.PoiSelected += (s, poi) => ShowPoiCard(poi);
 
             for (int i = 0; i < sidePanels.Length; i++)
             {
@@ -135,14 +156,7 @@ namespace Hue_travel.Shell
                 };
             }
 
-            searchPoiPanel.PoiSelected += (s, poi) => ShowPoiCard(poi);
             mapHost.PoiClicked += (s, poi) => ShowPoiCard(poi);
-            searchPoiPanel.ShowOnMapRequested += (s, poi) =>
-            {
-                GeoPoint place;
-                if (poi.X != 0 || poi.Y != 0 || poi.HasLocation) ShowOnMap(poi);
-                else if (DemoPlaces.TryGetPoi(poi.Id, out place)) mapHost.ZoomTo(place.Longitude, place.Latitude);
-            };
 
             // Status bar: live scale and area from the map view, weather from Open-Meteo (no fixed placeholder text).
             statusBar.SetWeather(weatherUpdater.Text);
@@ -162,13 +176,13 @@ namespace Hue_travel.Shell
                 lastView = view;
                 statusBar.SetScale(MapScale.Format(view.ScaleDenominator));
                 ShowArea();
+                if (explorePanel.Visible) { exploreTimer.Stop(); exploreTimer.Start(); }
             };
 
             // The server's list of places replaces the bundled one when it arrives: redraw the markers and the search results.
             PoiCatalog.Changed += (s, e) =>
             {
                 mapHost.LoadPois(PoiCatalog.All);
-                searchPoiPanel.ReloadPois();
             };
             routeOptimizerPanel.Api = api;
             routeOptimizerPanel.RouteInvalidated += (s, e) => mapHost.ClearRoute();
@@ -201,8 +215,9 @@ namespace Hue_travel.Shell
             {
                 sidePanels[index].Visible = true;
                 if (index == NavRail.Profile) Safe(accountPanel.OpenAsync());
+                if (index == NavRail.Explore) RefreshExplore();
             }
-            navRail.ActiveIndex = index;
+            navRail.ActiveIndex = index <= NavRail.Profile ? index : -1;   // the layer list belongs to the filter bar, not to a rail tab
         }
 
         // Back to the sign-in screen (signed out, password changed, or the session ended); Program.Main shows it again.
@@ -212,6 +227,29 @@ namespace Hue_travel.Shell
             session.ReturnToSignIn = true;
             session.Notice = notice;
             Close();
+        }
+
+        // Fills the search drop-down with the places whose name matches (diacritic-insensitive), names that start with it first.
+        private void UpdateSearchResults(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) { searchDropdown.Dismiss(); return; }
+            var compare = System.Globalization.CultureInfo.CurrentCulture.CompareInfo;
+            const System.Globalization.CompareOptions loose = System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreNonSpace;
+            List<Poi> matches = Hue_travel.Panels.SearchPoi.PoiSearchFilter.Apply(PoiCatalog.All.Where(p => p.X != 0 || p.Y != 0), text.Trim(), null)
+                .OrderBy(p => compare.IsPrefix(p.Name ?? "", text.Trim(), loose) ? 0 : 1)
+                .ThenBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+            System.Drawing.Rectangle box = titleBar.SearchBoxBounds;
+            box.Offset(titleBar.Location);
+            searchDropdown.ShowResults(matches, box);
+        }
+
+        // Tells the Explore panel which part of the map is in view and what area its centre is in.
+        private void RefreshExplore()
+        {
+            double xMin, yMin, xMax, yMax;
+            if (!mapHost.TryGetViewBounds(out xMin, out yMin, out xMax, out yMax)) return;
+            explorePanel.UpdateView(xMin, yMin, xMax, yMax);
+            if (lastView != null) explorePanel.SetArea(areaLocator.Locate(lastView.CenterLongitude, lastView.CenterLatitude));
         }
 
         private void ShowCursorCoordinates()

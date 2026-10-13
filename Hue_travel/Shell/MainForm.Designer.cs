@@ -1,7 +1,8 @@
 ﻿using Hue_travel.MapEngine;
 using Hue_travel.Panels.PoiIdentify;
 using Hue_travel.Panels.RouteOptimizer;
-using Hue_travel.Panels.SearchPoi;
+using Hue_travel.Panels.Explore;
+using Hue_travel.Panels.Layers;
 using Hue_travel.Panels.TravelGuide;
 using Hue_travel.Auth;
 using Hue_travel.Theme;
@@ -24,7 +25,9 @@ namespace Hue_travel.Shell
         private MapHost mapHost;
 
         private RouteOptimizerPanel routeOptimizerPanel;
-        private SearchPoiPanel searchPoiPanel;
+        private ExplorePanel explorePanel;
+        private LayerPanel layerPanel;
+        private SearchDropdown searchDropdown;
         private TravelGuidePanel travelGuidePanel;
         private PoiIdentifyCard poiIdentifyCard;
         private Toast toast;
@@ -43,7 +46,9 @@ namespace Hue_travel.Shell
             this.statusBar = new AppStatusBar();
             this.mapHost = new MapHost();
             this.routeOptimizerPanel = new RouteOptimizerPanel();
-            this.searchPoiPanel = new SearchPoiPanel();
+            this.explorePanel = new ExplorePanel();
+            this.layerPanel = new LayerPanel();
+            this.searchDropdown = new SearchDropdown();
             this.travelGuidePanel = new TravelGuidePanel();
             this.poiIdentifyCard = new PoiIdentifyCard();
             this.toast = new Toast();
@@ -83,7 +88,8 @@ namespace Hue_travel.Shell
             // AttachTo records where each sits in this window and which edges it follows when resized.
             // The three tool panels share one slot beside the rail (a web map's side panel): 12px from the rail,
             // below the filter bar, down to just above the status bar. Opening one closes the others.
-            this.searchPoiPanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
+            this.explorePanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
+            this.layerPanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
             this.routeOptimizerPanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
             this.travelGuidePanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
             this.poiIdentifyCard.AttachTo(this, new System.Drawing.Point(522, 584), System.Windows.Forms.AnchorStyles.Bottom);
@@ -92,6 +98,7 @@ namespace Hue_travel.Shell
 
             this.toast.TopOffset = 116;
             this.Controls.Add(this.toast);
+            this.Controls.Add(this.searchDropdown);
 
             this.ResumeLayout(false);
         }

@@ -34,6 +34,10 @@ namespace Hue_travel.MapEngine
         private readonly List<PoiMarker> markers = new List<PoiMarker>();
         private readonly LeftPressFilter pressFilter = new LeftPressFilter();
         private int routeHandle = -1;
+        private IReadOnlyList<Poi> lastPois = new List<Poi>();
+        private readonly HashSet<string> hiddenPoiIds = new HashSet<string>();
+        private const int MarkerDesignPixels = 34;               // the round badge on the map
+        private const double LabelMaxScaleDenominator = 45000;   // names appear once zoomed in to about 1:45 000
         private int pressX = int.MinValue, pressY = int.MinValue;   // MinValue = no press seen since the last release
 
         /// <summary>Raised after the visible extent (or the control width) changed: new centre and scale.</summary>
@@ -139,13 +143,14 @@ namespace Hue_travel.MapEngine
         /// </summary>
         public void LoadPois(IReadOnlyList<Poi> pois)
         {
+            lastPois = pois;
             Extents keptView = CopyOfView();   // MapWinGIS zooms to the new layer when the map was empty
             // New layers go in before the old ones come out: a map with no layers loses its tiles.
             List<int> oldLayers = poiLayers.Handles.ToList();
             poiLayers.Clear();
             markers.Clear();
 
-            foreach (IGrouping<PoiCategory, Poi> group in pois.Where(p => p.X != 0 || p.Y != 0).GroupBy(p => p.Category))
+            foreach (IGrouping<PoiCategory, Poi> group in pois.Where(p => (p.X != 0 || p.Y != 0) && !hiddenPoiIds.Contains(p.Id)).GroupBy(p => p.Category))
             {
                 int handle = AddMarkerLayer(group.Key, group.ToList());
                 if (handle < 0) continue;
@@ -155,6 +160,24 @@ namespace Hue_travel.MapEngine
             foreach (int handle in oldLayers) axMap.RemoveLayer(handle);
             if (keptView != null) axMap.Extents = keptView;
             axMap.Redraw();
+        }
+
+        /// <summary>Places that are switched off in the layer list: they are left out of the map until switched on again.</summary>
+        public void SetHiddenPois(IEnumerable<string> ids)
+        {
+            hiddenPoiIds.Clear();
+            foreach (string id in ids) hiddenPoiIds.Add(id);
+            LoadPois(lastPois);
+        }
+
+        /// <summary>The map window in map metres; false before the map has a view.</summary>
+        public bool TryGetViewBounds(out double xMin, out double yMin, out double xMax, out double yMax)
+        {
+            Extents view = axMap.Extents;
+            xMin = yMin = xMax = yMax = 0;
+            if (view == null || view.xMax <= view.xMin) return false;
+            xMin = view.xMin; yMin = view.yMin; xMax = view.xMax; yMax = view.yMax;
+            return true;
         }
 
         private Extents CopyOfView()
@@ -170,25 +193,75 @@ namespace Hue_travel.MapEngine
         {
             var layer = new Shapefile();
             if (!layer.CreateNew(string.Empty, ShpfileType.SHP_POINT)) return -1;
+            int nameField = layer.EditAddField("name", FieldType.STRING_FIELD, 0, 100);
             foreach (Poi poi in pois)
             {
                 var point = new Shape();
                 if (!point.Create(ShpfileType.SHP_POINT)) continue;
                 point.AddPoint(poi.X, poi.Y);
-                layer.EditAddShape(point);
+                int index = layer.EditAddShape(point);
+                if (index >= 0 && nameField >= 0) layer.EditCellValue(nameField, index, poi.Name ?? string.Empty);
             }
 
             ShapeDrawingOptions style = layer.DefaultDrawingOptions;
-            style.PointShape = tkPointShapeType.ptShapeCircle;
-            style.PointSize = Ui.S(PoiMarkerStyle.DiameterPixels);
-            style.FillColor = (uint)System.Drawing.ColorTranslator.ToOle(PoiMarkerStyle.ColorOf(category));
-            style.LineColor = (uint)System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.White);
-            style.LineVisible = true;
-            style.LineWidth = 1.5f;
+            if (!UsePictureMarker(style, category))
+            {
+                // Fallback when the picture cannot be loaded: a plain coloured disc.
+                style.PointType = tkPointSymbolType.ptSymbolStandard;
+                style.PointShape = tkPointShapeType.ptShapeCircle;
+                style.PointSize = Ui.S(PoiMarkerStyle.DiameterPixels);
+                style.FillColor = (uint)System.Drawing.ColorTranslator.ToOle(PoiMarkerStyle.ColorOf(category));
+                style.LineColor = (uint)System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.White);
+                style.LineVisible = true;
+                style.LineWidth = 1.5f;
+            }
+            if (nameField >= 0) StyleNameLabels(layer, nameField);
 
             int handle = axMap.AddLayer(layer, true);
             if (handle >= 0) axMap.set_LayerName(handle, category.ToString());
             return handle;
+        }
+
+        // The badge of the group as the point symbol (a picture drawn at the screen's own resolution, so it stays sharp).
+        private static bool UsePictureMarker(ShapeDrawingOptions style, PoiCategory category)
+        {
+            string path = PoiMarkerIcons.FilePath(category, Ui.S(MarkerDesignPixels));
+            if (path == null) return false;
+            try
+            {
+                var picture = new Interop.MapWinGIS.Image();
+                if (!picture.Open(path, ImageType.PNG_FILE, true, null)) return false;
+                style.PointType = tkPointSymbolType.ptSymbolPicture;
+                style.Picture = picture;
+                style.PictureScaleX = 1.0;
+                style.PictureScaleY = 1.0;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("MapHost.UsePictureMarker: " + ex.Message);
+                return false;
+            }
+        }
+
+        // Small name under each marker: dark text with a white halo, kept apart from each other, shown once zoomed in.
+        private static void StyleNameLabels(Shapefile layer, int nameField)
+        {
+            layer.GenerateLabels(nameField, tkLabelPositioning.lpCenter, false);
+            Labels labels = layer.Labels;
+            labels.FontName = "Segoe UI";
+            labels.FontSize = 9;
+            labels.FontBold = false;
+            labels.FrameVisible = false;   // dark text with a white halo, no box
+            labels.FontColor = (uint)System.Drawing.ColorTranslator.ToOle(ThemeColors.Slate800);
+            labels.HaloVisible = true;
+            labels.HaloColor = (uint)System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.White);
+            labels.HaloSize = 3;
+            labels.Alignment = tkLabelAlignment.laTopCenter;
+            labels.OffsetY = Ui.S(MarkerDesignPixels) / 2 + Ui.S(1);
+            labels.AvoidCollisions = true;
+            labels.DynamicVisibility = true;
+            labels.MaxVisibleScale = LabelMaxScaleDenominator;
         }
 
         // The nearest visible marker within HitRadius of a pixel, or null.
