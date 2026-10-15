@@ -26,6 +26,8 @@ Muốn nắm hệ thống trong vài phút, mở **[tai-lieu/so-do.md](tai-lieu/
 | [Ai làm được gì](tai-lieu/so-do.md#3-ai-làm-được-gì) | bảng chức năng theo ba vai trò: người dùng, chủ quản, quản trị viên |
 | [Cơ sở dữ liệu](tai-lieu/so-do.md#4-sơ-đồ-cơ-sở-dữ-liệu) | các bảng và quan hệ giữa chúng (nhóm tài khoản–nội dung và nhóm địa lý–đường đi) |
 | [Vòng đời yêu cầu duyệt](tai-lieu/so-do.md#5-vòng-đời-các-yêu-cầu-cần-duyệt) | một yêu cầu của chủ quản đi qua những trạng thái nào |
+| [Thư viện sử dụng](tai-lieu/thu-vien-su-dung.md) | mọi thư viện, công cụ, dữ liệu bên ngoài và vai trò của từng thứ |
+| [pgRouting](tai-lieu/pgrouting.md) | tìm đường hoạt động thế nào, kèm ví dụ chạy thật trên Đại Nội, Thiên Mụ, Tự Đức |
 
 ## Kho mã chia làm hai phần độc lập
 

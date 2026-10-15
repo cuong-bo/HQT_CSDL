@@ -2,7 +2,8 @@
 
 Các sơ đồ dưới đây viết bằng [Mermaid](https://mermaid.js.org/), GitHub tự vẽ khi mở tệp này. Muốn xem chi tiết từng
 bảng và từng API, đọc [tai-lieu-du-lieu.md](tai-lieu-du-lieu.md); muốn biết cách chia hai phần cài đặt, đọc
-[phan-chia-may-chu-may-khach.md](phan-chia-may-chu-may-khach.md).
+[phan-chia-may-chu-may-khach.md](phan-chia-may-chu-may-khach.md). Xem thêm [thu-vien-su-dung.md](thu-vien-su-dung.md)
+(các thư viện và vai trò) và [pgrouting.md](pgrouting.md) (tìm đường hoạt động thế nào).
 
 Mục lục: [1. Kiến trúc](#1-kiến-trúc-hệ-thống) · [2. Phân rã chức năng](#2-sơ-đồ-phân-rã-chức-năng) ·
 [3. Ai làm được gì](#3-ai-làm-được-gì) · [4. Cơ sở dữ liệu](#4-sơ-đồ-cơ-sở-dữ-liệu) · [5. Vòng đời duyệt](#5-vòng-đời-các-yêu-cầu-cần-duyệt)
