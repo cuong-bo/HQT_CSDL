@@ -15,13 +15,25 @@ Máy khách (Windows)                       Máy chủ (VPS Ubuntu, Docker Compo
 
 Hệ tọa độ thống nhất: **VN-2000 / UTM 48N (EPSG:3405)**, đơn vị mét.
 
+## Xem nhanh bằng sơ đồ
+
+Muốn nắm hệ thống trong vài phút, mở **[tai-lieu/so-do.md](tai-lieu/so-do.md)** (GitHub tự vẽ các sơ đồ):
+
+| Sơ đồ | Cho biết |
+|---|---|
+| [Kiến trúc hệ thống](tai-lieu/so-do.md#1-kiến-trúc-hệ-thống) | máy khách, máy chủ, cơ sở dữ liệu nói chuyện với nhau thế nào |
+| [Phân rã chức năng](tai-lieu/so-do.md#2-sơ-đồ-phân-rã-chức-năng) | toàn bộ chức năng chia theo nhóm: bản đồ, lộ trình, hướng dẫn, tài khoản, chủ quản, quản trị, máy chủ |
+| [Ai làm được gì](tai-lieu/so-do.md#3-ai-làm-được-gì) | bảng chức năng theo ba vai trò: người dùng, chủ quản, quản trị viên |
+| [Cơ sở dữ liệu](tai-lieu/so-do.md#4-sơ-đồ-cơ-sở-dữ-liệu) | các bảng và quan hệ giữa chúng (nhóm tài khoản–nội dung và nhóm địa lý–đường đi) |
+| [Vòng đời yêu cầu duyệt](tai-lieu/so-do.md#5-vòng-đời-các-yêu-cầu-cần-duyệt) | một yêu cầu của chủ quản đi qua những trạng thái nào |
+
 ## Kho mã chia làm hai phần độc lập
 
 | Thư mục | Là gì | Ai cần | Cài đặt |
 |---|---|---|---|
 | [`may-chu/`](may-chu) | **Máy chủ**: API, cơ sở dữ liệu, dữ liệu shapefile, Docker Compose, script vận hành | Người quản trị VPS (chỉ cần `git clone` rồi `cd may-chu`) | [may-chu/HUONG-DAN-CAI-DAT.md](may-chu/HUONG-DAN-CAI-DAT.md) |
 | [`may-khach/`](may-khach) | **Máy khách**: ứng dụng Windows, bộ cài Inno Setup, test | Người dùng cuối (nhận bộ cài `.exe`) và người dựng bộ cài | [may-khach/HUONG-DAN-CAI-DAT.md](may-khach/HUONG-DAN-CAI-DAT.md) |
-| [`tai-lieu/`](tai-lieu) | Tài liệu chung: phân chia hai phần, kế hoạch triển khai, từ điển dữ liệu | Cả hai | [tai-lieu/phan-chia-may-chu-may-khach.md](tai-lieu/phan-chia-may-chu-may-khach.md) |
+| [`tai-lieu/`](tai-lieu) | Tài liệu chung: sơ đồ (kiến trúc, chức năng, cơ sở dữ liệu), phân chia hai phần, kế hoạch triển khai, từ điển dữ liệu | Cả hai | [tai-lieu/phan-chia-may-chu-may-khach.md](tai-lieu/phan-chia-may-chu-may-khach.md) |
 
 Hai phần chỉ giao tiếp qua HTTP/JSON; mỗi phần dựng, kiểm thử và cài riêng, không phần nào cần mã của phần kia.
 
