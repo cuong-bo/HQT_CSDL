@@ -13,7 +13,7 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - uses: microsoft/setup-msbuild@v2
+      - uses: microsoft/setup-msbuild@v3
       - run: msbuild may-khach/ung-dung/Hue_travel.csproj /restore /p:Configuration=Release /v:minimal
       - name: Zip the client (the Windows installer is built on a machine that has MapWinGIS, see may-khach/bo-cai/README.md)
         run: Compress-Archive -Path may-khach/ung-dung/bin/Release/* -DestinationPath HueTravel-${{ github.ref_name }}-portable.zip
