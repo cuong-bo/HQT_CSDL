@@ -23,6 +23,19 @@ public sealed class RouteRepository(NpgsqlDataSource db, IMemoryCache cache)
         return found;
     }
 
+    /// <summary>The group and free-text opening hours of the given places; missing ids are absent from the dictionary.</summary>
+    public async Task<Dictionary<string, PoiOpeningHours>> OpeningHoursAsync(string[] ids, CancellationToken ct)
+    {
+        var found = new Dictionary<string, PoiOpeningHours>();
+        await using NpgsqlCommand cmd = db.CreateCommand(
+            "select id, nhom, gio_mo_cua from poi where id = any(@ids) and deleted_at is null");
+        cmd.Parameters.AddWithValue("ids", ids);
+        await using NpgsqlDataReader r = await cmd.ExecuteReaderAsync(ct);
+        while (await r.ReadAsync(ct))
+            found[r.GetString(0)] = new PoiOpeningHours(r.GetString(1), r.IsDBNull(2) ? null : r.GetString(2));
+        return found;
+    }
+
     /// <summary>Travel time in seconds between every pair; infinity where there is no road connection. Index follows <paramref name="ids"/>.</summary>
     public async Task<double[,]> TimeMatrixAsync(string[] ids, CancellationToken ct)
     {

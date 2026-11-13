@@ -68,8 +68,8 @@ flowchart LR
 
     B --> B1["Chọn điểm bắt đầu<br/>gợi ý từ danh sách, không gõ tọa độ"]
     B --> B2["Chọn các điểm cần đi"]
-    B --> B3["Tìm thứ tự tối ưu<br/>theo thời gian hoặc quãng đường"]
-    B --> B4["Vẽ tuyến theo đường bộ thật<br/>xe chạy đúng thời gian, tua 1×/2×/4×/8×"]
+    B --> B3["Tìm thứ tự tối ưu<br/>theo thời gian, quãng đường<br/>và giờ mở cửa"]
+    B --> B4["Vẽ tuyến theo đường bộ thật<br/>xe chạy đúng thời gian, tua 1×/2×/4×/8×, kéo thanh tua"]
     B --> B5["Lưu và mở lại lộ trình"]
     B --> B6["Giờ khởi hành, thời gian lưu lại,<br/>giờ đến / giờ rời, cảnh báo đóng cửa"]
 

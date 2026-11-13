@@ -30,6 +30,9 @@ namespace Hue_travel.Services.Routing
         /// <summary>How long the visitor plans to stay at the stop, in minutes.</summary>
         public int StayMinutes { get; set; }
 
+        /// <summary>How long the car waits at the stop for the door to open, in minutes (0 when already open).</summary>
+        public int WaitMinutes { get; set; }
+
         /// <summary>The state of the stop's opening schedule at the arrival time (Unknown when no time was given).</summary>
         public OpenState OpenState { get; set; } = OpenState.Unknown;
 
@@ -107,15 +110,31 @@ namespace Hue_travel.Services.Routing
                 DateTime? arrive = null, leave = null;
                 OpenState state = OpenState.Unknown;
                 bool warning = false;
+                int wait = 0;
                 if (clock.HasValue)
                 {
-                    clock = clock.Value.AddSeconds(leg.Seconds);
-                    arrive = clock;
-                    leave = arrive.Value.AddMinutes(stayed);
+                    DateTime arrival = clock.Value.AddSeconds(leg.Seconds);
+                    DateTime effective = arrival;
+
+                    // A short wait for the door to open is part of the visit; a closed place later in the day is not.
+                    OpenStatus status = to.Schedule.StatusAt(arrival);
+                    if (status.State == OpenState.Closed && status.NextChange.HasValue)
+                    {
+                        DateTime opening = status.NextChange.Value;
+                        if (opening - arrival <= TimeSpan.FromHours(4) &&
+                            to.Schedule.IsOpenForVisit(opening, TimeSpan.FromMinutes(stayed)))
+                        {
+                            effective = opening;
+                            wait = (int)Math.Round((opening - arrival).TotalMinutes);
+                            status = to.Schedule.StatusAt(effective);
+                        }
+                    }
+
+                    arrive = effective;
+                    leave = effective.AddMinutes(stayed);
                     clock = leave;
-                    OpenStatus status = to.Schedule.StatusAt(arrive.Value);
                     state = status.State;
-                    warning = !to.Schedule.IsOpenForVisit(arrive.Value, TimeSpan.FromMinutes(stayed));
+                    warning = !to.Schedule.IsOpenForVisit(effective, TimeSpan.FromMinutes(stayed));
                 }
 
                 legs.Add(new TripLeg
@@ -129,6 +148,7 @@ namespace Hue_travel.Services.Routing
                     ArriveAt = arrive,
                     LeaveAt = leave,
                     StayMinutes = stayed,
+                    WaitMinutes = wait,
                     OpenState = state,
                     HoursWarning = warning,
                 });

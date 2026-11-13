@@ -47,6 +47,12 @@ public static class RouteEndpoints
         if (missing.Length > 0)
             return Results.Problem(detail: "Không tìm thấy địa điểm: " + string.Join(", ", missing), statusCode: StatusCodes.Status404NotFound);
 
+        int[] stays = request.StayMinutes ?? new int[stops.Length];
+        if (stays.Length != stops.Length)
+            return Results.Problem(detail: "stayMinutes phải có đúng một giá trị cho mỗi điểm đến.", statusCode: StatusCodes.Status400BadRequest);
+        if (stays.Any(minutes => minutes is < 0 or > 24 * 60))
+            return Results.Problem(detail: "stayMinutes phải từ 0 đến 1440 phút.", statusCode: StatusCodes.Status400BadRequest);
+
         string[] order = stops;
         if (request.Optimize ?? true)
         {
@@ -68,7 +74,26 @@ public static class RouteEndpoints
             {
                 matrix = await routes.TimeMatrixAsync(all, ct);
             }
-            IReadOnlyList<int>? best = RouteOptimizer.Order(matrix);
+
+            IReadOnlyList<int>? best;
+            if (request.DepartAt is { } departAt)
+            {
+                // An order that cannot visit a stop before it closes is not useful; the app still shows warnings for the
+                // order it was given, so a distance-only fallback is better than refusing the whole trip.
+                Dictionary<string, PoiOpeningHours> info = await routes.OpeningHoursAsync(stops, ct);
+                var schedules = stops.Select(id =>
+                {
+                    return info.TryGetValue(id, out PoiOpeningHours? found) && found != null
+                        ? OpeningHours.Parse(found.Text, found.Group)
+                        : OpeningHours.Parse(null, null);
+                }).ToList();
+                best = RouteOptimizer.Order(matrix, departAt, schedules, stays);
+            }
+            else
+            {
+                best = null;
+            }
+            best ??= RouteOptimizer.Order(matrix);
             if (best == null)
                 return Results.Problem(detail: "Có địa điểm không nối được bằng đường bộ với các điểm còn lại.", statusCode: StatusCodes.Status422UnprocessableEntity);
             order = freeStart ? best.Select(i => stops[i - 1]).ToArray() : best.Select(i => all[i]).ToArray();

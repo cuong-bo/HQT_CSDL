@@ -230,6 +230,7 @@ namespace Hue_travel.Shell
             tripResultPanel.ReplayRequested += (s, e) => mapHost.ReplayTrip();
             tripResultPanel.FitRequested += (s, e) => mapHost.ZoomToTrip();
             tripResultPanel.SpeedRequested += (s, value) => mapHost.TripSpeed = value;
+            tripResultPanel.SeekRequested += (s, seconds) => mapHost.SeekTrip(seconds);
             mapHost.TripPlayStateChanged += (s, e) => tripResultPanel.SetCarPlaying(mapHost.TripPlaying);
             mapHost.TripLegChanged += (s, leg) => tripResultPanel.SetActiveLeg(leg);
             mapHost.TripSpeedChanged += (s, e) => tripResultPanel.SetSpeed(mapHost.TripSpeed);

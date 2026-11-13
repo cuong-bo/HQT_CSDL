@@ -384,6 +384,15 @@ Check 'trip: a visit past closing time is flagged' $late.Legs[0].HoursWarning 'T
 Check 'trip: the place is closing soon at arrival' $late.Legs[0].OpenState.ToString() 'ClosingSoon'
 $early = $fromOnlineTimed.Invoke($null, @($timed, 'Start', $farStart, $placeList, $null, [datetime]'2026-11-10T08:00:00', $stayList))
 Check 'trip: a morning visit fits' $early.Legs[0].HoursWarning 'False'
+$waitPlace = MakePoi 'Đại Nội Huế' 'Heritage'
+$waitPlace.Id = 'DL001'
+$waitPlace.OpeningHours = '09:00-17:00'
+$waitList = [Activator]::CreateInstance($listT)
+$waitList.Add($waitPlace)
+$waiting = $fromOnlineTimed.Invoke($null, @($timed, 'Start', $farStart, $waitList, $null, [datetime]'2026-11-10T08:00:00', $stayList))
+Check 'trip: a short wait for opening' $waiting.Legs[0].ArriveAt.ToString('HH:mm') '09:00'
+Check 'trip: the wait is counted' $waiting.Legs[0].WaitMinutes '59'
+Check 'trip: waiting makes the visit fit' $waiting.Legs[0].HoursWarning 'False'
 
 $storeT = GetT ($online + 'TokenStore')
 $sessionPath = [string](Join-Path ([IO.Path]::GetTempPath()) ('session-' + [guid]::NewGuid().ToString('N') + '.dat'))

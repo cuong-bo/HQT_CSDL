@@ -125,17 +125,33 @@ namespace Hue_travel.Services.Online
             this.api = api;
         }
 
-        public Task<ApiResult<OnlineRoute>> PlanAsync(string startId, IList<string> stopIds, bool optimize, CancellationToken ct)
+        public Task<ApiResult<OnlineRoute>> PlanAsync(string startId, IList<string> stopIds, bool optimize, CancellationToken ct,
+            DateTime? departAt = null, IReadOnlyList<int> stayMinutes = null)
         {
             var body = new Dictionary<string, object> { { "startId", startId }, { "stopIds", stopIds.ToArray() }, { "optimize", optimize } };
+            AddHours(body, departAt, stayMinutes);
             return SendAsync(body, ct);
         }
 
         /// <summary>Like <see cref="PlanAsync"/> but from a free point (map metres, e.g. one picked on the map) instead of a place.</summary>
-        public Task<ApiResult<OnlineRoute>> PlanFromPointAsync(double x, double y, IList<string> stopIds, bool optimize, CancellationToken ct)
+        public Task<ApiResult<OnlineRoute>> PlanFromPointAsync(double x, double y, IList<string> stopIds, bool optimize, CancellationToken ct,
+            DateTime? departAt = null, IReadOnlyList<int> stayMinutes = null)
         {
             var body = new Dictionary<string, object> { { "startX", x }, { "startY", y }, { "stopIds", stopIds.ToArray() }, { "optimize", optimize } };
+            AddHours(body, departAt, stayMinutes);
             return SendAsync(body, ct);
+        }
+
+        // The server compares the arrival times with the stops' opening hours (Vietnam clock, UTC+7). Sending the time as an
+        // ISO string with an explicit offset keeps it unambiguous even when the server runs in UTC.
+        private static void AddHours(Dictionary<string, object> body, DateTime? departAt, IReadOnlyList<int> stayMinutes)
+        {
+            if (departAt.HasValue)
+            {
+                DateTime value = DateTime.SpecifyKind(departAt.Value, DateTimeKind.Unspecified);
+                body["departAt"] = new DateTimeOffset(value, TimeSpan.FromHours(7)).ToString("o", System.Globalization.CultureInfo.InvariantCulture);
+            }
+            if (stayMinutes != null) body["stayMinutes"] = stayMinutes.ToArray();
         }
 
         private async Task<ApiResult<OnlineRoute>> SendAsync(Dictionary<string, object> body, CancellationToken ct)

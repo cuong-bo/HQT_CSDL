@@ -23,6 +23,76 @@ namespace Hue_travel.Panels.RouteOptimizer
     /// </summary>
     public sealed class TripResultPanel : FloatingPanelForm
     {
+        // ------------------------------------------------------------------ a thin bar for jumping to a moment of the trip
+
+        private sealed class SeekBar : Control
+        {
+            private double fraction;
+            private bool dragging;
+
+            public SeekBar()
+            {
+                SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
+                BackColor = Color.White;
+                Cursor = Cursors.Hand;
+            }
+
+            public event EventHandler<double> Seeked;
+
+            public double Fraction => fraction;
+
+            public void SetValue(double value)
+            {
+                if (dragging) return;
+                fraction = Math.Max(0, Math.Min(1, value));
+                Invalidate();
+            }
+
+            protected override void OnMouseDown(MouseEventArgs e)
+            {
+                base.OnMouseDown(e);
+                if (e.Button != MouseButtons.Left) return;
+                dragging = true;
+                Capture = true;
+                Seek(e.X);
+            }
+
+            protected override void OnMouseMove(MouseEventArgs e)
+            {
+                base.OnMouseMove(e);
+                if (dragging && (e.Button & MouseButtons.Left) != 0) Seek(e.X);
+            }
+
+            protected override void OnMouseUp(MouseEventArgs e)
+            {
+                base.OnMouseUp(e);
+                dragging = false;
+                Capture = false;
+            }
+
+            private void Seek(int x)
+            {
+                fraction = Width <= 0 ? 0 : Math.Max(0, Math.Min(1, (double)x / Width));
+                Invalidate();
+                Seeked?.Invoke(this, fraction);
+            }
+
+            protected override void OnPaint(PaintEventArgs e)
+            {
+                Graphics g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.Clear(BackColor);
+                int y = Height / 2, line = Math.Max(2, Ui.S(4)), thumb = Ui.S(11);
+                using (var track = new Pen(ThemeColors.Slate200, line) { StartCap = LineCap.Round, EndCap = LineCap.Round })
+                    g.DrawLine(track, 0, y, Width, y);
+                int x = (int)Math.Round(fraction * Width);
+                using (var fill = new Pen(ThemeColors.Primary, line) { StartCap = LineCap.Round, EndCap = LineCap.Round })
+                    g.DrawLine(fill, 0, y, x, y);
+                using (var circle = new SolidBrush(ThemeColors.Primary)) g.FillEllipse(circle, x - thumb / 2, y - thumb / 2, thumb, thumb);
+                using (var rim = new Pen(Color.White, Math.Max(1, Ui.S(2)))) g.DrawEllipse(rim, x - thumb / 2, y - thumb / 2, thumb, thumb);
+            }
+        }
+
         // ------------------------------------------------------------------ the legs of a computed trip, side by side
 
         private sealed class LegStrip : Control
@@ -174,6 +244,12 @@ namespace Hue_travel.Panels.RouteOptimizer
                                 new Rectangle(card.X + pad, badgeRect.Bottom + Ui.S(40), card.Width - pad * 2, Ui.S(14)),
                                 ThemeColors.Amber700, flags);
                         }
+                        else if (leg.WaitMinutes > 0)
+                        {
+                            TextRenderer.DrawText(g, "Chờ mở cửa " + leg.WaitMinutes + " phút", ThemeFonts.SemiBold(10),
+                                new Rectangle(card.X + pad, badgeRect.Bottom + Ui.S(40), card.Width - pad * 2, Ui.S(14)),
+                                ThemeColors.Amber700, flags);
+                        }
                     }
                 }
 
@@ -252,6 +328,7 @@ namespace Hue_travel.Panels.RouteOptimizer
         private readonly IconButton btnFold = new IconButton();
         private readonly IconButton btnClose = new IconButton();
         private readonly LegStrip legStrip = new LegStrip();
+        private readonly SeekBar seek = new SeekBar();
         private readonly IconButton btnPlay = new IconButton();
         private readonly IconButton btnReplay = new IconButton();
         private readonly IconButton btnFit = new IconButton();
@@ -282,9 +359,12 @@ namespace Hue_travel.Panels.RouteOptimizer
         /// <summary>The chosen simulation speed (1, 2, 4 or 8), for the map to apply.</summary>
         public event EventHandler<int> SpeedRequested;
 
+        /// <summary>The seek bar was moved: the trip time in seconds the car should jump to.</summary>
+        public event EventHandler<double> SeekRequested;
+
         /// <summary>Design size (96-DPI pixels) of the panel: a low bar to sit under the map.</summary>
         public const int DesignWidth = 760;
-        public const int DesignHeight = 224;
+        public const int DesignHeight = 248;
         /// <summary>Raised when the panel is folded away: the host shows a button on the map that calls <see cref="Unfold"/>.</summary>
         public event EventHandler Folded;
 
@@ -292,6 +372,7 @@ namespace Hue_travel.Panels.RouteOptimizer
         {
             Size = new Size(DesignWidth, DesignHeight);
             BackColor = Color.White;
+            KeyPreview = true;
 
             Round(btnFold, "expand_more");
             Round(btnClose, "close");
@@ -322,8 +403,12 @@ namespace Hue_travel.Panels.RouteOptimizer
             new ToolTip().SetToolTip(btnFold, "Thu nhỏ thành biểu tượng");
             new ToolTip().SetToolTip(btnClose, "Dừng lại và xoá kết quả");
 
-            foreach (Control c in new Control[] { titleRow, btnFold, btnClose, legStrip, btnPlay, btnReplay, btnFit, btnSave, btnPrint, btnSpeed1, btnSpeed2, btnSpeed4, btnSpeed8, btnStop }) Controls.Add(c);
+            foreach (Control c in new Control[] { titleRow, btnFold, btnClose, legStrip, seek, btnPlay, btnReplay, btnFit, btnSave, btnPrint, btnSpeed1, btnSpeed2, btnSpeed4, btnSpeed8, btnStop }) Controls.Add(c);
 
+            seek.Seeked += (s, fraction) =>
+            {
+                if (plan != null) SeekRequested?.Invoke(this, fraction * plan.TotalSeconds);
+            };
             btnFold.Click += (s, e) => Fold();
             btnClose.Click += (s, e) => StopRequested?.Invoke(this, EventArgs.Empty);
             legStrip.LegClicked += (s, i) => { LegSelected?.Invoke(this, i); legStrip.SetActive(i); };
@@ -402,7 +487,39 @@ namespace Hue_travel.Panels.RouteOptimizer
         public void SetProgress(double clockSeconds, double totalSeconds)
         {
             titleRow.Clock = FormatClock(clockSeconds) + " / " + FormatClock(totalSeconds);
+            seek.SetValue(totalSeconds > 0 ? clockSeconds / totalSeconds : 0);
             titleRow.Invalidate();
+        }
+
+        // Space pauses / plays, +/- changes the speed, Left/Right jump half a minute. The panel must have the keyboard focus.
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            Keys key = keyData & Keys.KeyCode;
+            if (key == Keys.Space)
+            {
+                if (carPlaying) PauseRequested?.Invoke(this, EventArgs.Empty);
+                else PlayRequested?.Invoke(this, EventArgs.Empty);
+                return true;
+            }
+            if (key == Keys.Add || key == Keys.Oemplus) { CycleSpeed(1); return true; }
+            if (key == Keys.Subtract || key == Keys.OemMinus) { CycleSpeed(-1); return true; }
+            if (key == Keys.Left && plan != null) { SeekBy(plan.TotalSeconds, -30); return true; }
+            if (key == Keys.Right && plan != null) { SeekBy(plan.TotalSeconds, 30); return true; }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void CycleSpeed(int direction)
+        {
+            int at = Array.IndexOf(Speeds, speed);
+            int next = Math.Max(0, Math.Min(Speeds.Length - 1, at + direction));
+            if (next != at) ChooseSpeed(Speeds[next]);
+        }
+
+        private void SeekBy(double totalSeconds, double delta)
+        {
+            if (totalSeconds <= 0) return;
+            double next = seek.Fraction * totalSeconds + delta;
+            SeekRequested?.Invoke(this, Math.Max(0, Math.Min(totalSeconds, next)));
         }
 
         /// <summary>Shows the simulated time of day at the car, e.g. "09:42" (null hides it).</summary>
@@ -493,7 +610,9 @@ namespace Hue_travel.Panels.RouteOptimizer
             int bottom = height - pad;
             int controlsY = bottom - rowH;
             int stripY = pad + small + Ui.S(10);
-            legStrip.SetBounds(pad, stripY, width - pad * 2, controlsY - Ui.S(10) - stripY);
+            int seekY = controlsY - Ui.S(24);
+            seek.SetBounds(pad, seekY, width - pad * 2, Ui.S(16));
+            legStrip.SetBounds(pad, stripY, width - pad * 2, seekY - Ui.S(6) - stripY);
 
             int x = pad;
             int w1 = Ui.S(104), w2 = Ui.S(92), w3 = Ui.S(108), w4 = Ui.S(66), w5 = Ui.S(56);

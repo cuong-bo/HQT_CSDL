@@ -3,7 +3,12 @@ using System.Text.Json;
 namespace Hue_travel.Api.Routing;
 
 // The start is either a place (StartId) or a free point in VN-2000 / UTM 48N metres (StartX, StartY), e.g. one picked on the map.
-public sealed record RouteRequest(string? StartId, string[]? StopIds, bool? Optimize, double? StartX = null, double? StartY = null);
+// DepartAt (with the Vietnam offset) and StayMinutes make an optimized order respect the stops' opening hours.
+public sealed record RouteRequest(string? StartId, string[]? StopIds, bool? Optimize, double? StartX = null, double? StartY = null,
+    DateTimeOffset? DepartAt = null, int[]? StayMinutes = null);
+
+// The server's copy of a place's opening hours, used only while choosing an order.
+public sealed record PoiOpeningHours(string Group, string? Text);
 
 // Geometry is GeoJSON in degrees; GeometryUtm is the same line in VN-2000 / UTM 48N metres (the map's own units).
 // Times[i] is the seconds elapsed on arrival at point i of the line (Times[0] = 0, the last = Seconds), so a car moved

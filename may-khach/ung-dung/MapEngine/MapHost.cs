@@ -519,6 +519,9 @@ namespace Hue_travel.MapEngine
 
         public void ReplayTrip() { if (routeDrawing != null) routeDrawing.Replay(); }
 
+        /// <summary>Moves the car to a moment of the trip (seconds of driving time).</summary>
+        public void SeekTrip(double seconds) { if (routeDrawing != null) routeDrawing.SeekTo(seconds); }
+
         public void ZoomToTripLeg(int leg) { if (routeDrawing != null) routeDrawing.ZoomToLeg(leg); }
 
         public void ZoomToTrip() { if (routeDrawing != null) routeDrawing.ZoomToTrip(); }

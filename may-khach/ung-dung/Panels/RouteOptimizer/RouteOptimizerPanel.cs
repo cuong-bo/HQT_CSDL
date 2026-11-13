@@ -380,15 +380,21 @@ namespace Hue_travel.Panels.RouteOptimizer
 
         private const string NeedServer = "Cần kết nối máy chủ để tìm đường. Hãy nhập địa chỉ máy chủ (xem hướng dẫn cài đặt) rồi mở lại ứng dụng.";
 
-        // Asks the server for the route of a start through the stops; with <paramref name="optimize"/> the server also picks the order.
+        // Asks the server for the route of a start through the stops; with <paramref name="optimize"/> the server also picks the
+        // order, using the departure time and the stops' opening hours when they are known.
         private Task<ApiResult<OnlineRoute>> AskServerAsync(StartSpot from, List<Poi> places, bool optimize, CancellationToken token)
         {
             var ids = places.Select(p => p.Id).ToList();
+            DateTime departAt = DepartureTime();
+            IReadOnlyList<int> stays = stopList.StayMinutes;
             bool byPlace = from.Place != null && !ids.Contains(from.Place.Id);
             return byPlace
-                ? routeService.PlanAsync(from.Place.Id, ids, optimize, token)
-                : routeService.PlanFromPointAsync(from.Point.X, from.Point.Y, ids, optimize, token);
+                ? routeService.PlanAsync(from.Place.Id, ids, optimize, token, departAt, stays)
+                : routeService.PlanFromPointAsync(from.Point.X, from.Point.Y, ids, optimize, token, departAt, stays);
         }
+
+        private DateTime DepartureTime() =>
+            chkDepartNow.Checked ? OpeningSchedule.NowInVietnam : OpeningSchedule.NowInVietnam.Date.Add(departAt.Value.TimeOfDay);
 
         // "Xếp giúp": the server finds the order with the shortest travel time over the roads and the list is put in that order.
         private async void AutoOrder()
@@ -411,7 +417,7 @@ namespace Hue_travel.Panels.RouteOptimizer
                 itinerary.Clear();
                 itinerary.AddRange(ordered);
                 AfterStopsChanged();
-                Notify("Máy chủ đã xếp lại các điểm đến theo đường đi nhanh nhất", ToastKind.Success);
+                Notify("Máy chủ đã xếp lại các điểm đến theo đường đi và giờ mở cửa", ToastKind.Success);
             }
             finally
             {
@@ -469,9 +475,7 @@ namespace Hue_travel.Panels.RouteOptimizer
                 Notify(answer.Error, ToastKind.Error);
                 return;
             }
-            DateTime depart = chkDepartNow.Checked
-                ? OpeningSchedule.NowInVietnam
-                : OpeningSchedule.NowInVietnam.Date.Add(departAt.Value.TimeOfDay);
+            DateTime depart = DepartureTime();
             RouteComputed?.Invoke(this, TripPlanner.FromOnline(answer.Value, from.Name, from.Point, places, null, depart, stopList.StayMinutes));
         }
 

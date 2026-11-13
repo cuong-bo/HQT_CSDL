@@ -187,7 +187,7 @@ namespace Hue_travel.MapEngine
             elapsed = times.ToArray();
             for (int i = 1; i < elapsed.Length; i++) elapsed[i] = Math.Max(elapsed[i], elapsed[i - 1]);
             totalElapsed = elapsed.Length == 0 ? 0 : elapsed[elapsed.Length - 1];
-            totalStaySeconds = plan.Legs.Sum(l => Math.Max(0, l.StayMinutes) * 60.0);
+            totalStaySeconds = plan.Legs.Sum(l => (Math.Max(0, l.StayMinutes) + Math.Max(0, l.WaitMinutes)) * 60.0);
             if (totalElapsed <= 0 && total > 0)
             {
                 for (int i = 0; i < elapsed.Length; i++) elapsed[i] = cumulative[i] / FallbackMetresPerSecond;
@@ -212,7 +212,9 @@ namespace Hue_travel.MapEngine
         }
 
         private double StaySeconds(int leg) =>
-            plan != null && leg >= 0 && leg < plan.Legs.Count ? Math.Max(0, plan.Legs[leg].StayMinutes) * 60.0 : 0;
+            plan != null && leg >= 0 && leg < plan.Legs.Count
+                ? (Math.Max(0, plan.Legs[leg].StayMinutes) + Math.Max(0, plan.Legs[leg].WaitMinutes)) * 60.0
+                : 0;
 
         // The distance along the line the car has covered after a given travel time.
         private double DistanceAt(double seconds)
@@ -365,6 +367,28 @@ namespace Hue_travel.MapEngine
             if (plan == null) return;
             Restart();
             SetPlaying(true);
+        }
+
+        /// <summary>Jumps to a position of the trip (seconds of driving time), e.g. from the result panel's seek bar.</summary>
+        public void SeekTo(double seconds)
+        {
+            if (plan == null) return;
+            tripClock = Math.Max(0, Math.Min(totalElapsed, seconds));
+            travelled = tripClock >= totalElapsed ? total : DistanceAt(tripClock);
+            stoppedSeconds = StaySecondsBefore(travelled);
+            dwellLeft = 0;
+            UpdateLeg();
+            DrawCar();
+            map.Redraw2(tkRedrawType.RedrawSkipDataLayers);
+            Progress?.Invoke(this, EventArgs.Empty);
+        }
+
+        private double StaySecondsBefore(double distance)
+        {
+            double sum = 0;
+            for (int i = 0; i < legEnds.Length; i++)
+                if (legEnds[i] <= distance + 0.001) sum += StaySeconds(i);
+            return sum;
         }
 
         private void Restart()

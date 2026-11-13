@@ -1,8 +1,9 @@
 # Hue Travel - bản đồ du lịch Huế
 
 Ứng dụng Windows (WinForms + MapWinGIS) cho khách tham quan Huế: bản đồ nền vẽ từ dữ liệu của dự án, tìm địa điểm theo nhóm,
-sắp xếp lộ trình ngắn nhất theo đường bộ thật, xe chạy mô phỏng đúng thời gian (tua 1×/2×/4×/8×), giờ mở cửa và cảnh báo
-đóng cửa, thời tiết, đo khoảng cách/diện tích; khách xem bản đồ không cần tài khoản.
+sắp xếp lộ trình ngắn nhất theo đường bộ thật (máy chủ cân nhắc cả giờ mở cửa khi xếp), xe chạy mô phỏng đúng thời gian
+(tua 1×/2×/4×/8×, kéo thanh tua), giờ mở cửa và cảnh báo đóng cửa, thời tiết, đo khoảng cách/diện tích; khách xem bản đồ
+không cần tài khoản.
 Dữ liệu và xử lý nặng (tìm đường, tài khoản) nằm trên một **máy chủ** (VPS Ubuntu); **máy khách** là ứng dụng Windows nhẹ.
 
 ```

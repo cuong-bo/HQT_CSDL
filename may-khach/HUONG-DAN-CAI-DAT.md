@@ -43,6 +43,8 @@ Bộ cài đã gồm ứng dụng, thành phần bản đồ **MapWinGIS** (tự
    theo giờ Việt Nam) và bấm chip **Lưu …′** ở từng điểm để đổi thời gian lưu lại; kết quả hiện giờ đến/giờ rời và cảnh báo
    nếu đến lúc địa điểm đã đóng.
 7. **Xe mô phỏng** chạy đúng thời gian ước tính của máy chủ; nút **1× 2× 4× 8×** đổi tốc độ, tốc độ được nhớ cho lần sau.
+   Kéo thanh mảnh phía trên hàng nút để tua tới bất kỳ thời điểm nào; khi bảng kết quả đang được chọn, phím **Space** tạm
+   dừng/chạy, **+ / -** đổi tốc độ, **← / →** tua lùi/tới 30 giây.
 
 ### A4. Đổi địa chỉ máy chủ sau khi cài
 Có ba cách, ứng dụng lấy theo thứ tự này (cách trên thắng cách dưới):
