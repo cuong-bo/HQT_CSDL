@@ -339,6 +339,14 @@ Check 'tokens: values survive' "$($loadArgs[0])|$($loadArgs[1])" 'access-1|refre
 $store.Delete()
 Check 'tokens: removed' ($tl.Invoke($store, [object[]]@($null, $null))) 'False'
 
+# a session starts as "not a guest"; choosing the guest mode flips it
+$sessionT = GetT ($online + 'AppSession')
+$privateCtor = $sessionT.GetConstructors([System.Reflection.BindingFlags]'NonPublic,Instance')[0]
+$appSession = $privateCtor.Invoke([object[]]@($null, $null))
+Check 'guest: not a guest at start' $appSession.IsGuest 'False'
+$appSession.IsGuest = $true
+Check 'guest: choosing the guest mode is remembered' $appSession.IsGuest 'True'
+
 $apiT = GetT ($online + 'ApiClient')
 $none = [Threading.CancellationToken]::None
 function New-Api($handler) { $s = [Activator]::CreateInstance($storeT, @($sessionPath)); $ctor = $apiT.GetConstructors()[0]; $ctor.Invoke([object[]]@('http://test.local', $s, [System.Net.Http.HttpMessageHandler]$handler, $null)) }

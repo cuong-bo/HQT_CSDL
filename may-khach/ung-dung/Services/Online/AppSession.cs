@@ -18,6 +18,12 @@ namespace Hue_travel.Services.Online
 
         public bool IsOnline => Api != null;
 
+        /// <summary>
+        /// True when the person chose to use the app without an account. It only says that leaving the map on purpose is not
+        /// an expired session; every feature that needs an account still asks the server and is refused without a token.
+        /// </summary>
+        public bool IsGuest { get; set; }
+
         /// <summary>A line the sign-in screen shows once, e.g. "the session ended".</summary>
         public string Notice { get; set; }
 

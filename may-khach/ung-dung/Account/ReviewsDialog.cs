@@ -32,7 +32,7 @@ namespace Hue_travel.Account
         private bool hasMine;
         private bool busy;
 
-        private ReviewsDialog(ApiClient api, Poi poi, bool signedIn) : base("Đánh giá: " + Shorten(poi.Name), DialogWidth, signedIn ? "Gửi đánh giá" : "Đóng", false, signedIn)
+        private ReviewsDialog(ApiClient api, Poi poi, bool signedIn) : base("Đánh giá: " + Shorten(poi.Name), DialogWidth, signedIn ? "Gửi đánh giá" : "Viết đánh giá", false, signedIn)
         {
             this.api = api;
             this.poi = poi;
@@ -89,10 +89,13 @@ namespace Hue_travel.Account
 
         private static string Shorten(string name) => name != null && name.Length > 34 ? name.Substring(0, 33) + "…" : name;
 
-        /// <summary>Shows the reviews of a place; returns when the window is closed.</summary>
-        public static void ShowFor(IWin32Window owner, ApiClient api, Poi poi, bool signedIn)
+        /// <summary>
+        /// Shows the reviews of a place. Returns true when a guest asked to write a review (the host then opens the sign-in
+        /// form and comes back); false when the window was simply closed.
+        /// </summary>
+        public static bool ShowFor(IWin32Window owner, ApiClient api, Poi poi, bool signedIn)
         {
-            using (var dialog = new ReviewsDialog(api, poi, signedIn)) dialog.ShowDialog(owner);
+            using (var dialog = new ReviewsDialog(api, poi, signedIn)) return dialog.ShowDialog(owner) == DialogResult.Retry;
         }
 
         private string Path => "/v1/pois/" + Uri.EscapeDataString(poi.Id) + "/reviews";
@@ -138,7 +141,12 @@ namespace Hue_travel.Account
 
         protected override bool CanAccept()
         {
-            if (!signedIn) return true;   // "Đóng"
+            if (!signedIn)
+            {
+                // A guest pressed "Viết đánh giá": close with a signal so the host can sign them in and come back.
+                DialogResult = DialogResult.Retry;
+                return false;
+            }
             var ignored = SubmitAsync();
             return false;
         }

@@ -48,6 +48,14 @@ namespace Hue_travel.Shell
             btnMaximize.IconName = isMaximized ? "filter_none" : "crop_square";
         }
 
+        /// <summary>Who is using the app: "Khách", the signed-in person's name, or empty (offline) to show nothing.</summary>
+        public void SetUser(string text)
+        {
+            lblUser.Text = text ?? "";
+            lblUser.Visible = lblUser.Text.Length > 0;
+            LayoutRightGroup();
+        }
+
         /// <summary>
         /// Positions the right-hand group (auth button, window buttons)
         /// from the measured widths so the spacing matches the mockup's flex gaps. The
@@ -60,6 +68,9 @@ namespace Hue_travel.Shell
             btnMaximize.Left = btnClose.Left - btnMaximize.Width;
             btnMinimize.Left = btnMaximize.Left - btnMinimize.Width;
 
+            int gap = Hue_travel.Theme.Ui.S(16);
+            lblUser.Left = btnMinimize.Left - gap - lblUser.Width;
+            lblUser.Top = (Height - lblUser.Height) / 2;
             LayoutSearch();
         }
 
@@ -67,7 +78,8 @@ namespace Hue_travel.Shell
         private void LayoutSearch()
         {
             int gap = Hue_travel.Theme.Ui.S(24);
-            int free = btnMinimize.Left - gap - (lblLogo.Right + gap);
+            int userSpace = lblUser.Visible ? lblUser.Width + gap : 0;
+            int free = btnMinimize.Left - userSpace - gap - (lblLogo.Right + gap);
             int width = System.Math.Max(Hue_travel.Theme.Ui.S(200), System.Math.Min(Hue_travel.Theme.Ui.S(560), free));
             int height = Hue_travel.Theme.Ui.S(38);
             int left = System.Math.Max(lblLogo.Right + gap, (Width - width) / 2);

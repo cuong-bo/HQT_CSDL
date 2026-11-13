@@ -16,6 +16,7 @@ using Hue_travel.Services.Online;
 using Hue_travel.Services.Routing;
 using Hue_travel.Services.Weather;
 using Hue_travel.Theme;
+using Hue_travel.Welcome;
 
 namespace Hue_travel.Shell
 {
@@ -160,6 +161,11 @@ namespace Hue_travel.Shell
 
             mapHost.PoiClicked += (s, poi) => ShowPoiCard(poi);
 
+            // These three need an account. A guest is asked to sign in first; offline the host points out that a server is needed.
+            poiIdentifyCard.FavoriteToggled += (s, poi) => RunSignedIn("Đăng nhập để lưu địa điểm yêu thích", () => Safe(ToggleFavoriteAsync(poi)));
+            poiIdentifyCard.ClaimRequested += (s, poi) => RunSignedIn("Đăng nhập hoặc đăng ký tài khoản chủ quản", () => Safe(ClaimAsync(poi)));
+            poiIdentifyCard.ReportRequested += (s, poi) => RunSignedIn("Đăng nhập để báo thông tin chưa đúng", () => Safe(ReportAsync(poi)));
+
             // Status bar: live scale and area from the map view, weather from Open-Meteo (no fixed placeholder text).
             statusBar.SetWeather(weatherUpdater.Text);
             weatherUpdater.TextChanged += (s, text) => statusBar.SetWeather(text);
@@ -241,6 +247,12 @@ namespace Hue_travel.Shell
         // Shows the panel of one rail tab (NavRail.Explore / Route / Guide / Profile) and closes the others; -1 closes all.
         private void ShowSidePanel(int index)
         {
+            // The profile belongs to an account: a guest signs in first, and the panel opens right after.
+            if (index == NavRail.Profile && auth != null && auth.CurrentUser == null)
+            {
+                RunSignedIn("Đăng nhập hoặc đăng ký để xem hồ sơ", () => ShowSidePanel(NavRail.Profile));
+                return;
+            }
             for (int i = 0; i < sidePanels.Length; i++)
             {
                 if (i != index && sidePanels[i] != null) sidePanels[i].Visible = false;
@@ -254,6 +266,27 @@ namespace Hue_travel.Shell
                 if (index == NavRail.Explore) RefreshExplore();
             }
             navRail.ActiveIndex = index <= NavRail.Profile ? index : -1;   // the layer list belongs to the filter bar, not to a rail tab
+        }
+
+        /// <summary>
+        /// Runs an action that needs an account. A guest first sees the sign-in / register form over the map (the main window
+        /// and its state stay untouched); after signing in, the action they pressed runs. Offline there is nobody to sign in to.
+        /// </summary>
+        private void RunSignedIn(string reason, Action action)
+        {
+            if (auth != null && auth.CurrentUser != null) { action(); return; }
+            if (api == null)
+            {
+                toast.ShowMessage("Cần kết nối máy chủ để đăng nhập.", ToastKind.Info);
+                return;
+            }
+            using (var form = new LoginForm(session, reason))
+            {
+                // "Quay lại bản đồ", Esc or the close button keeps the map and the guest exactly as they were.
+                if (form.ShowDialog(this) != DialogResult.OK || auth.CurrentUser == null) return;
+            }
+            session.IsGuest = false;
+            action();
         }
 
         // Back to the sign-in screen (signed out, password changed, or the session ended); Program.Main shows it again.
@@ -328,7 +361,7 @@ namespace Hue_travel.Shell
             };
             accountPanel.ReviewRequested += (s, poi) => ReviewsDialog.ShowFor(this, api, poi, auth.CurrentUser != null);
             poiIdentifyCard.ReviewsAvailable = true;
-            poiIdentifyCard.ReviewsRequested += (s, poi) => ReviewsDialog.ShowFor(this, api, poi, auth.CurrentUser != null);
+            poiIdentifyCard.ReviewsRequested += (s, poi) => OpenReviews(poi);
             accountPanel.AdminRequested += (s, e) => Safe(OpenAdminConsoleAsync());
             accountPanel.ShowOnMapRequested += (s, poi) => ShowOnMap(poi);
             accountPanel.FavoritesChanged += (s, e) => Safe(LoadFavoritesAsync());
@@ -336,9 +369,6 @@ namespace Hue_travel.Shell
             accountPanel.PasswordChanged += (s, e) => ReturnToSignIn("Đã đổi mật khẩu. Hãy đăng nhập lại bằng mật khẩu mới.");
             auth.Changed += (s, e) => UpdateAccountUi();
 
-            poiIdentifyCard.FavoriteToggled += (s, poi) => Safe(ToggleFavoriteAsync(poi));
-            poiIdentifyCard.ClaimRequested += (s, poi) => Safe(ClaimAsync(poi));
-            poiIdentifyCard.ReportRequested += (s, poi) => Safe(ReportAsync(poi));
             UpdateAccountUi();
         }
 
@@ -346,13 +376,29 @@ namespace Hue_travel.Shell
         {
             UserInfo user = auth.CurrentUser;
             poiIdentifyCard.SignedIn = user != null;
+            navRail.GuestMode = user == null && session.IsGuest;
+            titleBar.SetUser(user != null ? user.DisplayName : session.IsGuest ? "Khách" : "");
             if (user == null)
             {
                 favoriteIds.Clear();
-                // Signing out or changing the password is handled by the panel's own events; anything else is a session that ended.
-                if (!accountPanel.IsLeaving) ReturnToSignIn("Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.");
+                poiIdentifyCard.RefreshAccountButtons();
+                // Signing out or changing the password is handled by the panel's own events; a chosen guest is not an expired
+                // session. Anything else is a session that ended.
+                if (!session.IsGuest && !accountPanel.IsLeaving) ReturnToSignIn("Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.");
+                return;
             }
+
+            Safe(LoadFavoritesAsync());
+            if (auth.MustChangePassword) ShowSidePanel(NavRail.Profile);   // a temporary password must be changed first
             poiIdentifyCard.RefreshAccountButtons();
+        }
+
+        // The reviews are open to everyone; a guest who presses "Viết đánh giá" is signed in first, then the write form opens.
+        private void OpenReviews(Poi poi)
+        {
+            bool wantsToWrite = ReviewsDialog.ShowFor(this, api, poi, auth.CurrentUser != null);
+            if (!wantsToWrite || auth.CurrentUser != null) return;
+            RunSignedIn("Đăng nhập để viết đánh giá", () => ReviewsDialog.ShowFor(this, api, poi, true));
         }
 
         // Runs a task nobody awaits (a button handler, an event) and turns its failure into a message instead of a crash.

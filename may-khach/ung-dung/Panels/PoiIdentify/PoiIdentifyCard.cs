@@ -230,7 +230,10 @@ namespace Hue_travel.Panels.PoiIdentify
             LayoutCard();
         }
 
-        /// <summary>Shows the favourite / claim / report buttons only to a signed-in user.</summary>
+        /// <summary>
+        /// True when somebody is signed in. The buttons are shown to guests too (pressing one asks them to sign in), so this
+        /// only decides whether the favourite star shows the saved state.
+        /// </summary>
         public bool SignedIn
         {
             get { return signedIn; }
@@ -239,10 +242,10 @@ namespace Hue_travel.Panels.PoiIdentify
 
         public void RefreshAccountButtons()
         {
-            bool visible = signedIn && shown != null;
+            bool visible = shown != null;
             btnFavorite.Visible = btnClaim.Visible = btnReport.Visible = visible;
             if (!visible) return;
-            bool favorite = FavoriteIds != null && FavoriteIds.Contains(shown.Id);
+            bool favorite = signedIn && FavoriteIds != null && FavoriteIds.Contains(shown.Id);
             btnFavorite.Text = favorite ? "Bỏ thích" : "Yêu thích";
             btnFavorite.IconColor = favorite ? ThemeColors.Amber600 : ThemeColors.Primary;
         }
@@ -269,7 +272,7 @@ namespace Hue_travel.Panels.PoiIdentify
             btnRoute.SetBounds(pad, top, width - pad * 2, Ui.S(48));
             int bottom = btnRoute.Bottom;
 
-            if (signedIn)
+            if (btnFavorite.Visible)
             {
                 int gap = Ui.S(8), buttonWidth = (width - pad * 2 - gap * 2) / 3, y = btnRoute.Bottom + Ui.S(10), height = Ui.S(38);
                 btnFavorite.SetBounds(pad, y, buttonWidth, height);

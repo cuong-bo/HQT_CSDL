@@ -41,7 +41,7 @@ namespace Hue_travel.Welcome
             new RectangleF(1050, 512, 398, 66),    // sign-in button
             new RectangleF(1050, 598, 398, 30),    // "or" divider
             new RectangleF(1050, 642, 398, 66),    // register button
-            new RectangleF(1086, 774, 400, 36),    // footer text
+            new RectangleF(1030, 750, 448, 94),    // guest choice, message and footer
         };
 
         private readonly AppSession session;
@@ -64,11 +64,17 @@ namespace Hue_travel.Welcome
         private readonly IconButton btnPlaces = new IconButton();
         private readonly IconButton btnPrimary = new IconButton();
         private readonly IconButton btnSecondary = new IconButton();
+        private readonly IconButton btnGuest = new IconButton();
         private readonly IconButton btnMinimize = new IconButton();
         private readonly IconButton btnMaximize = new IconButton();
         private readonly IconButton btnClose = new IconButton();
 
         private const int MaxOwnerPlaces = 5;
+
+        // Why the form was opened over the map (a guest pressed something that needs an account), or null at start-up.
+        private readonly string reason;
+
+        private bool InAppDialog => !string.IsNullOrEmpty(reason);
 
         private Mode mode;
         private bool busy;
@@ -86,13 +92,22 @@ namespace Hue_travel.Welcome
         [DllImport("user32.dll")]
         private static extern int SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
 
-        public LoginForm(AppSession session)
+        public LoginForm(AppSession session) : this(session, null)
+        {
+        }
+
+        /// <param name="reason">
+        /// Given when a guest pressed something that needs an account: the same sign-in form opens as a dialog over the map, says
+        /// why, and "Quay lại bản đồ" (or Esc) goes back without closing the main window. Null at start-up.
+        /// </param>
+        public LoginForm(AppSession session, string reason)
         {
             this.session = session;
-            Text = "Hue Travel";
+            this.reason = reason;
+            Text = InAppDialog ? "Hue Travel — Đăng nhập" : "Hue Travel";
             Icon = AppImages.AppIcon();
             FormBorderStyle = FormBorderStyle.None;
-            StartPosition = FormStartPosition.CenterScreen;
+            StartPosition = InAppDialog ? FormStartPosition.CenterParent : FormStartPosition.CenterScreen;
             AutoScaleMode = AutoScaleMode.None;
             KeyPreview = true;
             BackColor = ThemeColors.Slate100;
@@ -104,6 +119,13 @@ namespace Hue_travel.Welcome
             ClientSize = new Size(width, (int)Math.Round(width * ImageHeight / ImageWidth));   // the restored (not maximised) size
             MaximizedBounds = area;                                                              // a borderless window must not cover the taskbar
             WindowState = FormWindowState.Maximized;
+            if (InAppDialog)
+            {
+                // A dialog-sized window over the map, not another full-screen sign-in: the map stays visible around it.
+                width = Math.Min(Ui.S(1000), area.Width - Ui.S(80));
+                ClientSize = new Size(width, (int)Math.Round(width * ImageHeight / ImageWidth));
+                WindowState = FormWindowState.Normal;
+            }
 
             BuildControls();
             SetMode(session.IsOnline ? Mode.Login : Mode.Offline);
@@ -186,6 +208,7 @@ namespace Hue_travel.Welcome
 
             StyleButton(btnPrimary, true);
             StyleButton(btnSecondary, false);
+            StyleButton(btnGuest, false);
             StyleChoice(btnTypeUser, "Người dùng", "account_circle", true);
             StyleChoice(btnTypeOwner, "Chủ quản địa điểm", "pin_drop", false);
             StyleChoice(btnPlaces, "Chọn địa điểm bạn quản lý", "add", false);
@@ -194,6 +217,12 @@ namespace Hue_travel.Welcome
             btnPlaces.Click += (s, e) => ChoosePlaces();
             btnPrimary.Click += async (s, e) => await PrimaryAsync();
             btnSecondary.Click += (s, e) => SetMode(mode == Mode.Login ? Mode.Register : Mode.Login);
+            btnGuest.Click += (s, e) =>
+            {
+                if (InAppDialog) { DialogResult = DialogResult.Cancel; return; }   // back to the map, still a guest
+                session.IsGuest = true;
+                DialogResult = DialogResult.OK;
+            };
 
             // Window buttons like the main window's title bar (minimise, maximise / restore, close).
             StyleWindowButton(btnMinimize, "minimize", false);
@@ -202,11 +231,12 @@ namespace Hue_travel.Welcome
             btnMinimize.Click += (s, e) => WindowState = FormWindowState.Minimized;
             btnMaximize.Click += (s, e) => ToggleMaximize();
             btnClose.Click += (s, e) => DialogResult = DialogResult.Cancel;
+            new ToolTip().SetToolTip(btnClose, InAppDialog ? "Quay lại bản đồ" : "Đóng");
 
             Control[] all =
             {
                 lblTitle, lblSubtitle, lblFooter, lblMessage, lblInfo, lnkForgot, chkRemember, fieldName, fieldUser, fieldPass, fieldPass2,
-                btnTypeUser, btnTypeOwner, btnPlaces, btnPrimary, btnSecondary, btnMinimize, btnMaximize, btnClose,
+                btnTypeUser, btnTypeOwner, btnPlaces, btnPrimary, btnSecondary, btnGuest, btnMinimize, btnMaximize, btnClose,
             };
             foreach (Control c in all) Controls.Add(c);
         }
@@ -351,6 +381,7 @@ namespace Hue_travel.Welcome
             chkRemember.Font = ThemeFonts.Medium(FontPx(17));
             foreach (AuthField f in new[] { fieldName, fieldUser, fieldPass, fieldPass2 }) f.Font = field;
             btnPrimary.Font = btnSecondary.Font = button;
+            btnGuest.Font = ThemeFonts.SemiBold(FontPx(19));
             btnTypeUser.Font = btnTypeOwner.Font = btnPlaces.Font = ThemeFonts.SemiBold(FontPx(19));
             ApplyModeLayout();
         }
@@ -359,6 +390,7 @@ namespace Hue_travel.Welcome
         {
             lblTitle.Bounds = R(1054, 160, 400, 70);
             lblFooter.TextAlign = mode == Mode.Login ? ContentAlignment.MiddleLeft : ContentAlignment.MiddleCenter;
+            if (InAppDialog) btnGuest.Bounds = R(40, 40, 260, 50);
             if (mode == Mode.Login)
             {
                 lblSubtitle.Bounds = R(1054, 236, 400, 36);
@@ -370,6 +402,13 @@ namespace Hue_travel.Welcome
                 btnSecondary.Bounds = R(1054, 647, 392, 54);
                 lblMessage.Bounds = R(1030, 708, 440, 62);
                 lblFooter.Bounds = R(1088, 778, 396, 32);
+                if (!InAppDialog)
+                {
+                    // The guest choice sits under "Đăng ký"; the message and footer move down to make room.
+                    btnGuest.Bounds = R(1054, 710, 392, 42);
+                    lblMessage.Bounds = R(1030, 758, 440, 44);
+                    lblFooter.Bounds = R(1088, 804, 396, 30);
+                }
             }
             else if (mode == Mode.Register)
             {
@@ -419,7 +458,7 @@ namespace Hue_travel.Welcome
         private void SetMode(Mode next)
         {
             mode = next;
-            ShowMessage(null, false);
+            ShowMessage(InAppDialog ? reason : null, false);
             bool login = next == Mode.Login, register = next == Mode.Register;
             lblSubtitle.Visible = lblTitle.Visible = lblFooter.Visible = true;
             fieldUser.Visible = fieldPass.Visible = login || register;
@@ -429,6 +468,10 @@ namespace Hue_travel.Welcome
             chkRemember.Visible = lnkForgot.Visible = login;
             btnPrimary.Visible = true;
             btnSecondary.Visible = login || register;
+            // At start-up the guest choice is offered on the sign-in page; inside the app it is always "back to the map" instead.
+            btnGuest.Visible = session.IsOnline && (InAppDialog || login);
+            btnGuest.Text = InAppDialog ? "Quay lại bản đồ" : "Dùng thử không cần tài khoản";
+            btnGuest.IconName = InAppDialog ? "arrow_back" : "explore";
             lblInfo.Visible = next == Mode.Offline;
 
             if (login)
@@ -470,7 +513,7 @@ namespace Hue_travel.Welcome
         {
             busy = value;
             foreach (AuthField f in new[] { fieldName, fieldUser, fieldPass, fieldPass2 }) f.Enabled = !value;
-            chkRemember.Enabled = btnSecondary.Enabled = btnPrimary.Enabled = !value;
+            chkRemember.Enabled = btnSecondary.Enabled = btnPrimary.Enabled = btnGuest.Enabled = !value;
             btnTypeUser.Enabled = btnTypeOwner.Enabled = btnPlaces.Enabled = !value;
             if (value) { btnPrimary.Text = text; btnPrimary.TrailingIconName = ""; }
             else
@@ -486,6 +529,13 @@ namespace Hue_travel.Welcome
         {
             base.OnShown(e);
             if (mode == Mode.Offline) return;
+            if (InAppDialog)
+            {
+                // Opened because a guest pressed something that needs an account: explain, and wait for sign-in or "back".
+                ShowMessage(reason, false);
+                if (mode == Mode.Login) fieldUser.FocusInput();
+                return;
+            }
             if (!string.IsNullOrEmpty(session.Notice)) ShowMessage(session.Notice, false);
 
             // A remembered session goes straight in.
@@ -494,6 +544,7 @@ namespace Hue_travel.Welcome
             {
                 if (await session.Auth.RestoreAsync())
                 {
+                    session.IsGuest = false;
                     if (!IsDisposed) DialogResult = DialogResult.OK;
                     return;
                 }
@@ -531,6 +582,7 @@ namespace Hue_travel.Welcome
             if (IsDisposed) return;
             SetBusy(false);
             if (error != null) { ShowMessage(error, true); return; }
+            session.IsGuest = false;
             fieldPass.Text = "";
             DialogResult = DialogResult.OK;
         }
@@ -556,6 +608,7 @@ namespace Hue_travel.Welcome
             if (IsDisposed) return;
             SetBusy(false);
             if (error != null) { ShowMessage(error, true); return; }
+            session.IsGuest = false;
             DialogResult = DialogResult.OK;
         }
 

@@ -14,6 +14,7 @@ namespace Hue_travel.Shell
         private System.Windows.Forms.TextBox txtSearch;
         private System.Windows.Forms.Label lblSearchHint;
         private IconButton btnClearSearch;
+        private System.Windows.Forms.Label lblUser;
         private IconButton btnMinimize;
         private IconButton btnMaximize;
         private IconButton btnClose;
@@ -35,6 +36,7 @@ namespace Hue_travel.Shell
             this.txtSearch = new System.Windows.Forms.TextBox();
             this.lblSearchHint = new System.Windows.Forms.Label();
             this.btnClearSearch = new IconButton();
+            this.lblUser = new System.Windows.Forms.Label();
             this.btnMinimize = new IconButton();
             this.btnMaximize = new IconButton();
             this.btnClose = new IconButton();
@@ -125,6 +127,19 @@ namespace Hue_travel.Shell
             this.boxSearch.Controls.Add(this.txtSearch);
             this.boxSearch.Controls.Add(this.btnClearSearch);
 
+            // Who is using the app: "Khách" or the signed-in person's name, left of the window buttons.
+            this.lblUser.AutoSize = false;
+            this.lblUser.Size = new System.Drawing.Size(160, 22);
+            this.lblUser.Text = string.Empty;
+            this.lblUser.Visible = false;
+            this.lblUser.UseMnemonic = false;
+            this.lblUser.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.lblUser.AutoEllipsis = true;
+            this.lblUser.Font = ThemeFonts.SemiBold(12);
+            this.lblUser.ForeColor = ThemeColors.Slate600;
+            this.lblUser.BackColor = System.Drawing.Color.Transparent;
+            this.lblUser.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+
             // Right group, positions refined by TitleBar.LayoutRightGroup() from real text widths.
             this.btnClose.AutoWidth = false;
             this.btnClose.Size = new System.Drawing.Size(48, 55);
@@ -169,6 +184,7 @@ namespace Hue_travel.Shell
             this.panelRoot.Controls.Add(this.picLogo);
             this.panelRoot.Controls.Add(this.lblLogo);
             this.panelRoot.Controls.Add(this.boxSearch);
+            this.panelRoot.Controls.Add(this.lblUser);
             this.panelRoot.Controls.Add(this.btnMinimize);
             this.panelRoot.Controls.Add(this.btnMaximize);
             this.panelRoot.Controls.Add(this.btnClose);

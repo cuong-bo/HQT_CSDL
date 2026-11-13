@@ -102,6 +102,11 @@ may-khach\ung-dung\bin\Debug\Hue_travel.exe
 `ApiBaseUrl` trong `Hue_travel.exe.config`. Không có địa chỉ nào thì ứng dụng chạy **ngoại tuyến** (xem bản đồ và địa điểm; không
 đăng nhập, không tìm đường).
 
+Khi có máy chủ, màn hình đầu cho chọn **Đăng nhập**, **Đăng ký** hoặc **Dùng thử không cần tài khoản**. Khách xem bản đồ, tìm
+kiếm, đọc đánh giá, xem thời tiết và lập lộ trình; các việc cần tài khoản (yêu thích, viết đánh giá, báo sai, nhận quản lý, hồ sơ)
+vẫn hiện nút, bấm vào thì form đăng nhập mở ngay trên bản đồ rồi làm tiếp việc vừa chọn. Máy chủ vẫn là nơi chặn quyền: không có
+token thì các điểm truy cập cần đăng nhập trả 401.
+
 Tài khoản quản trị đầu tiên: đăng ký trong ứng dụng rồi cấp quyền một lần bằng SQL (xem [may-chu/HUONG-DAN-CAI-DAT.md](may-chu/HUONG-DAN-CAI-DAT.md), mục 8).
 
 ## Nguồn và ghi công

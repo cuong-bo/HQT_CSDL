@@ -32,6 +32,7 @@ namespace Hue_travel
 
             while (true)
             {
+                session.IsGuest = false;
                 using (var login = new LoginForm(session))
                 {
                     if (login.ShowDialog() != DialogResult.OK) return;

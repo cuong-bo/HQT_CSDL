@@ -33,8 +33,22 @@ namespace Hue_travel.Shell
         private int activeIndex = -1;
         private int hoverIndex = -1;
         private int tipIndex = -1;
+        private bool guestMode;
 
         public event EventHandler<int> ItemClicked;
+
+        /// <summary>When true (a guest, no account) the last tab reads "Đăng nhập" instead of "Hồ sơ".</summary>
+        public bool GuestMode
+        {
+            get { return guestMode; }
+            set { if (guestMode == value) return; guestMode = value; Invalidate(); }
+        }
+
+        private string LabelOf(int index) => index == Profile && guestMode ? "Đăng nhập" : Labels[index];
+
+        private string IconOf(int index) => index == Profile && guestMode ? "login" : Icons[index];
+
+        private string TipOf(int index) => index == Profile && guestMode ? "Đăng nhập hoặc đăng ký để dùng hồ sơ" : Tips[index];
 
         public NavRail()
         {
@@ -77,7 +91,7 @@ namespace Hue_travel.Shell
                 if (index != tipIndex)
                 {
                     tipIndex = index;
-                    tooltip.SetToolTip(this, index >= 0 ? Tips[index] : "");
+                    tooltip.SetToolTip(this, index >= 0 ? TipOf(index) : "");
                 }
                 Invalidate();
             }
@@ -163,10 +177,10 @@ namespace Hue_travel.Shell
                 int sink = press.SinkFor(i);
                 Color iconColor = active ? ThemeColors.Primary : ThemeColors.Slate600;
                 int iconPx = Ui.S(IconSize);
-                g.DrawImage(IconFont.Get(Icons[i], iconPx, iconColor), pill.X + (pill.Width - iconPx) / 2, pill.Y + (pill.Height - iconPx) / 2 + sink, iconPx, iconPx);
+                g.DrawImage(IconFont.Get(IconOf(i), iconPx, iconColor), pill.X + (pill.Width - iconPx) / 2, pill.Y + (pill.Height - iconPx) / 2 + sink, iconPx, iconPx);
 
                 var labelBounds = new Rectangle(0, pill.Bottom + Ui.S(4) + sink, item.Width, Ui.S(18));
-                TextRenderer.DrawText(g, Labels[i], active ? ThemeFonts.Bold(11) : ThemeFonts.Medium(11), labelBounds,
+                TextRenderer.DrawText(g, LabelOf(i), active ? ThemeFonts.Bold(11) : ThemeFonts.Medium(11), labelBounds,
                     active ? ThemeColors.Primary : ThemeColors.Slate700,
                     TextFormatFlags.HorizontalCenter | TextFormatFlags.Top | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine);
             }

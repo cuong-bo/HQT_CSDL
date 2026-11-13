@@ -28,9 +28,15 @@ Máy chủ cài riêng, xem [../may-chu/HUONG-DAN-CAI-DAT.md](../may-chu/HUONG-D
 Bộ cài đã gồm ứng dụng, thành phần bản đồ **MapWinGIS** (tự đăng ký) và dữ liệu bản đồ; không cần cài gì thêm.
 
 ### A3. Lần đầu mở ứng dụng
-1. Màn hình **đăng nhập**: đăng ký tài khoản mới hoặc đăng nhập. Bấm **"Tiếp tục ngoại tuyến"** nếu chỉ muốn xem bản đồ.
-2. Bản đồ hiện sau vài giây. Thanh bên trái: Khám phá, Lộ trình, Hướng dẫn, Hồ sơ.
-3. **Lộ trình**: chọn điểm bắt đầu (bấm *Gợi ý điểm bắt đầu* hoặc *Chọn trên bản đồ*), thêm các điểm đến, bấm **Tìm đường**.
+1. Màn hình **đăng nhập** có ba lựa chọn: **Đăng nhập**, **Đăng ký**, **Dùng thử không cần tài khoản**. Chưa cấu hình máy chủ
+   thì chỉ có nút **Tiếp tục ngoại tuyến**.
+2. Bản đồ hiện sau vài giây. Thanh bên trái: Khám phá, Lộ trình, Hướng dẫn, Hồ sơ (khách thấy **Đăng nhập** ở mục cuối).
+3. **Khách** (không cần tài khoản) xem bản đồ, tìm kiếm, lọc nhóm, mở thẻ địa điểm, đọc đánh giá và thông báo, xem thời tiết,
+   đo khoảng cách/diện tích, lập lộ trình tới 12 điểm, xem tuyến và chạy xe mô phỏng.
+4. Các việc gắn với tài khoản vẫn hiện nút bình thường: **Yêu thích**, **Viết đánh giá**, **Báo sai**, **Nhận quản lý**, mục
+   **Hồ sơ**. Khách bấm vào thì form đăng nhập/đăng ký mở ngay trên bản đồ; đăng nhập xong ứng dụng làm tiếp đúng việc vừa
+   bấm, không mất địa điểm đang xem hay lộ trình đang dựng. Bấm **Quay lại bản đồ** (hoặc Esc) để tiếp tục là khách.
+5. **Lộ trình**: chọn điểm bắt đầu (bấm *Gợi ý điểm bắt đầu* hoặc *Chọn trên bản đồ*), thêm các điểm đến, bấm **Tìm đường**.
    Kết quả hiện ở khung giữa phía dưới bản đồ; xe chạy theo tuyến. Bấm **Dừng lại** để xóa kết quả.
 
 ### A4. Đổi địa chỉ máy chủ sau khi cài
