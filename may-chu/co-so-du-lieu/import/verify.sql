@@ -20,6 +20,11 @@ begin
     if n > 0 then raise exception 'poi: % stays are in another group', n; end if;
     select count(*) into n from poi where nhom = 'food';
     if n = 0 then raise notice 'poi: no food places yet (the food layer is missing from the data)'; end if;
+    -- V011: a plain "07:00-17:30" (with any dash) must have its two time columns filled.
+    select count(*) into n from poi
+    where gio_mo_cua ~ '^\s*\d{1,2}:\d{2}\s*[-–—]\s*\d{1,2}:\d{2}\s*$'
+      and (gio_mo is null or gio_dong is null);
+    if n > 0 then raise exception 'poi: % simple opening-hour ranges were not parsed', n; end if;
 
     select count(*) into n from geometry_columns where f_table_schema = 'public' and srid <> 3405;
     if n > 0 then raise exception '% geometry columns are not in SRID 3405', n; end if;
