@@ -177,7 +177,7 @@ namespace Hue_travel.Panels.RouteOptimizer
 
         private sealed class TitleRow : Control
         {
-            public string Distance = "", Duration = "", Note = "";
+            public string Distance = "", Duration = "", Clock = "", Note = "";
             public bool Estimate;
 
             public TitleRow()
@@ -202,6 +202,11 @@ namespace Hue_travel.Panels.RouteOptimizer
                 x += Pill(g, x, "straighten", Distance);
                 x += Ui.S(8);
                 x += Pill(g, x, "schedule", Duration);
+                if (!string.IsNullOrEmpty(Clock))
+                {
+                    x += Ui.S(8);
+                    x += Pill(g, x, "schedule", Clock);
+                }
                 x += Ui.S(14);
                 TextRenderer.DrawText(g, Note, ThemeFonts.Regular(12), new Rectangle(x, 0, Math.Max(0, Width - x), Height), Estimate ? ThemeColors.Amber700 : ThemeColors.Slate500,
                     TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
@@ -233,9 +238,18 @@ namespace Hue_travel.Panels.RouteOptimizer
         private readonly IconButton btnFit = new IconButton();
         private readonly IconButton btnSave = new IconButton();
         private readonly IconButton btnPrint = new IconButton();
+        private readonly IconButton btnSpeed1 = new IconButton();
+        private readonly IconButton btnSpeed2 = new IconButton();
+        private readonly IconButton btnSpeed4 = new IconButton();
+        private readonly IconButton btnSpeed8 = new IconButton();
+        private readonly IconButton[] speedButtons;
         private readonly IconButton btnStop = new IconButton();
         private TripPlan plan;
         private bool carPlaying;
+        private int speed = 1;
+
+        /// <summary>The speeds the result panel offers; the same list as the drawing uses.</summary>
+        private static readonly int[] Speeds = RouteDrawing.SpeedSteps;
 
         /// <summary>Raised when "Dừng lại" is pressed: the host clears the map and the route form.</summary>
         public event EventHandler StopRequested;
@@ -245,6 +259,9 @@ namespace Hue_travel.Panels.RouteOptimizer
         public event EventHandler PauseRequested;
         public event EventHandler ReplayRequested;
         public event EventHandler FitRequested;
+
+        /// <summary>The chosen simulation speed (1, 2, 4 or 8), for the map to apply.</summary>
+        public event EventHandler<int> SpeedRequested;
 
         /// <summary>Design size (96-DPI pixels) of the panel: a low bar to sit under the map.</summary>
         public const int DesignWidth = 760;
@@ -264,6 +281,14 @@ namespace Hue_travel.Panels.RouteOptimizer
             Style(btnFit, "Toàn tuyến", "route");
             Style(btnSave, "Lưu", "save_alt");
             Style(btnPrint, "In", "print");
+            speedButtons = new[] { btnSpeed1, btnSpeed2, btnSpeed4, btnSpeed8 };
+            for (int i = 0; i < speedButtons.Length; i++)
+            {
+                StyleSpeed(speedButtons[i], Speeds[i] + "×");
+                int value = Speeds[i];
+                speedButtons[i].Click += (s, e) => ChooseSpeed(value);
+            }
+            SetSpeed(Hue_travel.Properties.Settings.Default.TripSpeed);
             btnStop.AutoWidth = false;
             btnStop.Text = "Dừng lại";
             btnStop.IconName = "close";
@@ -278,7 +303,7 @@ namespace Hue_travel.Panels.RouteOptimizer
             new ToolTip().SetToolTip(btnFold, "Thu nhỏ thành biểu tượng");
             new ToolTip().SetToolTip(btnClose, "Dừng lại và xoá kết quả");
 
-            foreach (Control c in new Control[] { titleRow, btnFold, btnClose, legStrip, btnPlay, btnReplay, btnFit, btnSave, btnPrint, btnStop }) Controls.Add(c);
+            foreach (Control c in new Control[] { titleRow, btnFold, btnClose, legStrip, btnPlay, btnReplay, btnFit, btnSave, btnPrint, btnSpeed1, btnSpeed2, btnSpeed4, btnSpeed8, btnStop }) Controls.Add(c);
 
             btnFold.Click += (s, e) => Fold();
             btnClose.Click += (s, e) => StopRequested?.Invoke(this, EventArgs.Empty);
@@ -320,6 +345,47 @@ namespace Hue_travel.Panels.RouteOptimizer
             b.BorderColor = ThemeColors.Slate300;
         }
 
+        // One of the 1×/2×/4×/8× buttons: compact, with the chosen one filled in the brand colour.
+        private static void StyleSpeed(IconButton b, string text)
+        {
+            b.AutoWidth = false;
+            b.Text = text;
+            b.IconName = "";
+            b.HorizontalPadding = 0;
+            b.Font = ThemeFonts.SemiBold(11);
+            b.Radius = 8;
+            b.BorderColor = ThemeColors.Slate300;
+        }
+
+        private void ChooseSpeed(int value)
+        {
+            SetSpeed(value);
+            SpeedRequested?.Invoke(this, speed);
+        }
+
+        /// <summary>Marks one of the speeds as chosen (the map also reports the saved speed when a trip opens).</summary>
+        public void SetSpeed(int value)
+        {
+            speed = Array.IndexOf(Speeds, value) >= 0 ? value : 1;
+            for (int i = 0; i < speedButtons.Length; i++)
+            {
+                bool chosen = Speeds[i] == speed;
+                IconButton b = speedButtons[i];
+                b.FillColor = chosen ? ThemeColors.Primary : Color.White;
+                b.HoverFillColor = chosen ? ThemeColors.PrimaryContainer : ThemeColors.Slate100;
+                b.ForeColor = chosen ? Color.White : ThemeColors.Slate700;
+                b.BorderColor = chosen ? ThemeColors.Primary : ThemeColors.Slate300;
+                b.Invalidate();
+            }
+        }
+
+        /// <summary>Shows how much of the trip has run: "08:12 / 20:00".</summary>
+        public void SetProgress(double clockSeconds, double totalSeconds)
+        {
+            titleRow.Clock = FormatClock(clockSeconds) + " / " + FormatClock(totalSeconds);
+            titleRow.Invalidate();
+        }
+
         // ------------------------------------------------------------------ folding into the round button
 
         /// <summary>Hides the panel; the host shows its button on the map.</summary>
@@ -355,6 +421,8 @@ namespace Hue_travel.Panels.RouteOptimizer
                 : ShortName(trip.StartName) + "  →  " + trip.Stops.Count + " điểm đến" + (saved > 0 ? "  ·  tiết kiệm " + saved + " phút" : "");
             titleRow.Invalidate();
             legStrip.SetLegs(trip.Legs);
+            SetSpeed(Hue_travel.Properties.Settings.Default.TripSpeed);
+            SetProgress(0, trip.TotalSeconds);
             SetCarPlaying(true);
             LayoutAll();
         }
@@ -399,12 +467,22 @@ namespace Hue_travel.Panels.RouteOptimizer
             legStrip.SetBounds(pad, stripY, width - pad * 2, controlsY - Ui.S(10) - stripY);
 
             int x = pad;
-            int w1 = Ui.S(112), w2 = Ui.S(100), w3 = Ui.S(116), w4 = Ui.S(72), w5 = Ui.S(62);
+            int w1 = Ui.S(104), w2 = Ui.S(92), w3 = Ui.S(108), w4 = Ui.S(66), w5 = Ui.S(56);
             btnPlay.SetBounds(x, controlsY, w1, rowH); x += w1 + gap;
             btnReplay.SetBounds(x, controlsY, w2, rowH); x += w2 + gap;
             btnFit.SetBounds(x, controlsY, w3, rowH); x += w3 + gap;
             btnSave.SetBounds(x, controlsY, w4, rowH); x += w4 + gap;
-            btnPrint.SetBounds(x, controlsY, w5, rowH);
+            btnPrint.SetBounds(x, controlsY, w5, rowH); x += w5 + gap;
+
+            // 1× 2× 4× 8×: one group between "In" and "Dừng lại".
+            int speedWidth = Ui.S(22), speedHeight = Ui.S(28), speedGap = Ui.S(4);
+            int speedY = controlsY + (rowH - speedHeight) / 2;
+            for (int i = 0; i < speedButtons.Length; i++)
+            {
+                speedButtons[i].SetBounds(x, speedY, speedWidth, speedHeight);
+                x += speedWidth + speedGap;
+            }
+
             int stopW = Ui.S(120);
             btnStop.SetBounds(width - pad - stopW, controlsY, stopW, rowH);
         }
@@ -477,6 +555,14 @@ namespace Hue_travel.Panels.RouteOptimizer
         private static string ShortName(string name) => string.IsNullOrEmpty(name) ? "" : Regex.Replace(name, @"\s*\(.*\)\s*$", "");
 
         private static string FormatKm(double km) => km.ToString("0.0", CultureInfo.InvariantCulture) + " km";
+
+        // 75 -> "01:15", 3 725 -> "1:02:05"
+        private static string FormatClock(double seconds)
+        {
+            if (double.IsNaN(seconds) || double.IsInfinity(seconds) || seconds < 0) seconds = 0;
+            var time = TimeSpan.FromSeconds(seconds);
+            return time.TotalHours >= 1 ? time.ToString(@"h\:mm\:ss", CultureInfo.InvariantCulture) : time.ToString(@"mm\:ss", CultureInfo.InvariantCulture);
+        }
 
         private static string FormatMinutes(int minutes) =>
             minutes >= 60 ? (minutes / 60) + " giờ " + (minutes % 60) + " phút" : minutes + " phút";

@@ -25,5 +25,20 @@ namespace Hue_travel.Properties
                 return defaultInstance;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int TripSpeed
+        {
+            get
+            {
+                return ((int)(this["TripSpeed"]));
+            }
+            set
+            {
+                this["TripSpeed"] = value;
+            }
+        }
     }
 }

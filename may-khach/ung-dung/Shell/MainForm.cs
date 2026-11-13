@@ -201,6 +201,8 @@ namespace Hue_travel.Shell
                 ShowSidePanel(-1);                  // the route form closes ...
                 tripResultPanel.Open(trip);         // ... and the result opens, a low bar centred under the map
                 mapHost.ShowTrip(trip, true);
+                tripResultPanel.SetSpeed(mapHost.TripSpeed);
+                tripResultPanel.SetProgress(mapHost.TripClockSeconds, mapHost.TripTotalSeconds);
             };
             tripResultPanel.StopRequested += (s, e) =>
             {
@@ -217,8 +219,11 @@ namespace Hue_travel.Shell
             tripResultPanel.PauseRequested += (s, e) => mapHost.PauseTrip();
             tripResultPanel.ReplayRequested += (s, e) => mapHost.ReplayTrip();
             tripResultPanel.FitRequested += (s, e) => mapHost.ZoomToTrip();
+            tripResultPanel.SpeedRequested += (s, value) => mapHost.TripSpeed = value;
             mapHost.TripPlayStateChanged += (s, e) => tripResultPanel.SetCarPlaying(mapHost.TripPlaying);
             mapHost.TripLegChanged += (s, leg) => tripResultPanel.SetActiveLeg(leg);
+            mapHost.TripSpeedChanged += (s, e) => tripResultPanel.SetSpeed(mapHost.TripSpeed);
+            mapHost.TripProgress += (s, e) => tripResultPanel.SetProgress(mapHost.TripClockSeconds, mapHost.TripTotalSeconds);
             mapHost.PointPicked += (s, point) =>
             {
                 double longitude, latitude;

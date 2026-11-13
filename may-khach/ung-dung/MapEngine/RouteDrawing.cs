@@ -19,13 +19,14 @@ namespace Hue_travel.MapEngine
     /// </summary>
     internal sealed class RouteDrawing : IDisposable
     {
-        private const double MinSpeedMetresPerSecond = 120;     // a short trip is not a blink
-        private const double TripSeconds = 26;                  // a long trip is shown in about this time
         private const double FallbackMetresPerSecond = 8.3;     // about 30 km/h, when a leg comes without road times
         private const int FrameMs = 33;
         private const double DwellSeconds = 0.9;                // the car waits a moment at every stop
         private const int BadgeRadiusPixels = 14;
         private const double FollowMargin = 0.18;               // the map follows the car once it is this close to an edge
+
+        /// <summary>The speeds the simulation can run at; 1 is real time.</summary>
+        public static readonly int[] SpeedSteps = { 1, 2, 4, 8 };
 
         private readonly AxMap map;
         private readonly Func<int> lowestPlacePosition;
@@ -42,12 +43,14 @@ namespace Hue_travel.MapEngine
         private double travelled;
         private double[] elapsed = new double[0];    // real travel seconds on arrival at every point of the line
         private double totalElapsed;
-        private double tripClock;                    // real travel seconds the car has driven so far
-        private double clockScale;                   // real seconds that pass per second of the show
+        private double tripClock;                    // trip seconds the car has driven so far (no stop time)
         private double dwellLeft;
         private int legIndex;
+        private int speed = 1;
+        private int progressFrames;
         private bool playing;
         private double lastMetresPerPixel, lastBadgeMetresPerPixel;
+        private double lastDrawnTravelled = -1;
         private long lastTicks;
 
         /// <summary>Raised when the car enters another leg (the index of the leg).</summary>
@@ -58,6 +61,12 @@ namespace Hue_travel.MapEngine
 
         /// <summary>Raised when the car reaches the end of the trip.</summary>
         public event EventHandler Finished;
+
+        /// <summary>Raised a few times a second while the car runs, and whenever the clock jumps (start, stop, speed change).</summary>
+        public event EventHandler Progress;
+
+        /// <summary>Raised when the simulation speed changes.</summary>
+        public event EventHandler SpeedChanged;
 
         public RouteDrawing(AxMap map, Func<int> lowestPlacePosition)
         {
@@ -73,6 +82,26 @@ namespace Hue_travel.MapEngine
         public bool Follow { get; set; } = true;
 
         public int CurrentLeg => legIndex;
+
+        /// <summary>1 = real time, 2/4/8 = that many trip seconds per real second.</summary>
+        public int Speed
+        {
+            get { return speed; }
+            set
+            {
+                int next = Array.IndexOf(SpeedSteps, value) >= 0 ? value : 1;
+                if (speed == next) return;
+                speed = next;
+                SpeedChanged?.Invoke(this, EventArgs.Empty);
+                Progress?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+        /// <summary>How much of the trip has been driven, in trip seconds (stops not included).</summary>
+        public double TripClockSeconds => tripClock;
+
+        /// <summary>The whole trip's driving time in seconds, as the server estimated it.</summary>
+        public double TotalTripSeconds => totalElapsed;
 
         public void Dispose()
         {
@@ -115,6 +144,8 @@ namespace Hue_travel.MapEngine
             legEnds = new double[0];
             elapsed = new double[0];
             total = travelled = totalElapsed = tripClock = 0;
+            lastDrawnTravelled = -1;
+            progressFrames = 0;
             if (wasPlaying) PlayStateChanged?.Invoke(this, EventArgs.Empty);
             map.Redraw();
         }
@@ -152,9 +183,6 @@ namespace Hue_travel.MapEngine
                 for (int i = 0; i < elapsed.Length; i++) elapsed[i] = cumulative[i] / FallbackMetresPerSecond;
                 totalElapsed = total / FallbackMetresPerSecond;
             }
-            // The whole trip is shown in a fixed time (a short one is not a blink); real seconds are compressed to fit.
-            double shown = Math.Max(1, Math.Min(TripSeconds, total / MinSpeedMetresPerSecond));
-            clockScale = totalElapsed / shown;
         }
 
         // Without road times, a leg's own total time is spread over its points by distance.
@@ -331,10 +359,13 @@ namespace Hue_travel.MapEngine
             travelled = tripClock = 0;
             dwellLeft = 0;
             legIndex = 0;
+            progressFrames = 0;
             lastMetresPerPixel = 0;
+            lastDrawnTravelled = -1;
             DrawCar();
             map.Redraw2(tkRedrawType.RedrawSkipDataLayers);
             LegChanged?.Invoke(this, legIndex);
+            Progress?.Invoke(this, EventArgs.Empty);
         }
 
         private void SetPlaying(bool value)
@@ -353,6 +384,7 @@ namespace Hue_travel.MapEngine
             if (plan == null) return;
 
             bool moved = false;
+            bool finished = false;
             if (playing)
             {
                 if (dwellLeft > 0)
@@ -362,30 +394,42 @@ namespace Hue_travel.MapEngine
                 else
                 {
                     double before = travelled;
-                    tripClock = Math.Min(totalElapsed, tripClock + clockScale * dt);
+                    tripClock = Math.Min(totalElapsed, tripClock + speed * dt);
                     travelled = tripClock >= totalElapsed ? total : DistanceAt(tripClock);
                     moved = travelled != before;
                     int arrived = Array.FindIndex(legEnds, end => before < end - 0.001 && travelled >= end - 0.001);
                     if (travelled >= total)
                     {
+                        finished = true;
                         SetPlaying(false);
                         Finished?.Invoke(this, EventArgs.Empty);
                     }
                     else if (arrived >= 0)
                     {
-                        dwellLeft = DwellSeconds;
+                        // The stop is a pause in the show, not in the trip: it is shorter when the car runs faster.
+                        dwellLeft = DwellSeconds / Math.Min(speed, 4);
                     }
                     UpdateLeg();
                 }
             }
 
             double mpp = MetresPerPixel();
-            if (moved || Math.Abs(mpp - lastMetresPerPixel) > 1e-6)
+            bool zoomChanged = Math.Abs(mpp - lastMetresPerPixel) > 1e-6;
+            // At real time on a zoomed-out map the car moves less than a pixel per frame; draw only when it would show.
+            bool movedEnough = Math.Abs(travelled - lastDrawnTravelled) >= Math.Max(0.05, 0.5 * mpp);
+            if ((moved && (movedEnough || zoomChanged)) || finished)
             {
                 if (Math.Abs(mpp - lastBadgeMetresPerPixel) > 1e-6) DrawBadges();
                 DrawCar();
                 if (playing && Follow) FollowCar();
                 map.Redraw2(tkRedrawType.RedrawSkipDataLayers);
+            }
+
+            // The clock on the result panel needs about four updates a second, not one per frame.
+            if (playing && (moved || finished) && (++progressFrames >= 8 || finished))
+            {
+                progressFrames = 0;
+                Progress?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -425,6 +469,7 @@ namespace Hue_travel.MapEngine
         private void DrawCar()
         {
             if (plan == null) return;
+            lastDrawnTravelled = travelled;
             // A fresh drawing layer per frame, the previous one removed once the new one is there (no flicker).
             int previous = carDrawing;
             carDrawing = map.NewDrawing(tkDrawReferenceList.dlSpatiallyReferencedList);

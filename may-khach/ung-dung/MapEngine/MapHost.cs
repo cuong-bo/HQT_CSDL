@@ -31,6 +31,7 @@ namespace Hue_travel.MapEngine
         private readonly List<PoiMarker> markers = new List<PoiMarker>();
         private readonly LeftPressFilter pressFilter = new LeftPressFilter();
         private RouteDrawing routeDrawing;
+        private int tripSpeed = 1;
         private bool pickingPoint;
         private int placeholderHandle = -1;
         private HighlightRing highlightRing;
@@ -60,6 +61,8 @@ namespace Hue_travel.MapEngine
             stackZoom.BringToFront();
             compass.BringToFront();
             InitTripChip();
+            int savedSpeed = Hue_travel.Properties.Settings.Default.TripSpeed;
+            tripSpeed = Array.IndexOf(RouteDrawing.SpeedSteps, savedSpeed) >= 0 ? savedSpeed : 1;
             LayoutOverlays();
             Resize += (s, e) => LayoutOverlays();
             new ToolTip().SetToolTip(compass, "Khôi phục hướng Bắc");
@@ -423,12 +426,42 @@ namespace Hue_travel.MapEngine
         /// <summary>Raised when the car reaches the end of the trip.</summary>
         public event EventHandler TripFinished;
 
+        /// <summary>Raised a few times a second while the car runs, and at the start, the stops and the end.</summary>
+        public event EventHandler TripProgress;
+
+        /// <summary>Raised when the simulation speed changes (from the result panel or the saved setting).</summary>
+        public event EventHandler TripSpeedChanged;
+
         /// <summary>Raised with the clicked position (map metres) while <see cref="BeginPickPoint"/> is waiting for one.</summary>
         public event EventHandler<MapXY> PointPicked;
 
         public bool IsPickingPoint => pickingPoint;
 
         public bool TripPlaying => routeDrawing != null && routeDrawing.IsPlaying;
+
+        /// <summary>1 = real time, 2/4/8 = that many trip seconds per real second. Kept across trips and between runs.</summary>
+        public int TripSpeed
+        {
+            get { return routeDrawing != null ? routeDrawing.Speed : tripSpeed; }
+            set
+            {
+                tripSpeed = Array.IndexOf(RouteDrawing.SpeedSteps, value) >= 0 ? value : 1;
+                if (routeDrawing != null) routeDrawing.Speed = tripSpeed;
+                try
+                {
+                    Hue_travel.Properties.Settings.Default.TripSpeed = tripSpeed;
+                    Hue_travel.Properties.Settings.Default.Save();
+                }
+                catch (System.Configuration.ConfigurationErrorsException)
+                {
+                    // A read-only settings file must not stop the simulation.
+                }
+            }
+        }
+
+        public double TripClockSeconds => routeDrawing != null ? routeDrawing.TripClockSeconds : 0;
+
+        public double TripTotalSeconds => routeDrawing != null ? routeDrawing.TotalTripSeconds : 0;
 
         /// <summary>Waits for the next click on the map and raises <see cref="PointPicked"/> with it (a crosshair shows meanwhile).</summary>
         public void BeginPickPoint()
@@ -474,6 +507,9 @@ namespace Hue_travel.MapEngine
             routeDrawing.LegChanged += (s, leg) => TripLegChanged?.Invoke(this, leg);
             routeDrawing.PlayStateChanged += (s, e) => TripPlayStateChanged?.Invoke(this, EventArgs.Empty);
             routeDrawing.Finished += (s, e) => TripFinished?.Invoke(this, EventArgs.Empty);
+            routeDrawing.Progress += (s, e) => TripProgress?.Invoke(this, EventArgs.Empty);
+            routeDrawing.SpeedChanged += (s, e) => TripSpeedChanged?.Invoke(this, EventArgs.Empty);
+            routeDrawing.Speed = tripSpeed;
             Disposed += (s, e) => routeDrawing.Dispose();
             return routeDrawing;
         }

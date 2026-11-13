@@ -86,6 +86,10 @@ Check 'utm' $cf.GetMethod('FormatUtm').Invoke($null, @([double]775116.47, [doubl
 Check 'degrees north-east' $cf.GetMethod('FormatDegrees').Invoke($null, @([double]107.5786, [double]16.4698)) ('16.4698' + $deg + 'N, 107.5786' + $deg + 'E')
 Check 'degrees south-west' $cf.GetMethod('FormatDegrees').Invoke($null, @([double]-70.25, [double]-33.5)) ('33.5000' + $deg + 'S, 70.2500' + $deg + 'W')
 
+# ---- RouteDrawing: the simulation runs at real time unless the user picks a faster speed
+$routeDrawingT = GetT 'Hue_travel.MapEngine.RouteDrawing'
+Check 'trip: four simulation speeds' ($routeDrawingT.GetField('SpeedSteps').GetValue($null) -join ',') '1,2,4,8'
+
 # ---- PoiLayerFilter (left rail: show only one kind of object)
 $catType = GetT 'Hue_travel.Models.PoiCategory'
 $heritage = [Enum]::Parse($catType, 'Heritage'); $food = [Enum]::Parse($catType, 'Food'); $stay = [Enum]::Parse($catType, 'Stay')
