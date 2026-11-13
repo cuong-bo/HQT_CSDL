@@ -67,6 +67,7 @@ namespace Hue_travel.Shell
         private AccountPanel accountPanel;
         private MapViewChangedEventArgs lastView;
         private bool openOnly;
+        private bool signingIn;
         private bool showDegrees = true; // degrees are the familiar format; click the read-out for UTM metres
         private MapCursorEventArgs lastCursor;
 
@@ -300,13 +301,27 @@ namespace Hue_travel.Shell
                 toast.ShowMessage("Cần kết nối máy chủ để đăng nhập.", ToastKind.Info);
                 return;
             }
-            using (var form = new LoginForm(session, reason))
+            if (IsHandleCreated && InvokeRequired)
             {
-                // "Quay lại bản đồ", Esc or the close button keeps the map and the guest exactly as they were.
-                if (form.ShowDialog(this) != DialogResult.OK || auth.CurrentUser == null) return;
+                BeginInvoke(new Action(() => RunSignedIn(reason, action)));
+                return;
             }
-            session.IsGuest = false;
-            action();
+            if (signingIn) return;   // a second 401 while the form is already open must not stack another one
+            signingIn = true;
+            try
+            {
+                using (var form = new LoginForm(session, reason))
+                {
+                    // "Quay lại bản đồ", Esc or the close button keeps the map and the guest exactly as they were.
+                    if (form.ShowDialog(this) != DialogResult.OK || auth.CurrentUser == null) return;
+                }
+                session.IsGuest = false;
+                action();
+            }
+            finally
+            {
+                signingIn = false;
+            }
         }
 
         // Back to the sign-in screen (signed out, password changed, or the session ended); Program.Main shows it again.
@@ -388,6 +403,7 @@ namespace Hue_travel.Shell
             accountPanel.LoggedOut += (s, e) => ReturnToSignIn(null);
             accountPanel.PasswordChanged += (s, e) => ReturnToSignIn("Đã đổi mật khẩu. Hãy đăng nhập lại bằng mật khẩu mới.");
             auth.Changed += (s, e) => UpdateAccountUi();
+            api.SignInRequired += (s, e) => RunSignedIn("Hãy đăng nhập để tiếp tục", () => { });
 
             UpdateAccountUi();
         }

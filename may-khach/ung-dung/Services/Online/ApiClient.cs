@@ -69,6 +69,9 @@ namespace Hue_travel.Services.Online
         /// <summary>Raised when the refresh token no longer works: the person has to sign in again.</summary>
         public event EventHandler SessionExpired;
 
+        /// <summary>Raised when a signed-in-only call is made with no session at all (an unguarded guest action).</summary>
+        public event EventHandler SignInRequired;
+
         public void SetTokens(string access, string refresh, bool persist)
         {
             AccessToken = access;
@@ -96,9 +99,15 @@ namespace Hue_travel.Services.Online
         public async Task<ApiResponse> SendAsync(HttpMethod method, string path, object body, CancellationToken ct = default(CancellationToken))
         {
             ApiResponse response = await SendOnceAsync(method, path, body, ct).ConfigureAwait(true);
-            bool canRefresh = response.StatusCode == 401 && !string.IsNullOrEmpty(RefreshToken)
-                              && !path.StartsWith("/v1/auth/", StringComparison.Ordinal);
-            if (!canRefresh) return response;
+            bool authPath = path.StartsWith("/v1/auth/", StringComparison.Ordinal);
+            bool canRefresh = response.StatusCode == 401 && !string.IsNullOrEmpty(RefreshToken) && !authPath;
+            if (!canRefresh)
+            {
+                // A guest pressed something that needs an account without the host catching it: ask them to sign in.
+                if (response.StatusCode == 401 && string.IsNullOrEmpty(RefreshToken) && !authPath && string.IsNullOrEmpty(AccessToken))
+                    SignInRequired?.Invoke(this, EventArgs.Empty);
+                return response;
+            }
             if (!await TryRefreshAsync(ct).ConfigureAwait(true)) return response;
             return await SendOnceAsync(method, path, body, ct).ConfigureAwait(true);
         }
