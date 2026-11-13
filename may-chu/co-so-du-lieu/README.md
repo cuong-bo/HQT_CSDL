@@ -52,4 +52,4 @@ select * from route_path('GT002', 'DL019');
 - `ranh_xa`: một xã có đỉnh lỗi chồng ra ngoài tỉnh; tổng diện tích xã lệch khoảng 116 km² so với tỉnh.
 - 16 điểm cách đường hơn 150 m (phần lớn ở núi, đầm phá, bờ biển); `poi_snap.xa_duong = true` cho các điểm này, tính tuyến
   nên cộng thêm đoạn đi bộ.
-- Lớp ẩm thực chưa có nên `nhom = 'food'` trống.
+- Nếu lần nạp nào thiếu lớp ẩm thực (`diemAnUong`), `verify.sql` chỉ cảnh báo và `nhom = 'food'` sẽ trống; bộ dữ liệu hiện tại đã có lớp này.
