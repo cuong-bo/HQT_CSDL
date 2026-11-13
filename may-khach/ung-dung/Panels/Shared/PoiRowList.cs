@@ -6,6 +6,7 @@ using System.Drawing.Imaging;
 using System.Windows.Forms;
 using Hue_travel.MapEngine;
 using Hue_travel.Models;
+using Hue_travel.Services.Hours;
 using Hue_travel.Theme;
 
 namespace Hue_travel.Panels.Shared
@@ -329,7 +330,20 @@ namespace Hue_travel.Panels.Shared
 
                 int textWidth = Math.Max(Ui.S(40), rightEdge - textLeft);
                 string subtitle = row.Subtitle ?? row.Poi.TypeLabel ?? row.Poi.Address ?? "";
-                TextRenderer.DrawText(g, row.Poi.Name ?? "", ThemeFonts.SemiBold(14), new Rectangle(textLeft, top + Ui.S(11) + sink, textWidth, Ui.S(20)),
+
+                // A small dot says whether the place is open now; unknown hours get no dot (the data may simply not say).
+                OpenStatus status = row.Poi.Schedule.StatusAt(OpeningSchedule.NowInVietnam);
+                int nameLeft = textLeft;
+                if (status.State != OpenState.Unknown)
+                {
+                    int dot = Ui.S(7);
+                    Color dotColor = status.State == OpenState.Closed ? ThemeColors.Red500
+                        : status.State == OpenState.ClosingSoon ? ThemeColors.Amber500 : ThemeColors.Emerald500;
+                    using (var brush = new SolidBrush(dim ? Color.FromArgb(90, dotColor) : dotColor))
+                        g.FillEllipse(brush, textLeft, top + Ui.S(18) + sink, dot, dot);
+                    nameLeft += dot + Ui.S(6);
+                }
+                TextRenderer.DrawText(g, row.Poi.Name ?? "", ThemeFonts.SemiBold(14), new Rectangle(nameLeft, top + Ui.S(11) + sink, Math.Max(Ui.S(30), rightEdge - nameLeft), Ui.S(20)),
                     dim ? ThemeColors.Slate400 : ThemeColors.Slate800, flags);
                 TextRenderer.DrawText(g, subtitle, ThemeFonts.Regular(12), new Rectangle(textLeft, top + Ui.S(33) + sink, textWidth, Ui.S(18)),
                     dim ? ThemeColors.Slate300 : ThemeColors.Slate500, flags);

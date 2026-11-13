@@ -178,6 +178,7 @@
     <Compile Include="MapEngine\MapCursorEventArgs.cs" />
     <Compile Include="Services\Area\SceneGeoreference.cs" />
     <Compile Include="Services\Area\DemoPlaces.cs" />
+    <Compile Include="Services\Hours\OpeningSchedule.cs" />
     <Compile Include="Services\Routing\GeoMath.cs" />
     <Compile Include="Services\Routing\GeoPoint.cs" />
     <Compile Include="Services\Routing\RoutePlan.cs" />

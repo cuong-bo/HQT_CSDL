@@ -38,6 +38,11 @@ Bộ cài đã gồm ứng dụng, thành phần bản đồ **MapWinGIS** (tự
    bấm, không mất địa điểm đang xem hay lộ trình đang dựng. Bấm **Quay lại bản đồ** (hoặc Esc) để tiếp tục là khách.
 5. **Lộ trình**: chọn điểm bắt đầu (bấm *Gợi ý điểm bắt đầu* hoặc *Chọn trên bản đồ*), thêm các điểm đến, bấm **Tìm đường**.
    Kết quả hiện ở khung giữa phía dưới bản đồ; xe chạy theo tuyến. Bấm **Dừng lại** để xóa kết quả.
+6. **Giờ mở cửa**: thẻ địa điểm và danh sách có chip *Đang mở*, *Sắp đóng*, *Đã đóng* (chữ gốc vẫn hiện đầy đủ). Nút lọc
+   **Đang mở cửa** trên thanh nhóm giữ cả địa điểm chưa rõ giờ. Trong lộ trình, chọn **Giờ khởi hành** (mặc định *Bây giờ*,
+   theo giờ Việt Nam) và bấm chip **Lưu …′** ở từng điểm để đổi thời gian lưu lại; kết quả hiện giờ đến/giờ rời và cảnh báo
+   nếu đến lúc địa điểm đã đóng.
+7. **Xe mô phỏng** chạy đúng thời gian ước tính của máy chủ; nút **1× 2× 4× 8×** đổi tốc độ, tốc độ được nhớ cho lần sau.
 
 ### A4. Đổi địa chỉ máy chủ sau khi cài
 Có ba cách, ứng dụng lấy theo thứ tự này (cách trên thắng cách dưới):

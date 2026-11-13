@@ -9,6 +9,7 @@ using Hue_travel.MapEngine;
 using Hue_travel.Models;
 using Hue_travel.Panels.Shared;
 using Hue_travel.Services.Data;
+using Hue_travel.Services.Hours;
 using Hue_travel.Theme;
 
 namespace Hue_travel.Panels.Explore
@@ -133,7 +134,20 @@ namespace Hue_travel.Panels.Explore
         private readonly PoiRowList list = new PoiRowList { Dock = DockStyle.Fill };
         private double xMin, yMin, xMax, yMax;
         private bool hasView;
+        private bool openOnly;
         private PoiCategory? filter;
+
+        /// <summary>Shows only places open now (unknown hours are kept); set by the filter bar.</summary>
+        public bool OpenOnly
+        {
+            get { return openOnly; }
+            set
+            {
+                if (openOnly == value) return;
+                openOnly = value;
+                Rebuild(true);
+            }
+        }
 
         /// <summary>Raised when a place in the list is clicked.</summary>
         public event EventHandler<Poi> PoiSelected;
@@ -174,8 +188,10 @@ namespace Hue_travel.Panels.Explore
         {
             if (!hasView) return;
             double cx = (xMin + xMax) / 2, cy = (yMin + yMax) / 2;
+            DateTime now = OpeningSchedule.NowInVietnam;
             var inView = PoiCatalog.All
                 .Where(p => (p.X != 0 || p.Y != 0) && p.X >= xMin && p.X <= xMax && p.Y >= yMin && p.Y <= yMax)
+                .Where(p => !openOnly || p.Schedule.StatusAt(now).State != OpenState.Closed)
                 .Select(p => new { Poi = p, Meters = Math.Sqrt((p.X - cx) * (p.X - cx) + (p.Y - cy) * (p.Y - cy)) })
                 .OrderBy(x => x.Meters).ToList();
 

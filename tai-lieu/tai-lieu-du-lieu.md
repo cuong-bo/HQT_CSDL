@@ -7,7 +7,7 @@ chưa có dữ liệu), `stay` (lưu trú), `service` (dịch vụ du lịch), `
 
 | Bảng | Nội dung |
 |---|---|
-| `poi` | một bảng chung cho 4 lớp điểm; `gio_mo_cua` và `gia_text` là chữ gốc, `gio_mo`, `gio_dong`, `gia_thap`, `gia_cao` là giá trị tách được (rỗng nếu chữ không theo mẫu); `status` (`visible` / `hidden` / `closed`), `version`, `updated_by`, `deleted_at` (xóa mềm) |
+| `poi` | một bảng chung cho 4 lớp điểm; `gio_mo_cua` và `gia_text` là chữ gốc, `gio_mo`, `gio_dong`, `gia_thap`, `gia_cao` là giá trị tách được (rỗng nếu chữ không theo mẫu); V011 chấp nhận cả gạch ngang dài `–`/`—` (dữ liệu ẩm thực); `status` (`visible` / `hidden` / `closed`), `version`, `updated_by`, `deleted_at` (xóa mềm) |
 | `poi_snap` | mỗi địa điểm bám vào đoạn đường gần nhất của mạng liên thông: `dist_m` (tới đường), `vertex_dist_m`, `xa_duong` (xa đường hơn 150 m) |
 | `hanh_chinh_diem` | 20 điểm hành chính |
 | `ranh_tinh`, `ranh_xa` | ranh giới tỉnh và 40 xã/phường (MultiPolygon hợp lệ) |
@@ -20,6 +20,8 @@ chưa có dữ liệu), `stay` (lưu trú), `service` (dịch vụ du lịch), `
 | `ways_vertices` | nút giao, `component`, `lien_thong` |
 
 Hàm: `route_cost_matrix(ids, by_time)` (tối đa 50 địa điểm), `route_path(từ, đến, by_time)`, `snap_poi(id)`.
+
+Giờ mở cửa: máy khách tự phân tích chữ tự do trong `poi.gio_mo_cua` (`may-khach/ung-dung/Services/Hours/OpeningSchedule.cs`) thành lịch theo tuần, kể cả dạng `T2–T6 08:00–22:00; T7–CN 08:00–23:00`, `Cả ngày` và khoảng qua đêm. Chữ không nhận dạng được coi là **chưa rõ**, không bao giờ bị báo là đã đóng.
 
 ## Tài khoản và vai trò
 

@@ -90,6 +90,45 @@ Check 'degrees south-west' $cf.GetMethod('FormatDegrees').Invoke($null, @([doubl
 $routeDrawingT = GetT 'Hue_travel.MapEngine.RouteDrawing'
 Check 'trip: four simulation speeds' ($routeDrawingT.GetField('SpeedSteps').GetValue($null) -join ',') '1,2,4,8'
 
+# ---- OpeningSchedule: free-text hours to a weekly schedule, in Vietnam time
+$hoursT = GetT 'Hue_travel.Services.Hours.OpeningSchedule'
+$parseHours = $hoursT.GetMethod('Parse')
+function Hours($text, $category) { $parseHours.Invoke($null, [object[]]@($text, $category)) }
+function State($schedule, $when) { $schedule.StatusAt([datetime]$when).State.ToString() }
+$simple = Hours '07:00-17:00' $heritage
+Check 'hours: 06:59 is closed' (State $simple '2026-11-10T06:59:00') 'Closed'
+Check 'hours: 07:00 is open' (State $simple '2026-11-10T07:00:00') 'Open'
+Check 'hours: 16:30 is closing soon' (State $simple '2026-11-10T16:30:00') 'ClosingSoon'
+Check 'hours: 17:00 is closed' (State $simple '2026-11-10T17:00:00') 'Closed'
+Check 'hours: the long dash is read too' (State (Hours '07:00–22:00' $food) '2026-11-10T21:00:00') 'ClosingSoon'
+Check 'hours: all day is always open' (State (Hours 'Cả ngày' $heritage) '2026-11-10T23:59:00') 'Open'
+Check 'hours: updating is unknown, not closed' (State (Hours 'Đang cập nhật' $service) '2026-11-10T09:00:00') 'Unknown'
+Check 'hours: a timetable is unknown' (State (Hours 'Không cố định; nên đi ban ngày' $scenery) '2026-11-10T09:00:00') 'Unknown'
+Check 'hours: garbage does not throw' (State (Hours 'abc' $food) '2026-11-10T09:00:00') 'Unknown'
+
+$groups = Hours 'T3-CN: 07:30-11:30; 13:00-17:00' $heritage
+Check 'hours: a Monday is outside T3-CN' (State $groups '2026-11-09T08:00:00') 'Closed'
+Check 'hours: Tuesday 08:00 is open' (State $groups '2026-11-10T08:00:00') 'Open'
+Check 'hours: Tuesday lunch is closed' (State $groups '2026-11-10T12:00:00') 'Closed'
+$week = Hours 'T2–T6 08:00–22:00; T7–CN 08:00–23:00' $food
+Check 'hours: Sunday 22:30 is still open' (State $week '2026-11-15T22:30:00') 'ClosingSoon'
+Check 'hours: Sunday 23:30 is closed' (State $week '2026-11-15T23:30:00') 'Closed'
+Check 'hours: a range past midnight is open at 01:00' (State (Hours '18:00-02:00' $food) '2026-11-11T01:00:00') 'ClosingSoon'
+Check 'hours: open from 07:00 has no closing time' (State (Hours 'Mở cửa từ 07:00' $service) '2026-11-10T23:00:00') 'Open'
+
+$stopListT = GetT 'Hue_travel.Panels.RouteOptimizer.StopList'
+$defaultStay = $stopListT.GetMethod('DefaultStayMinutes')
+$stayCatT = GetT 'Hue_travel.Models.PoiCategory'
+Check 'stay: a heritage place defaults to 60 minutes' $defaultStay.Invoke($null, @([Enum]::Parse($stayCatT, 'Heritage'))) '60'
+Check 'stay: a view defaults to 30 minutes' $defaultStay.Invoke($null, @([Enum]::Parse($stayCatT, 'Scenery'))) '30'
+Check 'stay: food defaults to 45 minutes' $defaultStay.Invoke($null, @([Enum]::Parse($stayCatT, 'Food'))) '45'
+Check 'stay: a hotel is a point to arrive at' $defaultStay.Invoke($null, @([Enum]::Parse($stayCatT, 'Stay'))) '0'
+
+$visit = $hoursT.GetMethod('IsOpenForVisit')
+Check 'hours: 16:30 plus 60 minutes does not fit' $visit.Invoke($simple, [object[]]@([datetime]'2026-11-10T16:30:00', [timespan]'01:00:00')) 'False'
+Check 'hours: 15:30 plus 60 minutes fits' $visit.Invoke($simple, [object[]]@([datetime]'2026-11-10T15:30:00', [timespan]'01:00:00')) 'True'
+Check 'hours: unknown hours allow any visit' $visit.Invoke((Hours 'Đang cập nhật' $food), [object[]]@([datetime]'2026-11-10T23:00:00', [timespan]'02:00:00')) 'True'
+
 # ---- PoiLayerFilter (left rail: show only one kind of object)
 $catType = GetT 'Hue_travel.Models.PoiCategory'
 $heritage = [Enum]::Parse($catType, 'Heritage'); $food = [Enum]::Parse($catType, 'Food'); $stay = [Enum]::Parse($catType, 'Stay')
@@ -160,7 +199,7 @@ $setT = [System.Collections.Generic.HashSet`1].MakeGenericType($catT)
 function MakePoi($name, $category) { $x = [Activator]::CreateInstance($poiT); $x.Name = $name; $x.Category = [Enum]::Parse($catT, $category); $x }
 $pois = [Activator]::CreateInstance($listT)
 foreach ($pair in @(@('Đại Nội Huế', 'Heritage'), @('Chùa Thiên Mụ', 'Heritage'), @('Bún bò Mụ Rơi', 'Food'), @('Khách sạn Sao', 'Stay'))) { $pois.Add((MakePoi $pair[0] $pair[1])) }
-$apply = (GetT 'Hue_travel.Panels.SearchPoi.PoiSearchFilter').GetMethod('Apply')
+$apply = (GetT 'Hue_travel.Panels.SearchPoi.PoiSearchFilter').GetMethods() | Where-Object { $_.Name -eq 'Apply' -and $_.GetParameters().Count -eq 3 }
 function Pick($keyword, [string[]]$cats) {
     $set = [Activator]::CreateInstance($setT)
     foreach ($c in $cats) { [void]$set.Add([Enum]::Parse($catT, $c)) }
@@ -323,13 +362,28 @@ $placeList = [Activator]::CreateInstance($listT)
 $place.Id = 'DL001'
 $placeList.Add($place)
 $farStart = [Activator]::CreateInstance($mapXyT, @([double]774900, [double]1821000))
-$plan = $tripT.GetMethod('FromOnline').Invoke($null, @($timed, 'Start', $farStart, $placeList, $null))
+$fromOnline = $tripT.GetMethods() | Where-Object { $_.Name -eq 'FromOnline' -and $_.GetParameters().Count -eq 5 }
+$plan = $fromOnline.Invoke($null, @($timed, 'Start', $farStart, $placeList, $null))
 $tripLeg = $plan.Legs[0]
 Check 'trip: times stay as long as the line (start and stop joined on)' "$($tripLeg.Times.Count)|$($tripLeg.Path.Count)" "$($tripLeg.Path.Count)|$($tripLeg.Path.Count)"
 Check 'trip: joined start has time 0' $tripLeg.Times[0] '0'
 Check 'trip: times never go back' ((@(1..($tripLeg.Times.Count - 1) | Where-Object { $tripLeg.Times[$_] -lt $tripLeg.Times[$_ - 1] })).Count) '0'
 Check 'trip: last time is the leg time' $tripLeg.Times[$tripLeg.Times.Count - 1] '60'
-Check 'trip: no times from the server means none' (($tripT.GetMethod('FromOnline').Invoke($null, @($route, 'Start', $farStart, $placeList, $null))).Legs.Count -ge 0) 'True'
+Check 'trip: no times from the server means none' (($fromOnline.Invoke($null, @($route, 'Start', $farStart, $placeList, $null))).Legs.Count -ge 0) 'True'
+
+# departure time, stay at the stop and the opening-hours warning
+$fromOnlineTimed = $tripT.GetMethods() | Where-Object { $_.Name -eq 'FromOnline' -and $_.GetParameters().Count -eq 7 }
+$place.OpeningHours = '07:00-17:00'
+$place.Category = $heritage
+$stayList = [int[]]@(60)
+$late = $fromOnlineTimed.Invoke($null, @($timed, 'Start', $farStart, $placeList, $null, [datetime]'2026-11-10T16:30:00', $stayList))
+Check 'trip: arrival at 16:31' $late.Legs[0].ArriveAt.ToString('HH:mm') '16:31'
+Check 'trip: leaving at 17:31' $late.Legs[0].LeaveAt.ToString('HH:mm') '17:31'
+Check 'trip: the stay is remembered' $late.Legs[0].StayMinutes '60'
+Check 'trip: a visit past closing time is flagged' $late.Legs[0].HoursWarning 'True'
+Check 'trip: the place is closing soon at arrival' $late.Legs[0].OpenState.ToString() 'ClosingSoon'
+$early = $fromOnlineTimed.Invoke($null, @($timed, 'Start', $farStart, $placeList, $null, [datetime]'2026-11-10T08:00:00', $stayList))
+Check 'trip: a morning visit fits' $early.Legs[0].HoursWarning 'False'
 
 $storeT = GetT ($online + 'TokenStore')
 $sessionPath = [string](Join-Path ([IO.Path]::GetTempPath()) ('session-' + [guid]::NewGuid().ToString('N') + '.dat'))

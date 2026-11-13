@@ -43,6 +43,8 @@ namespace Hue_travel.MapEngine
         private double travelled;
         private double[] elapsed = new double[0];    // real travel seconds on arrival at every point of the line
         private double totalElapsed;
+        private double totalStaySeconds;
+        private double stoppedSeconds;               // stay time of the stops already reached
         private double tripClock;                    // trip seconds the car has driven so far (no stop time)
         private double dwellLeft;
         private int legIndex;
@@ -103,6 +105,12 @@ namespace Hue_travel.MapEngine
         /// <summary>The whole trip's driving time in seconds, as the server estimated it.</summary>
         public double TotalTripSeconds => totalElapsed;
 
+        /// <summary>The trip clock including the planned stay at every stop already reached.</summary>
+        public double ClockSeconds => tripClock + stoppedSeconds;
+
+        /// <summary>The whole trip clock: driving time plus every planned stay.</summary>
+        public double TotalClockSeconds => totalElapsed + totalStaySeconds;
+
         public void Dispose()
         {
             frame.Dispose();
@@ -144,6 +152,7 @@ namespace Hue_travel.MapEngine
             legEnds = new double[0];
             elapsed = new double[0];
             total = travelled = totalElapsed = tripClock = 0;
+            totalStaySeconds = stoppedSeconds = 0;
             lastDrawnTravelled = -1;
             progressFrames = 0;
             if (wasPlaying) PlayStateChanged?.Invoke(this, EventArgs.Empty);
@@ -178,6 +187,7 @@ namespace Hue_travel.MapEngine
             elapsed = times.ToArray();
             for (int i = 1; i < elapsed.Length; i++) elapsed[i] = Math.Max(elapsed[i], elapsed[i - 1]);
             totalElapsed = elapsed.Length == 0 ? 0 : elapsed[elapsed.Length - 1];
+            totalStaySeconds = plan.Legs.Sum(l => Math.Max(0, l.StayMinutes) * 60.0);
             if (totalElapsed <= 0 && total > 0)
             {
                 for (int i = 0; i < elapsed.Length; i++) elapsed[i] = cumulative[i] / FallbackMetresPerSecond;
@@ -200,6 +210,9 @@ namespace Hue_travel.MapEngine
             }
             return result;
         }
+
+        private double StaySeconds(int leg) =>
+            plan != null && leg >= 0 && leg < plan.Legs.Count ? Math.Max(0, plan.Legs[leg].StayMinutes) * 60.0 : 0;
 
         // The distance along the line the car has covered after a given travel time.
         private double DistanceAt(double seconds)
@@ -356,7 +369,7 @@ namespace Hue_travel.MapEngine
 
         private void Restart()
         {
-            travelled = tripClock = 0;
+            travelled = tripClock = stoppedSeconds = 0;
             dwellLeft = 0;
             legIndex = 0;
             progressFrames = 0;
@@ -401,12 +414,15 @@ namespace Hue_travel.MapEngine
                     if (travelled >= total)
                     {
                         finished = true;
+                        if (plan.Legs.Count > 0) stoppedSeconds += StaySeconds(plan.Legs.Count - 1);
                         SetPlaying(false);
                         Finished?.Invoke(this, EventArgs.Empty);
                     }
                     else if (arrived >= 0)
                     {
-                        // The stop is a pause in the show, not in the trip: it is shorter when the car runs faster.
+                        // The stop is a pause in the show, not in the trip: it is shorter when the car runs faster. The simulated
+                        // clock jumps by the planned stay, so the next arrival time matches the itinerary.
+                        stoppedSeconds += StaySeconds(arrived);
                         dwellLeft = DwellSeconds / Math.Min(speed, 4);
                     }
                     UpdateLeg();

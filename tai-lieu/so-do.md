@@ -64,12 +64,14 @@ flowchart LR
     A --> A4["Công cụ: phóng/thu, kéo,<br/>nhận dạng, đo khoảng cách, đo diện tích"]
     A --> A5["Lớp dữ liệu, đổi bản đồ nền"]
     A --> A6["Thanh trạng thái: tên xã đang xem,<br/>tọa độ, tỉ lệ, thời tiết"]
+    A --> A7["Trạng thái mở cửa: đang mở, sắp đóng,<br/>đã đóng; lọc \"Đang mở cửa\""]
 
     B --> B1["Chọn điểm bắt đầu<br/>gợi ý từ danh sách, không gõ tọa độ"]
     B --> B2["Chọn các điểm cần đi"]
     B --> B3["Tìm thứ tự tối ưu<br/>theo thời gian hoặc quãng đường"]
-    B --> B4["Vẽ tuyến theo đường bộ thật<br/>xe chạy mô phỏng"]
+    B --> B4["Vẽ tuyến theo đường bộ thật<br/>xe chạy đúng thời gian, tua 1×/2×/4×/8×"]
     B --> B5["Lưu và mở lại lộ trình"]
+    B --> B6["Giờ khởi hành, thời gian lưu lại,<br/>giờ đến / giờ rời, cảnh báo đóng cửa"]
 
     C --> C1["Tour dựng sẵn: bấm là chạy"]
     C --> C2["Nội dung hướng dẫn<br/>viết sẵn trong ứng dụng"]
@@ -114,9 +116,10 @@ flowchart LR
 
 ## 3. Ai làm được gì
 
-Khi đã cấu hình địa chỉ máy chủ, ứng dụng yêu cầu đăng nhập hoặc đăng ký ngay khi mở. Chưa có địa chỉ máy chủ thì ứng dụng
-chạy **ngoại tuyến** (không có tài khoản, chỉ xem bản đồ và địa điểm đi kèm). Giao diện hiện đúng chức năng theo vai trò
-của tài khoản đang đăng nhập.
+Khi đã cấu hình địa chỉ máy chủ, màn hình đầu cho chọn **Đăng nhập**, **Đăng ký** hoặc **Dùng thử không cần tài khoản**
+(chế độ khách). Khách xem bản đồ, tìm kiếm, đọc đánh giá, xem thời tiết và lập lộ trình; việc cần tài khoản vẫn hiện nút, bấm
+vào thì form đăng nhập mở ngay trên bản đồ rồi làm tiếp việc vừa chọn. Chưa có địa chỉ máy chủ thì ứng dụng chạy **ngoại
+tuyến** (chỉ xem bản đồ và địa điểm đi kèm). Giao diện hiện đúng chức năng theo vai trò của tài khoản đang đăng nhập.
 
 | Chức năng | Người dùng | Chủ quản | Quản trị viên |
 |---|:-:|:-:|:-:|

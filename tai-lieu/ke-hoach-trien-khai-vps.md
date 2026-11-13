@@ -30,7 +30,8 @@ rồi được duyệt, hoặc quản trị viên tạo sẵn); một địa đi
 
 **Chưa làm hoặc còn rủi ro** (đã biết, chưa che hết):
 1. HTTP: mật khẩu và token đi dạng chữ thường (không che được bằng chữ ký). Phản hồi đã được ký ECDSA P-256 và app kiểm tra, nên dữ liệu bị sửa giữa đường sẽ bị từ chối; cần tạo cặp khóa và đặt khóa công khai vào app (`may-chu/VAN-HANH.md`).
-2. Bản đồ nền mặc định vẫn là Google qua HTTP, chỉ hợp để phát triển. Khi có nhà cung cấp hợp lệ, điền `TILE_URL_*` trong `may-chu/.env`: app đọc địa chỉ từ `GET /v1/config` lúc khởi động, không cần phát hành lại (`may-chu/VAN-HANH.md`). Chưa có nhà cung cấp nào được chọn.
+2. ~~Bản đồ nền mặc định vẫn là Google qua HTTP~~ — đã bỏ hẳn tile Google (13/11/2026): bản đồ nền chỉ vẽ từ dữ liệu của dự
+   án (`may-khach/ung-dung/MapEngine/LocalBaseMap.cs`), không còn địa chỉ tile trong mã hay trong `/v1/config`.
 3. Chưa cài bộ cài trên máy Windows sạch, chưa chạy `setup-vps.sh` trên Ubuntu thật, chưa chạy CI trên GitHub (các bước của CI đã được chạy lại bằng tay: dựng ảnh CSDL và áp 7 migration lên CSDL rỗng, test API, test app).
 4. Dữ liệu: lớp ẩm thực chưa có; 4 điểm ngoài ranh tỉnh; 1 xã có đỉnh lỗi; 16 điểm cách đường hơn 150 m (xem `may-chu/co-so-du-lieu/README.md`).
 5. Bảng tìm đường trong app có 4 hàng; nút "Thêm vào lộ trình" của một địa điểm bất kỳ đưa địa điểm đó vào hàng chưa chọn đầu tiên (hàng cuối nếu đã chọn hết). API hỗ trợ đến 12 điểm, bảng chưa cho thêm hàng thứ 5.

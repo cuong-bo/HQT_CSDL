@@ -67,8 +67,9 @@ Nếu quên chạy `pack`, máy khách chưa có bản đồ sẽ báo "Máy ch�
 (mục "Ký phản hồi"): máy khách có khóa công khai sẽ từ chối bản kê bị sửa, và bản kê chứa sha256 của gói nên gói giả cũng bị từ chối.
 
 **Cập nhật máy chủ trước khi dùng bản máy khách mới.** Bảng quản trị, ảnh địa điểm và "Đánh giá của tôi" cần máy chủ có
-migration V010 và API mới: sau `git pull`, chạy `scripts/deploy.sh update` rồi `scripts/deploy.sh import`. Máy chủ cũ trả 404/405 cho các
-trang này; ứng dụng sẽ báo "Máy chủ đang chạy bản cũ" thay vì hiện danh sách trống.
+migration V010; giờ mở cửa có dấu gạch ngang dài cần migration V011. Sau `git pull`, chạy `scripts/deploy.sh update` rồi
+`scripts/deploy.sh import`. Máy chủ cũ trả 404/405 cho các trang này; ứng dụng sẽ báo "Máy chủ đang chạy bản cũ" thay vì
+hiện danh sách trống.
 
 ## 4. Tài khoản quản trị đầu tiên
 

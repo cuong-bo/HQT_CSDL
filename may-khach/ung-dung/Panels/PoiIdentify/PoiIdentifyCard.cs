@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using Hue_travel.MapEngine;
 using Hue_travel.Models;
 using Hue_travel.Services.Data;
+using Hue_travel.Services.Hours;
 using Hue_travel.Theme;
 
 namespace Hue_travel.Panels.PoiIdentify
@@ -87,6 +88,7 @@ namespace Hue_travel.Panels.PoiIdentify
                 // facts: icon, a small caption and the value
                 y = Row(g, "pin_drop", "Địa chỉ", Clean(poi.Address), pad, inner, y);
                 y = Row(g, "schedule", HoursCaption(poi.Category), Clean(poi.OpeningHours), pad, inner, y);
+                if (poi.Category != PoiCategory.Stay) y = OpenStatusChip(g, poi, pad, inner, y);
                 y = Row(g, "sell", PriceCaption(poi.Category), Clean(poi.TicketPrice), pad, inner, y);
                 y = Row(g, "call", "Điện thoại", HasDigit(poi.Phone) ? Clean(poi.Phone) : null, pad, inner, y);
                 y = Row(g, "open_in_new", "Trang web", LooksLikeAddress(poi.Website) ? Clean(poi.Website) : null, pad, inner, y);
@@ -114,6 +116,58 @@ namespace Hue_travel.Panels.PoiIdentify
             {
                 if (string.IsNullOrWhiteSpace(text) || text.Contains(" ")) return false;
                 return text.StartsWith("http", StringComparison.OrdinalIgnoreCase) || text.StartsWith("www.", StringComparison.OrdinalIgnoreCase);
+            }
+
+            // The coloured "Đang mở · đóng lúc 17:00" chip under the original hours text; the free text stays visible above it.
+            private int OpenStatusChip(Graphics g, Poi poi, int pad, int inner, int y)
+            {
+                DateTime now = OpeningSchedule.NowInVietnam;
+                OpenStatus status = poi.Schedule.StatusAt(now);
+                string text;
+                Color fill, ink;
+                switch (status.State)
+                {
+                    case OpenState.Open:
+                        text = status.NextChange == null ? "Đang mở" : "Đang mở · đóng lúc " + status.NextChange.Value.ToString("HH:mm");
+                        fill = Color.FromArgb(28, ThemeColors.Emerald500); ink = ThemeColors.Emerald700;
+                        break;
+                    case OpenState.ClosingSoon:
+                        int minutes = status.NextChange == null ? 0 : Math.Max(1, (int)Math.Ceiling((status.NextChange.Value - now).TotalMinutes));
+                        text = "Sắp đóng · còn " + minutes + " phút";
+                        fill = ThemeColors.Amber100; ink = ThemeColors.Amber700;
+                        break;
+                    case OpenState.Closed:
+                        if (status.NextChange == null)
+                        {
+                            text = "Đã đóng cửa";
+                        }
+                        else
+                        {
+                            DateTime next = status.NextChange.Value;
+                            string day = next.Date == now.Date ? "" : next.Date == now.Date.AddDays(1) ? " mai" : " " + next.ToString("dd/MM");
+                            text = "Đã đóng · mở lại " + next.ToString("HH:mm") + day;
+                        }
+                        fill = Color.FromArgb(28, ThemeColors.Red500); ink = Color.FromArgb(185, 28, 28);
+                        break;
+                    default:
+                        text = "Chưa rõ giờ mở cửa";
+                        fill = ThemeColors.Slate100; ink = ThemeColors.Slate500;
+                        break;
+                }
+
+                Font font = ThemeFonts.SemiBold(11);
+                Size size = TextRenderer.MeasureText(text, font, Size.Empty, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine);
+                int left = pad + Ui.S(18) + Ui.S(12);
+                int width = Math.Min(inner - Ui.S(30), size.Width + Ui.S(20));
+                var chip = new Rectangle(left, y, width, Ui.S(24));
+                if (g != null)
+                {
+                    using (GraphicsPath path = Ui.RoundedRect(chip, chip.Height / 2f))
+                    using (var brush = new SolidBrush(fill)) g.FillPath(brush, path);
+                    TextRenderer.DrawText(g, text, font, chip, ink,
+                        TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
+                }
+                return chip.Bottom + Ui.S(8);
             }
 
             private int Row(Graphics g, string icon, string caption, string value, int pad, int inner, int y)

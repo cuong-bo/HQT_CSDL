@@ -390,7 +390,7 @@ namespace Hue_travel.Welcome
         {
             lblTitle.Bounds = R(1054, 160, 400, 70);
             lblFooter.TextAlign = mode == Mode.Login ? ContentAlignment.MiddleLeft : ContentAlignment.MiddleCenter;
-            if (InAppDialog) btnGuest.Bounds = R(40, 40, 260, 50);
+            if (InAppDialog || mode == Mode.Register) btnGuest.Bounds = R(40, 40, 260, 50);
             if (mode == Mode.Login)
             {
                 lblSubtitle.Bounds = R(1054, 236, 400, 36);
@@ -468,8 +468,9 @@ namespace Hue_travel.Welcome
             chkRemember.Visible = lnkForgot.Visible = login;
             btnPrimary.Visible = true;
             btnSecondary.Visible = login || register;
-            // At start-up the guest choice is offered on the sign-in page; inside the app it is always "back to the map" instead.
-            btnGuest.Visible = session.IsOnline && (InAppDialog || login);
+            // At start-up the guest choice is offered on both the sign-in and register pages; inside the app it is always
+            // "back to the map" instead.
+            btnGuest.Visible = session.IsOnline;
             btnGuest.Text = InAppDialog ? "Quay lại bản đồ" : "Dùng thử không cần tài khoản";
             btnGuest.IconName = InAppDialog ? "arrow_back" : "explore";
             lblInfo.Visible = next == Mode.Offline;

@@ -19,6 +19,7 @@ namespace Hue_travel.Shell
             public string Icon;
             public Color IconColor;
             public PoiCategory? Category;
+            public bool OpenOnly;
             public Rectangle Bounds;
         }
 
@@ -38,14 +39,19 @@ namespace Hue_travel.Shell
             new Chip { Label = "Lưu trú", Icon = "hotel", IconColor = ThemeColors.CategoryStay, Category = PoiCategory.Stay },
             new Chip { Label = "Dịch vụ", Icon = "support_agent", IconColor = ThemeColors.Emerald700, Category = PoiCategory.Service },
             new Chip { Label = "Giao thông", Icon = "train", IconColor = ThemeColors.Slate600, Category = PoiCategory.Transport },
+            new Chip { Label = "Đang mở cửa", Icon = "schedule", IconColor = ThemeColors.Emerald700, OpenOnly = true },
         };
 
         private readonly PressFeedback press;
         private int selectedIndex;
         private int hoverIndex = -1;
+        private bool openOnly;
 
         /// <summary>The picked kind of place; null means "Tất cả" (everything).</summary>
         public event EventHandler<PoiCategory?> CategorySelected;
+
+        /// <summary>The "Đang mở cửa" chip was switched on or off; it works together with the chosen category.</summary>
+        public event EventHandler<bool> OpenOnlyChanged;
 
         public FilterBar()
         {
@@ -127,6 +133,13 @@ namespace Hue_travel.Shell
             base.OnMouseClick(e);
             int index = IndexAt(e.Location);
             if (e.Button != MouseButtons.Left || index < 0) return;
+            if (chips[index].OpenOnly)
+            {
+                openOnly = !openOnly;
+                Invalidate();
+                OpenOnlyChanged?.Invoke(this, openOnly);
+                return;
+            }
             selectedIndex = index;
             Invalidate();
             CategorySelected?.Invoke(this, chips[index].Category);
@@ -148,7 +161,7 @@ namespace Hue_travel.Shell
             for (int i = 0; i < chips.Length; i++)
             {
                 Chip chip = chips[i];
-                bool selected = i == selectedIndex;
+                bool selected = chip.OpenOnly ? openOnly : i == selectedIndex;
                 Rectangle box = chip.Bounds;
                 var bounds = new RectangleF(box.X + 0.5f, box.Y + 0.5f, box.Width - 1f, box.Height - 1f);
 

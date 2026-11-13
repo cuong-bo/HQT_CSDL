@@ -1,7 +1,11 @@
-﻿namespace Hue_travel.Models
+﻿using Hue_travel.Services.Hours;
+
+namespace Hue_travel.Models
 {
     public sealed class Poi
     {
+        private OpeningSchedule schedule;
+
         public string Id { get; set; }
         public string Name { get; set; }
         public PoiCategory Category { get; set; }
@@ -23,5 +27,8 @@
         public double Y { get; set; }
 
         public bool HasLocation => Longitude != 0 || Latitude != 0;
+
+        /// <summary>The parsed opening hours (cached); unknown text answers "unknown", never "closed".</summary>
+        public OpeningSchedule Schedule => schedule ?? (schedule = OpeningSchedule.Parse(OpeningHours, Category));
     }
 }

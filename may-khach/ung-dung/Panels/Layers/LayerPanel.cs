@@ -7,6 +7,7 @@ using Hue_travel.MapEngine;
 using Hue_travel.Models;
 using Hue_travel.Panels.Shared;
 using Hue_travel.Services.Data;
+using Hue_travel.Services.Hours;
 using Hue_travel.Theme;
 
 namespace Hue_travel.Panels.Layers
@@ -26,7 +27,20 @@ namespace Hue_travel.Panels.Layers
         private readonly PoiRowList list = new PoiRowList { Dock = DockStyle.Fill, ShowSwitch = true };
         private readonly HashSet<string> hidden = new HashSet<string>();
         private PoiCategory? category;
+        private bool openOnly;
         private bool updatingSwitch;
+
+        /// <summary>Shows only places open now (unknown hours are kept); set by the filter bar.</summary>
+        public bool OpenOnly
+        {
+            get { return openOnly; }
+            set
+            {
+                if (openOnly == value) return;
+                openOnly = value;
+                Reload();
+            }
+        }
 
         /// <summary>Raised after any switch changed; <see cref="HiddenIds"/> then holds what the map must leave out.</summary>
         public event EventHandler HiddenChanged;
@@ -72,7 +86,10 @@ namespace Hue_travel.Panels.Layers
 
         public void Reload()
         {
-            IEnumerable<Poi> places = PoiCatalog.All.Where(p => (p.X != 0 || p.Y != 0) && (category == null || p.Category == category.Value));
+            DateTime now = OpeningSchedule.NowInVietnam;
+            IEnumerable<Poi> places = PoiCatalog.All
+                .Where(p => (p.X != 0 || p.Y != 0) && (category == null || p.Category == category.Value))
+                .Where(p => !openOnly || p.Schedule.StatusAt(now).State != OpenState.Closed);
             var rows = places.OrderBy(p => p.Category).ThenBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase)
                 .Select(p => new PoiRow(p) { On = !hidden.Contains(p.Id), Subtitle = SubtitleOf(p) }).ToList();
             list.EmptyText = "Chưa có địa điểm nào trong nhóm này.";

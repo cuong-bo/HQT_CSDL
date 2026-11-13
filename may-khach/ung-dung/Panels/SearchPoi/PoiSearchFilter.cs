@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Hue_travel.Models;
+using Hue_travel.Services.Hours;
 
 namespace Hue_travel.Panels.SearchPoi
 {
@@ -27,11 +29,26 @@ namespace Hue_travel.Panels.SearchPoi
         /// </summary>
         public static IReadOnlyList<Poi> Apply(IEnumerable<Poi> source, string keyword, IReadOnlyCollection<PoiCategory> categories)
         {
+            return Apply(source, keyword, categories, false);
+        }
+
+        /// <summary>
+        /// As above; <paramref name="openOnly"/> also drops the places the schedule says are certainly closed. A place whose
+        /// hours are unknown is kept: the app must not hide it merely because the source data does not say.
+        /// </summary>
+        public static IReadOnlyList<Poi> Apply(IEnumerable<Poi> source, string keyword, IReadOnlyCollection<PoiCategory> categories, bool openOnly)
+        {
             var query = source ?? Enumerable.Empty<Poi>();
 
             if (categories != null && categories.Count > 0)
             {
                 query = query.Where(p => categories.Contains(p.Category));
+            }
+
+            if (openOnly)
+            {
+                DateTime now = OpeningSchedule.NowInVietnam;
+                query = query.Where(p => p.Schedule.StatusAt(now).State != OpenState.Closed);
             }
 
             if (!string.IsNullOrWhiteSpace(keyword))

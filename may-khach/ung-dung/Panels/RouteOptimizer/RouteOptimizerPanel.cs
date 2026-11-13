@@ -16,6 +16,7 @@ using Hue_travel.Models;
 using Hue_travel.Panels.Shared;
 using Hue_travel.Panels.SearchPoi;
 using Hue_travel.Services.Data;
+using Hue_travel.Services.Hours;
 using Hue_travel.Services.Online;
 using Hue_travel.Services.Routing;
 using Hue_travel.Theme;
@@ -57,6 +58,15 @@ namespace Hue_travel.Panels.RouteOptimizer
         private readonly InputField suggestSearch = new InputField { IconName = "search", PlaceholderText = "Tìm điểm bắt đầu theo tên (ví dụ: ga, Đại Nội)…" };
         private readonly Label lblSuggestCount = Hint("");
         private readonly PoiRowList suggestList = new PoiRowList { StealFocus = false, EmptyText = "Không có địa điểm nào khớp." };
+
+        private readonly Label lblDepartTitle = Caption("Giờ khởi hành");
+        private readonly CheckBox chkDepartNow = new CheckBox { AutoSize = false, Text = "Bây giờ", Font = ThemeFonts.Regular(13), ForeColor = ThemeColors.Slate700, TextAlign = ContentAlignment.MiddleLeft };
+        private readonly DateTimePicker departAt = new DateTimePicker
+        {
+            Format = DateTimePickerFormat.Custom, CustomFormat = "HH:mm", ShowUpDown = true,
+            Font = ThemeFonts.Medium(13), Width = 100,
+        };
+        private readonly Label lblDepartHint = Hint("Giờ Việt Nam (UTC+7). Bỏ chọn \"Bây giờ\" để chọn giờ khác; thời gian lưu lại ở mỗi điểm bấm vào chip \"Lưu …′\" để đổi.");
 
         private readonly Label lblStopsTitle = Caption("Điểm đến");
         private readonly Label lblStopsCount = Hint("");
@@ -107,6 +117,7 @@ namespace Hue_travel.Panels.RouteOptimizer
             foreach (Control c in new Control[]
             {
                 lblStartTitle, startLabel, btnClearStart, lblStartHint, btnSuggest, btnPickOnMap, suggestSearch, lblSuggestCount, suggestList,
+                lblDepartTitle, chkDepartNow, departAt, lblDepartHint,
                 lblStopsTitle, lblStopsCount, stopList, btnAddStops, pickerSearch, lblPickerCount, pickerList,
                 btnAutoOrder, lblOrderHint, btnFind,
             }) body.Controls.Add(c);
@@ -119,6 +130,9 @@ namespace Hue_travel.Panels.RouteOptimizer
             Controls.Add(body);
             Controls.Add(header);
 
+            chkDepartNow.Checked = true;
+            departAt.Value = OpeningSchedule.NowInVietnam;
+            departAt.Enabled = false;
             WireEvents();
             ReloadSuggestions();
             ReloadPicker();
@@ -172,6 +186,8 @@ namespace Hue_travel.Panels.RouteOptimizer
             suggestOpen = pickerOpen = false;
             suggestSearch.Text = "";
             pickerSearch.Text = "";
+            chkDepartNow.Checked = true;
+            departAt.Value = OpeningSchedule.NowInVietnam;
             ShowStart();
             ReloadSuggestions();
             ReloadPicker();
@@ -230,6 +246,11 @@ namespace Hue_travel.Panels.RouteOptimizer
 
             stopList.MoveRequested += (s, move) => MoveStop(move.Key, move.Value);
             stopList.RemoveRequested += (s, index) => RemoveStop(index);
+            chkDepartNow.CheckedChanged += (s, e) =>
+            {
+                departAt.Enabled = !chkDepartNow.Checked;
+                if (chkDepartNow.Checked) departAt.Value = OpeningSchedule.NowInVietnam;
+            };
             btnAddStops.Click += (s, e) => { pickerOpen = !pickerOpen; if (pickerOpen) ReloadPicker(); LayoutAll(); if (pickerOpen) pickerSearch.FocusText(); };
             pickerSearch.TextChanged += (s, e) => ReloadPicker();
             pickerList.AddClicked += (s, row) => TogglePlace(row);
@@ -448,7 +469,10 @@ namespace Hue_travel.Panels.RouteOptimizer
                 Notify(answer.Error, ToastKind.Error);
                 return;
             }
-            RouteComputed?.Invoke(this, TripPlanner.FromOnline(answer.Value, from.Name, from.Point, places, null));
+            DateTime depart = chkDepartNow.Checked
+                ? OpeningSchedule.NowInVietnam
+                : OpeningSchedule.NowInVietnam.Date.Add(departAt.Value.TimeOfDay);
+            RouteComputed?.Invoke(this, TripPlanner.FromOnline(answer.Value, from.Name, from.Point, places, null, depart, stopList.StayMinutes));
         }
 
         private void SetBusy(bool value)
@@ -504,6 +528,14 @@ namespace Hue_travel.Panels.RouteOptimizer
                 put(lblSuggestCount, Ui.S(20)); y += Ui.S(2);
                 put(suggestList, SuggestRows * Ui.S(60)); y += gap;
             }
+
+            // departure time (Vietnam clock)
+            put(lblDepartTitle, Ui.S(26)); y += Ui.S(4);
+            int nowWidth = Ui.S(96);
+            chkDepartNow.SetBounds(pad, y + offset, nowWidth, Ui.S(30));
+            departAt.SetBounds(pad + nowWidth + gap, y + offset, inner - nowWidth - gap, Ui.S(30));
+            y += Ui.S(30) + Ui.S(6);
+            put(lblDepartHint, Ui.S(44)); y += gap;
             y += Divider(0, pad, inner, y, offset);
 
             // itinerary

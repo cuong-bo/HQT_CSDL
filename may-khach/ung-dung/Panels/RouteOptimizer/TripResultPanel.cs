@@ -5,6 +5,7 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Printing;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
@@ -160,7 +161,20 @@ namespace Hue_travel.Panels.RouteOptimizer
                     int textLeft = badgeRect.Right + Ui.S(10), textWidth = card.Right - pad - textLeft;
                     TextRenderer.DrawText(g, ShortName(leg.ToName), ThemeFonts.SemiBold(13), new Rectangle(textLeft, badgeRect.Y, textWidth, badge), ThemeColors.Slate800, flags | TextFormatFlags.VerticalCenter);
                     TextRenderer.DrawText(g, FormatKm(leg.Meters / 1000) + "  ·  " + FormatMinutes((int)Math.Round(leg.Seconds / 60)), ThemeFonts.SemiBold(12),
-                        new Rectangle(card.X + pad, badgeRect.Bottom + Ui.S(8), card.Width - pad * 2, Ui.S(18)), ThemeColors.Sky800, flags);
+                        new Rectangle(card.X + pad, badgeRect.Bottom + Ui.S(6), card.Width - pad * 2, Ui.S(18)), ThemeColors.Sky800, flags);
+
+                    if (leg.ArriveAt.HasValue && leg.LeaveAt.HasValue)
+                    {
+                        TextRenderer.DrawText(g, "Đến " + leg.ArriveAt.Value.ToString("HH:mm") + " · Rời " + leg.LeaveAt.Value.ToString("HH:mm"),
+                            ThemeFonts.Regular(11), new Rectangle(card.X + pad, badgeRect.Bottom + Ui.S(24), card.Width - pad * 2, Ui.S(16)),
+                            ThemeColors.Slate600, flags);
+                        if (leg.HoursWarning)
+                        {
+                            TextRenderer.DrawText(g, "Có thể đã đóng cửa khi đến", ThemeFonts.SemiBold(10),
+                                new Rectangle(card.X + pad, badgeRect.Bottom + Ui.S(40), card.Width - pad * 2, Ui.S(14)),
+                                ThemeColors.Amber700, flags);
+                        }
+                    }
                 }
 
                 if (MaxScroll > 0)
@@ -177,7 +191,7 @@ namespace Hue_travel.Panels.RouteOptimizer
 
         private sealed class TitleRow : Control
         {
-            public string Distance = "", Duration = "", Clock = "", Note = "";
+            public string Distance = "", Duration = "", Clock = "", TimeOfDay = "", Note = "";
             public bool Estimate;
 
             public TitleRow()
@@ -206,6 +220,11 @@ namespace Hue_travel.Panels.RouteOptimizer
                 {
                     x += Ui.S(8);
                     x += Pill(g, x, "schedule", Clock);
+                }
+                if (!string.IsNullOrEmpty(TimeOfDay))
+                {
+                    x += Ui.S(8);
+                    x += Pill(g, x, "schedule", TimeOfDay);
                 }
                 x += Ui.S(14);
                 TextRenderer.DrawText(g, Note, ThemeFonts.Regular(12), new Rectangle(x, 0, Math.Max(0, Width - x), Height), Estimate ? ThemeColors.Amber700 : ThemeColors.Slate500,
@@ -265,7 +284,7 @@ namespace Hue_travel.Panels.RouteOptimizer
 
         /// <summary>Design size (96-DPI pixels) of the panel: a low bar to sit under the map.</summary>
         public const int DesignWidth = 760;
-        public const int DesignHeight = 204;
+        public const int DesignHeight = 224;
         /// <summary>Raised when the panel is folded away: the host shows a button on the map that calls <see cref="Unfold"/>.</summary>
         public event EventHandler Folded;
 
@@ -386,6 +405,13 @@ namespace Hue_travel.Panels.RouteOptimizer
             titleRow.Invalidate();
         }
 
+        /// <summary>Shows the simulated time of day at the car, e.g. "09:42" (null hides it).</summary>
+        public void SetSimulatedTime(DateTime? when)
+        {
+            titleRow.TimeOfDay = when.HasValue ? when.Value.ToString("HH:mm") : "";
+            titleRow.Invalidate();
+        }
+
         // ------------------------------------------------------------------ folding into the round button
 
         /// <summary>Hides the panel; the host shows its button on the map.</summary>
@@ -419,10 +445,13 @@ namespace Hue_travel.Panels.RouteOptimizer
             titleRow.Note = trip.IsEstimate
                 ? "Ước tính theo đường chim bay (chưa có dữ liệu đường bộ)"
                 : ShortName(trip.StartName) + "  →  " + trip.Stops.Count + " điểm đến" + (saved > 0 ? "  ·  tiết kiệm " + saved + " phút" : "");
+            int warnings = trip.Legs.Count(l => l.HoursWarning);
+            if (warnings > 0) titleRow.Note += "  ·  " + warnings + " điểm có thể đã đóng cửa khi bạn đến";
             titleRow.Invalidate();
             legStrip.SetLegs(trip.Legs);
             SetSpeed(Hue_travel.Properties.Settings.Default.TripSpeed);
             SetProgress(0, trip.TotalSeconds);
+            SetSimulatedTime(trip.DepartAt);
             SetCarPlaying(true);
             LayoutAll();
         }

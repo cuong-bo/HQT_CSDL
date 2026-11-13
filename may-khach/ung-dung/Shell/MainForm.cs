@@ -66,6 +66,7 @@ namespace Hue_travel.Shell
         private readonly IAreaLocator areaLocator = new DemoAreaLocator();
         private AccountPanel accountPanel;
         private MapViewChangedEventArgs lastView;
+        private bool openOnly;
         private bool showDegrees = true; // degrees are the familiar format; click the read-out for UTM metres
         private MapCursorEventArgs lastCursor;
 
@@ -126,6 +127,14 @@ namespace Hue_travel.Shell
             };
             layerPanel.HiddenChanged += (s, e) => mapHost.SetHiddenPois(layerPanel.HiddenIds);
             layerPanel.PoiSelected += (s, poi) => { ShowOnMap(poi); ShowPoiCard(poi); };
+            filterBar.OpenOnlyChanged += (s, value) =>
+            {
+                openOnly = value;
+                mapHost.SetOpenOnly(value);
+                explorePanel.OpenOnly = value;
+                layerPanel.OpenOnly = value;
+                UpdateSearchResults(titleBar.SearchText);
+            };
 
             // The search box lists its results right under itself (no new window).
             titleBar.SearchTextChanged += (s, text) => UpdateSearchResults(text);
@@ -203,6 +212,7 @@ namespace Hue_travel.Shell
                 mapHost.ShowTrip(trip, true);
                 tripResultPanel.SetSpeed(mapHost.TripSpeed);
                 tripResultPanel.SetProgress(mapHost.TripClockSeconds, mapHost.TripTotalSeconds);
+                tripResultPanel.SetSimulatedTime(mapHost.TripSimulatedTime);
             };
             tripResultPanel.StopRequested += (s, e) =>
             {
@@ -223,7 +233,11 @@ namespace Hue_travel.Shell
             mapHost.TripPlayStateChanged += (s, e) => tripResultPanel.SetCarPlaying(mapHost.TripPlaying);
             mapHost.TripLegChanged += (s, leg) => tripResultPanel.SetActiveLeg(leg);
             mapHost.TripSpeedChanged += (s, e) => tripResultPanel.SetSpeed(mapHost.TripSpeed);
-            mapHost.TripProgress += (s, e) => tripResultPanel.SetProgress(mapHost.TripClockSeconds, mapHost.TripTotalSeconds);
+            mapHost.TripProgress += (s, e) =>
+            {
+                tripResultPanel.SetProgress(mapHost.TripClockSeconds, mapHost.TripTotalSeconds);
+                tripResultPanel.SetSimulatedTime(mapHost.TripSimulatedTime);
+            };
             mapHost.PointPicked += (s, point) =>
             {
                 double longitude, latitude;
@@ -308,7 +322,7 @@ namespace Hue_travel.Shell
         {
             if (string.IsNullOrWhiteSpace(text)) { searchDropdown.Dismiss(); return; }
             string wanted = Hue_travel.Panels.SearchPoi.PoiSearchFilter.Fold(text);
-            List<Poi> matches = Hue_travel.Panels.SearchPoi.PoiSearchFilter.Apply(PoiCatalog.All.Where(p => p.X != 0 || p.Y != 0), text.Trim(), null)
+            List<Poi> matches = Hue_travel.Panels.SearchPoi.PoiSearchFilter.Apply(PoiCatalog.All.Where(p => p.X != 0 || p.Y != 0), text.Trim(), null, openOnly)
                 .OrderBy(p => Hue_travel.Panels.SearchPoi.PoiSearchFilter.Fold(p.Name).StartsWith(wanted, StringComparison.Ordinal) ? 0 : 1)
                 .ThenBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
             System.Drawing.Rectangle box = titleBar.SearchBoxBounds;

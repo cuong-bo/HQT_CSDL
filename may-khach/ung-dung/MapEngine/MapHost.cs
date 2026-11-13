@@ -6,6 +6,7 @@ using AxInterop.MapWinGIS;
 using Hue_travel.Models;
 using Hue_travel.Services;
 using Hue_travel.Services.Area;
+using Hue_travel.Services.Hours;
 using Hue_travel.Services.Online;
 using Hue_travel.Services.Routing;
 using Hue_travel.Theme;
@@ -31,6 +32,7 @@ namespace Hue_travel.MapEngine
         private readonly List<PoiMarker> markers = new List<PoiMarker>();
         private readonly LeftPressFilter pressFilter = new LeftPressFilter();
         private RouteDrawing routeDrawing;
+        private TripPlan shownTrip;
         private int tripSpeed = 1;
         private bool pickingPoint;
         private int placeholderHandle = -1;
@@ -39,6 +41,7 @@ namespace Hue_travel.MapEngine
         private const int HighlightDesignPixels = 54;
         private IReadOnlyList<Poi> lastPois = new List<Poi>();
         private readonly HashSet<string> hiddenPoiIds = new HashSet<string>();
+        private bool openOnly;
         private const int MarkerDesignPixels = 34;               // the round badge on the map
         private const double LabelMaxScaleDenominator = 45000;   // names appear once zoomed in to about 1:45 000
         private int pressX = int.MinValue, pressY = int.MinValue;   // MinValue = no press seen since the last release
@@ -152,7 +155,11 @@ namespace Hue_travel.MapEngine
             poiLayers.Clear();
             markers.Clear();
 
-            foreach (IGrouping<PoiCategory, Poi> group in pois.Where(p => (p.X != 0 || p.Y != 0) && !hiddenPoiIds.Contains(p.Id)).GroupBy(p => p.Category))
+            DateTime now = OpeningSchedule.NowInVietnam;
+            foreach (IGrouping<PoiCategory, Poi> group in pois
+                .Where(p => (p.X != 0 || p.Y != 0) && !hiddenPoiIds.Contains(p.Id))
+                .Where(p => !openOnly || p.Schedule.StatusAt(now).State != OpenState.Closed)
+                .GroupBy(p => p.Category))
             {
                 int handle = AddMarkerLayer(group.Key, group.ToList());
                 if (handle < 0) continue;
@@ -220,6 +227,14 @@ namespace Hue_travel.MapEngine
         {
             hiddenPoiIds.Clear();
             foreach (string id in ids) hiddenPoiIds.Add(id);
+            LoadPois(lastPois);
+        }
+
+        /// <summary>Shows only places that are open now (unknown hours are kept: the data may simply not say).</summary>
+        public void SetOpenOnly(bool value)
+        {
+            if (openOnly == value) return;
+            openOnly = value;
             LoadPois(lastPois);
         }
 
@@ -463,6 +478,12 @@ namespace Hue_travel.MapEngine
 
         public double TripTotalSeconds => routeDrawing != null ? routeDrawing.TotalTripSeconds : 0;
 
+        /// <summary>The simulated time of day at the car, in Vietnam time; null when the trip has no departure time.</summary>
+        public DateTime? TripSimulatedTime =>
+            shownTrip != null && shownTrip.DepartAt.HasValue && routeDrawing != null
+                ? shownTrip.DepartAt.Value.AddSeconds(routeDrawing.ClockSeconds)
+                : (DateTime?)null;
+
         /// <summary>Waits for the next click on the map and raises <see cref="PointPicked"/> with it (a crosshair shows meanwhile).</summary>
         public void BeginPickPoint()
         {
@@ -482,11 +503,13 @@ namespace Hue_travel.MapEngine
         public void ShowTrip(TripPlan plan, bool play)
         {
             if (plan == null || plan.Legs.Count == 0) return;
+            shownTrip = plan;
             EnsureRouteDrawing().Show(plan, play);
         }
 
         public void ClearRoute()
         {
+            shownTrip = null;
             if (routeDrawing != null) routeDrawing.Clear();
         }
 
