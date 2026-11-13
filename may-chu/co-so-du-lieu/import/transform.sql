@@ -75,13 +75,14 @@ on conflict (id) do update set loai_hinh = excluded.loai_hinh, ten = excluded.te
 where poi.updated_by is null;
 
 -- Transport hubs: the timetable text is shown as the opening hours, the route as the description.
-insert into poi (id, nhom, loai_hinh, ten, dia_chi, gio_mo_cua, gia_text, sdt, website, mo_ta, ghi_chu, geom)
+insert into poi (id, nhom, loai_hinh, ten, dia_chi, gio_mo_cua, gio_mo, gio_dong, gia_text, sdt, website, mo_ta, ghi_chu, geom)
 select btrim(magt), 'transport', nullif(btrim(loaigt), ''), btrim(tengt), nullif(btrim(diachi), ''),
-       nullif(btrim(lichchay), ''), nullif(btrim(giave), ''), nullif(btrim(sdt), ''), nullif(btrim(website), ''),
+       nullif(btrim(lichchay), ''), f_gio_mo(lichchay), f_gio_dong(lichchay), nullif(btrim(giave), ''), nullif(btrim(sdt), ''), nullif(btrim(website), ''),
        nullif(btrim(tuyen), ''), nullif(btrim(luuy), ''), geom
 from stg.diemdmgiaothong
 on conflict (id) do update set loai_hinh = excluded.loai_hinh, ten = excluded.ten, dia_chi = excluded.dia_chi,
-    gio_mo_cua = excluded.gio_mo_cua, gia_text = excluded.gia_text, sdt = excluded.sdt, website = excluded.website,
+    gio_mo_cua = excluded.gio_mo_cua, gio_mo = excluded.gio_mo, gio_dong = excluded.gio_dong,
+    gia_text = excluded.gia_text, sdt = excluded.sdt, website = excluded.website,
     mo_ta = excluded.mo_ta, ghi_chu = excluded.ghi_chu, geom = excluded.geom, deleted_at = null
 where poi.updated_by is null;
 
