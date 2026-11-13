@@ -32,12 +32,12 @@ namespace Hue_travel.Account
         private bool hasMine;
         private bool busy;
 
-        private ReviewsDialog(ApiClient api, Poi poi, bool signedIn) : base("Đánh giá: " + Shorten(poi.Name), DialogWidth, signedIn ? "Gửi đánh giá" : "Viết đánh giá", false, signedIn)
+        private ReviewsDialog(ApiClient api, Poi poi, bool signedIn) : base("Đánh giá: " + Shorten(poi.Name), DialogWidth, signedIn ? "Gửi đánh giá" : "Viết đánh giá", false, true)
         {
             this.api = api;
             this.poi = poi;
             this.signedIn = signedIn;
-            if (signedIn) Cancel.Text = "Đóng";
+            Cancel.Text = "Đóng";
 
             int inner = DialogWidth - Side * 2;
             int y = 0;
