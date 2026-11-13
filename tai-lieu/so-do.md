@@ -64,7 +64,7 @@ flowchart LR
     A --> A4["Công cụ: phóng/thu, kéo,<br/>nhận dạng, đo khoảng cách, đo diện tích"]
     A --> A5["Lớp dữ liệu, đổi bản đồ nền"]
     A --> A6["Thanh trạng thái: tên xã đang xem,<br/>tọa độ, tỉ lệ, thời tiết"]
-    A --> A7["Trạng thái mở cửa: đang mở, sắp đóng,<br/>đã đóng; lọc \"Đang mở cửa\""]
+    A --> A7["Trạng thái mở cửa: đang mở, sắp đóng,<br/>đã đóng; lọc Đang mở cửa"]
 
     B --> B1["Chọn điểm bắt đầu<br/>gợi ý từ danh sách, không gõ tọa độ"]
     B --> B2["Chọn các điểm cần đi"]
