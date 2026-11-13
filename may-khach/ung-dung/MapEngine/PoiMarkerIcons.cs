@@ -84,6 +84,32 @@ namespace Hue_travel.MapEngine
             }
         }
 
+        /// <summary>The teardrop pin of a group saved as a PNG for the map engine; null when it cannot be written.</summary>
+        public static string PinFilePath(PoiCategory category, int px, bool centreAnchor)
+        {
+            try
+            {
+                string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HueTravel", "markers");
+                Directory.CreateDirectory(folder);
+                // the file name says what it is: a changed drawing must use a new name, or the old PNG is reused
+                string path = Path.Combine(folder, "pin2_" + category.ToString().ToLowerInvariant() + "_" + px + (centreAnchor ? "_c" : "") + ".png");
+                if (!File.Exists(path))
+                {
+                    using (Bitmap pin = PoiPin.Draw(px, PoiMarkerStyle.ColorOf(category), IconFont.Get(IconOf(category), px, Color.White)))
+                    using (Bitmap result = centreAnchor ? PoiPin.PadForCentreAnchor(pin) : (Bitmap)pin.Clone())
+                    {
+                        result.Save(path, ImageFormat.Png);
+                    }
+                }
+                return path;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("PoiMarkerIcons.PinFilePath: " + ex.Message);
+                return null;
+            }
+        }
+
         private static Bitmap Draw(PoiCategory category, int px)
         {
             var bmp = new Bitmap(px, px, PixelFormat.Format32bppArgb);

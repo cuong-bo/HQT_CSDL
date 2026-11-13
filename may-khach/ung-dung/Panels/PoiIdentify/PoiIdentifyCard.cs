@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Hue_travel.MapEngine;
 using Hue_travel.Models;
@@ -70,7 +71,7 @@ namespace Hue_travel.Panels.PoiIdentify
                 y = chip.Bottom + Ui.S(10);
 
                 // name (up to three lines)
-                Font nameFont = ThemeFonts.Bold(20);
+                Font nameFont = ThemeFonts.Serif(22);
                 int nameHeight = Math.Min(TextRenderer.MeasureText(poi.Name ?? "", nameFont, new Size(inner, int.MaxValue), wrap).Height, nameFont.Height * 3);
                 if (g != null) TextRenderer.DrawText(g, poi.Name ?? "", nameFont, new Rectangle(pad, y, inner, nameHeight), ThemeColors.Slate900, wrap);
                 y += nameHeight + Ui.S(4);
@@ -193,9 +194,10 @@ namespace Hue_travel.Panels.PoiIdentify
         private readonly InfoView info = new InfoView();
         private readonly IconButton btnClose = new IconButton();
         private readonly IconButton btnRoute = new IconButton();
-        private readonly IconButton btnFavorite = AccountButton("Yêu thích", "star");
+        private readonly IconButton btnFavorite = AccountButton("Lưu", "favorite");
         private readonly IconButton btnClaim = AccountButton("Chủ quản", "verified_user");
         private readonly IconButton btnReport = AccountButton("Báo sai", "campaign");
+        private readonly IconButton btnShare = AccountButton("Chia sẻ", "share");
         private readonly IconButton btnReviews = AccountButton("Đánh giá và nhận xét", "star");
         private Poi shown;
         private bool signedIn;
@@ -225,7 +227,7 @@ namespace Hue_travel.Panels.PoiIdentify
         public PoiIdentifyCard()
         {
             Size = new Size(DesignWidth, 600);
-            BackColor = Color.White;
+            BackColor = ThemeColors.Paper;
 
             btnClose.AutoWidth = false;
             btnClose.IconName = "close";
@@ -237,30 +239,38 @@ namespace Hue_travel.Panels.PoiIdentify
             btnClose.Click += (s, e) => Hide();
 
             btnRoute.AutoWidth = false;
-            btnRoute.Text = "Thêm vào lộ trình tham quan";
+            btnRoute.Text = "Lộ trình";
             btnRoute.IconName = "add";
-            btnRoute.IconSize = 18;
-            btnRoute.Gap = 8;
-            btnRoute.ForeColor = Color.White;
-            btnRoute.IconColor = Color.White;
-            btnRoute.FillColor = ThemeColors.Primary;
-            btnRoute.HoverFillColor = ThemeColors.PrimaryContainer;
-            btnRoute.Radius = 12;
-            btnRoute.Elevated = true;
+            btnRoute.IconSize = 20;
+            btnRoute.Gap = 6;
+            btnRoute.Font = ThemeFonts.Medium(11);
+            btnRoute.Radius = ThemeMetrics.RadiusMd;
+            btnRoute.Stacked = true;
+            btnRoute.Kind = IconButton.ButtonKind.Primary;
 
             gallery.HeroClicked += (s, i) => PhotoViewer.ShowOver(Owner ?? (Form)this, gallery.Paths, i, shown == null ? "" : shown.Name);
             btnRoute.Click += (s, e) => { if (shown != null) AddToRouteRequested?.Invoke(this, shown); };
             btnFavorite.Click += (s, e) => { if (shown != null) FavoriteToggled?.Invoke(this, shown); };
             btnClaim.Click += (s, e) => { if (shown != null) ClaimRequested?.Invoke(this, shown); };
             btnReport.Click += (s, e) => { if (shown != null) ReportRequested?.Invoke(this, shown); };
+            btnShare.Click += (s, e) => Share();
             btnReviews.Click += (s, e) => { if (shown != null) ReviewsRequested?.Invoke(this, shown); };
             btnReviews.Visible = false;
-            foreach (IconButton b in new[] { btnFavorite, btnClaim, btnReport }) b.Visible = false;
+            foreach (IconButton b in new[] { btnFavorite, btnClaim, btnReport, btnShare })
+            {
+                b.Visible = false;
+                b.Stacked = true;
+                b.IconSize = 20;
+                b.Font = ThemeFonts.Medium(11);
+                b.Radius = ThemeMetrics.RadiusMd;
+                b.Kind = IconButton.ButtonKind.Tonal;
+            }
 
             Controls.Add(info);
             Controls.Add(gallery);
             Controls.Add(btnRoute);
             Controls.Add(btnFavorite);
+            Controls.Add(btnShare);
             Controls.Add(btnClaim);
             Controls.Add(btnReport);
             Controls.Add(btnReviews);
@@ -300,11 +310,28 @@ namespace Hue_travel.Panels.PoiIdentify
         public void RefreshAccountButtons()
         {
             bool visible = shown != null;
-            btnFavorite.Visible = btnClaim.Visible = btnReport.Visible = visible;
+            btnFavorite.Visible = btnClaim.Visible = btnReport.Visible = btnShare.Visible = visible;
             if (!visible) return;
             bool favorite = signedIn && FavoriteIds != null && FavoriteIds.Contains(shown.Id);
-            btnFavorite.Text = favorite ? "Bỏ thích" : "Yêu thích";
-            btnFavorite.IconColor = favorite ? ThemeColors.Amber600 : ThemeColors.Primary;
+            btnFavorite.Text = favorite ? "Đã lưu" : "Lưu";
+            btnFavorite.IconName = favorite ? "favorite_fill" : "favorite";
+            btnFavorite.IconColor = favorite ? ThemeColors.Lacquer : ThemeColors.Brand;
+        }
+
+        // "Chia sẻ" copies the place's name and address: no external app is involved, and it works offline.
+        private void Share()
+        {
+            if (shown == null) return;
+            string text = shown.Name + (string.IsNullOrWhiteSpace(shown.Address) ? "" : " — " + shown.Address);
+            try
+            {
+                Clipboard.SetText(text);
+                Notify("Đã sao chép địa chỉ", ToastKind.Success);
+            }
+            catch (ExternalException)
+            {
+                Notify("Không sao chép được", ToastKind.Error);
+            }
         }
 
         // Stacks the parts from the top and sizes the card to them; a card that is open keeps its bottom edge.
@@ -320,25 +347,24 @@ namespace Hue_travel.Panels.PoiIdentify
             info.SetBounds(0, gallery.Bottom, width, info.MeasureHeight(width));
             int pad = Ui.S(16);
             int top = info.Bottom;
+            if (btnFavorite.Visible)
+            {
+                // Google-Maps style row: round tonal tiles with a short caption.
+                int gap = Ui.S(8), count = 5, tileWidth = (width - pad * 2 - gap * (count - 1)) / count, height = Ui.S(64);
+                btnRoute.SetBounds(pad, top, tileWidth, height);
+                btnFavorite.SetBounds(pad + (tileWidth + gap), top, tileWidth, height);
+                btnShare.SetBounds(pad + (tileWidth + gap) * 2, top, tileWidth, height);
+                btnClaim.SetBounds(pad + (tileWidth + gap) * 3, top, tileWidth, height);
+                btnReport.SetBounds(pad + (tileWidth + gap) * 4, top, tileWidth, height);
+                top += height + Ui.S(10);
+            }
             if (btnReviews.Visible)
             {
                 btnReviews.SetBounds(pad, top, width - pad * 2, Ui.S(42));
                 top = btnReviews.Bottom + Ui.S(10);
             }
-            btnRoute.Font = ThemeFonts.SemiBold(14);
-            btnRoute.SetBounds(pad, top, width - pad * 2, Ui.S(48));
-            int bottom = btnRoute.Bottom;
 
-            if (btnFavorite.Visible)
-            {
-                int gap = Ui.S(8), buttonWidth = (width - pad * 2 - gap * 2) / 3, y = btnRoute.Bottom + Ui.S(10), height = Ui.S(38);
-                btnFavorite.SetBounds(pad, y, buttonWidth, height);
-                btnClaim.SetBounds(pad + buttonWidth + gap, y, buttonWidth, height);
-                btnReport.SetBounds(pad + (buttonWidth + gap) * 2, y, buttonWidth, height);
-                bottom = y + height;
-            }
-
-            int wanted = bottom + Ui.S(16);
+            int wanted = top + Ui.S(16);
             if (Height == wanted) return;
             int oldBottom = Bottom;
             Height = wanted;
@@ -351,13 +377,19 @@ namespace Hue_travel.Panels.PoiIdentify
             if (shown != null) LayoutCard();
         }
 
+        protected override void OnVisibleChanged(EventArgs e)
+        {
+            base.OnVisibleChanged(e);
+            // The first LayoutCard runs before the form is shown, when Control.Visible still reads false: lay out again now
+            // that the action tiles are really visible, so the card grows to include them.
+            if (Visible && shown != null) LayoutCard();
+        }
+
         private static IconButton AccountButton(string text, string icon)
         {
             return new IconButton
             {
-                AutoWidth = false, Text = text, IconName = icon, IconSize = 16, Font = ThemeFonts.Medium(12), Radius = 10, Gap = 6, HorizontalPadding = 6,
-                ForeColor = ThemeColors.Slate700, IconColor = ThemeColors.Primary, FillColor = Color.White,
-                HoverFillColor = ThemeColors.Slate100, BorderColor = ThemeColors.Slate300,
+                AutoWidth = false, Text = text, IconName = icon, IconSize = 16, Font = ThemeFonts.Medium(12), Radius = ThemeMetrics.RadiusSm, Gap = 6, HorizontalPadding = 6,
             };
         }
 

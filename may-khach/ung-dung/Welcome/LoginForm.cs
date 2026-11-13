@@ -244,7 +244,7 @@ namespace Hue_travel.Welcome
         private static void StyleButton(IconButton button, bool primary)
         {
             button.AutoWidth = false;
-            button.Radius = 14;
+            button.Radius = ThemeMetrics.RadiusMd;
             button.Gap = 10;
             button.IconSize = 22;
             button.TrailingIconSize = 22;
@@ -275,7 +275,7 @@ namespace Hue_travel.Welcome
             button.IconName = icon;
             button.IconSize = 20;
             button.Gap = 8;
-            button.Radius = 12;
+            button.Radius = ThemeMetrics.RadiusSm;
             button.HorizontalPadding = 8;
             button.ForeColor = selected ? Color.White : ThemeColors.BrandPurple;
             button.IconColor = selected ? Color.White : ThemeColors.BrandPurple;

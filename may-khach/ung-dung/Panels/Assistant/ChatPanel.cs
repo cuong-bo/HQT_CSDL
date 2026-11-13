@@ -39,13 +39,13 @@ namespace Hue_travel.Panels.Assistant
         private const int ChatHeight = 640;
 
         private readonly PanelHeader header = new PanelHeader { IconName = "support_agent", Text = "Trợ lý Huế Travel", Prominent = true };
-        private readonly NoAutoScrollPanel body = new NoAutoScrollPanel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Color.White };
+        private readonly NoAutoScrollPanel body = new NoAutoScrollPanel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = ThemeColors.Paper };
         private readonly ChatTranscript transcript = new ChatTranscript();
-        private readonly Panel topBar = new Panel { Dock = DockStyle.Top, Height = 42, BackColor = Color.White };
+        private readonly Panel topBar = new Panel { Dock = DockStyle.Top, Height = 42, BackColor = ThemeColors.Paper };
         private readonly IconButton btnNew = new IconButton();
         private readonly Label lblRemaining = new Label { AutoSize = false, Font = ThemeFonts.Regular(11), ForeColor = ThemeColors.Slate500, TextAlign = ContentAlignment.MiddleRight };
-        private readonly FlowLayoutPanel suggestions = new FlowLayoutPanel { Dock = DockStyle.Top, Height = 78, Padding = new Padding(Ui.S(14), Ui.S(4), Ui.S(14), 0), WrapContents = true, AutoScroll = false, BackColor = Color.White };
-        private readonly Panel footer = new Panel { Dock = DockStyle.Bottom, Height = 144, BackColor = Color.White };
+        private readonly FlowLayoutPanel suggestions = new FlowLayoutPanel { Dock = DockStyle.Top, Height = 78, Padding = new Padding(Ui.S(14), Ui.S(4), Ui.S(14), 0), WrapContents = true, AutoScroll = false, BackColor = ThemeColors.Paper };
+        private readonly Panel footer = new Panel { Dock = DockStyle.Bottom, Height = 144, BackColor = ThemeColors.Paper };
         private readonly TextBox input = new TextBox { Multiline = true, AcceptsReturn = true, ScrollBars = ScrollBars.Vertical, BorderStyle = BorderStyle.FixedSingle, Font = ThemeFonts.Regular(13), BackColor = ThemeColors.Slate50, ForeColor = ThemeColors.Slate800 };
         private readonly IconButton btnSend = new IconButton();
         private readonly IconButton btnStop = new IconButton();
@@ -117,7 +117,7 @@ namespace Hue_travel.Panels.Assistant
         {
             builtChat = false;
             body.Controls.Clear();
-            var guide = new NoAutoScrollPanel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Color.White };
+            var guide = new NoAutoScrollPanel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = ThemeColors.Paper };
             var title = new Label { AutoSize = false, Font = ThemeFonts.Bold(16), ForeColor = ThemeColors.Slate800, Text = "Cẩm nang nhanh", TextAlign = ContentAlignment.MiddleLeft };
             var hint = new Label { AutoSize = false, Font = ThemeFonts.Regular(12), ForeColor = ThemeColors.Slate500, Text = "Trợ lý chưa sẵn sàng. Bạn vẫn xem được số điện thoại hữu ích và lưu ý khi tham quan.", TextAlign = ContentAlignment.TopLeft };
             var tips = new InfoRows();
@@ -170,7 +170,7 @@ namespace Hue_travel.Panels.Assistant
             btnNew.IconColor = ThemeColors.Primary;
             btnNew.FillColor = ThemeColors.Sky50;
             btnNew.HoverFillColor = ThemeColors.Sky100;
-            btnNew.Radius = 8;
+            btnNew.Radius = ThemeMetrics.RadiusSm;
             btnNew.Height = Ui.S(30);
             topBar.Controls.Add(btnNew);
             topBar.Controls.Add(lblRemaining);
@@ -218,7 +218,7 @@ namespace Hue_travel.Panels.Assistant
             {
                 AutoWidth = true, Text = text, IconName = icon, IconSize = 14, Gap = 5, HorizontalPadding = 8,
                 Font = ThemeFonts.Medium(11), ForeColor = ThemeColors.Slate700, IconColor = ThemeColors.Primary,
-                FillColor = ThemeColors.Slate50, HoverFillColor = ThemeColors.Sky50, BorderColor = ThemeColors.Slate200, Radius = 8,
+                FillColor = ThemeColors.Slate50, HoverFillColor = ThemeColors.Sky50, BorderColor = ThemeColors.Slate200, Radius = ThemeMetrics.RadiusSm,
             };
             button.Height = Ui.S(28);
             button.Click += async (s, e) =>
@@ -237,7 +237,7 @@ namespace Hue_travel.Panels.Assistant
             button.IconSize = 16;
             button.Gap = 6;
             button.Font = ThemeFonts.SemiBold(12);
-            button.Radius = 9;
+            button.Radius = ThemeMetrics.RadiusSm;
             button.ForeColor = primary ? Color.White : ThemeColors.Slate700;
             button.IconColor = primary ? Color.White : ThemeColors.Primary;
             button.FillColor = primary ? ThemeColors.Primary : Color.White;
@@ -440,7 +440,7 @@ namespace Hue_travel.Panels.Assistant
             public ChatTranscript()
             {
                 SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
-                BackColor = Color.White;
+                BackColor = ThemeColors.Paper;
             }
 
             public IReadOnlyList<ChatEntry> Entries => entries;
@@ -526,23 +526,23 @@ namespace Hue_travel.Panels.Assistant
                 {
                     Color bubble = item.Entry.User ? ThemeColors.Primary : ThemeColors.Slate100;
                     Color text = item.Entry.User ? Color.White : ThemeColors.Slate800;
-                    using (GraphicsPath path = Ui.RoundedRect(item.Bubble, Ui.S(12)))
+                    using (GraphicsPath path = Ui.RoundedRect(item.Bubble, Ui.S(ThemeMetrics.RadiusLg)))
                     using (var brush = new SolidBrush(bubble)) g.FillPath(brush, path);
                     TextRenderer.DrawText(g, item.Entry.Text ?? "", ThemeFonts.Regular(13),
                         Rectangle.Inflate(item.Bubble, -Ui.S(12), -Ui.S(8)), text,
                         TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.WordBreak | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
                     foreach (KeyValuePair<Rectangle, string> chip in item.Chips)
                     {
-                        using (GraphicsPath path = Ui.RoundedRect(chip.Key, Ui.S(8)))
+                        using (GraphicsPath path = Ui.RoundedRect(chip.Key, Ui.S(ThemeMetrics.RadiusFull)))
                         using (var brush = new SolidBrush(ThemeColors.Sky50)) g.FillPath(brush, path);
                         TextRenderer.DrawText(g, ChipName(chip.Value), ThemeFonts.SemiBold(11), chip.Key, ThemeColors.Primary,
                             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine);
                     }
                     if (item.Route != Rectangle.Empty)
                     {
-                        using (GraphicsPath path = Ui.RoundedRect(item.Route, Ui.S(10)))
+                        using (GraphicsPath path = Ui.RoundedRect(item.Route, Ui.S(ThemeMetrics.RadiusMd)))
                         using (var brush = new SolidBrush(ThemeColors.Slate50)) g.FillPath(brush, path);
-                        using (GraphicsPath outline = Ui.RoundedRect(item.Route, Ui.S(10)))
+                        using (GraphicsPath outline = Ui.RoundedRect(item.Route, Ui.S(ThemeMetrics.RadiusMd)))
                         using (var pen = new Pen(ThemeColors.Slate200)) g.DrawPath(pen, outline);
                         int pad = Ui.S(10);
                         TextRenderer.DrawText(g, "Lộ trình gợi ý", ThemeFonts.Bold(12), new Rectangle(item.Route.X + pad, item.Route.Y + Ui.S(6), item.Route.Width - pad * 2, Ui.S(20)), ThemeColors.Slate800, TextFormatFlags.Left | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);

@@ -1,14 +1,14 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace Hue_travel.Theme
 {
     /// <summary>
-    /// The h-8 title strip of a floating panel: leading icon, 12px semibold title, and the
-    /// minimise / close buttons. <see cref="Prominent"/> selects the solid primary header
-    /// (white text) over the light sky-50 one used by the layer panel.
+    /// The title strip of a floating panel: leading icon, a serif title, and the minimise / close buttons. <see cref="Prominent"/>
+    /// selects the brand gradient (white text) over the light paper strip with a hairline.
     /// </summary>
     public class PanelHeader : Control
     {
@@ -23,20 +23,20 @@ namespace Hue_travel.Theme
         public PanelHeader()
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
-            Height = 32;
+            Height = 52;
             Dock = DockStyle.Top;
-            Font = ThemeFonts.SemiBold(12);
+            Font = ThemeFonts.Serif(17);
 
             ConfigureButton(minimizeButton, "minimize");
             ConfigureButton(closeButton, "close");
-            closeButton.HoverFillColor = ThemeColors.Error;
+            closeButton.HoverFillColor = ThemeColors.Lacquer;
             closeButton.HoverIconColor = Color.White;
             minimizeButton.Click += (s, e) =>
             {
                 (FindForm() as FloatingPanelForm)?.ToggleCollapsed(Height);
                 MinimizeClicked?.Invoke(this, EventArgs.Empty);
             };
-            Cursor = Cursors.SizeAll; // the mockup's cursor-move title strip
+            Cursor = Cursors.SizeAll;
             closeButton.Click += (s, e) => CloseClicked?.Invoke(this, EventArgs.Empty);
             Controls.Add(minimizeButton);
             minimizeButton.Visible = false; // only the main window keeps a minimise mark
@@ -48,11 +48,11 @@ namespace Hue_travel.Theme
         [Category("Appearance")]
         public string IconName { get { return iconName; } set { iconName = value ?? ""; Invalidate(); } }
 
-        /// <summary>True: solid primary bar with white text. False: sky-50 bar with dark text.</summary>
+        /// <summary>True: brand gradient with white text. False: paper strip with dark text.</summary>
         [Category("Appearance")]
         public bool Prominent { get { return prominent; } set { prominent = value; ApplyStyle(); Invalidate(); } }
 
-        /// <summary>False for dialog-like cards (login, register, ...) that make no sense collapsed.</summary>
+        /// <summary>False for dialog-like cards that make no sense collapsed.</summary>
         [Category("Behavior"), DefaultValue(false)]
         public bool ShowMinimize
         {
@@ -63,20 +63,21 @@ namespace Hue_travel.Theme
         [Browsable(true), EditorBrowsable(EditorBrowsableState.Always)]
         public override string Text { get { return base.Text; } set { base.Text = value; Invalidate(); } }
 
+        // Round 28 px buttons (radius = half the size is a circle).
         private static void ConfigureButton(IconButton button, string icon)
         {
             button.AutoWidth = false;
             button.IconName = icon;
-            button.IconSize = 12;
-            button.Radius = 4;
-            button.Size = new Size(20, 20);
+            button.IconSize = 14;
+            button.Radius = ThemeMetrics.RadiusFull;
+            button.Size = new Size(28, 28);
             button.FillColor = Color.Transparent;
         }
 
         private void ApplyStyle()
         {
-            Color iconColor = prominent ? Color.White : ThemeColors.Slate500;
-            Color hover = prominent ? ThemeColors.Sky700 : ThemeColors.Sky100;
+            Color iconColor = prominent ? Color.White : ThemeColors.InkSoft;
+            Color hover = prominent ? Color.FromArgb(70, 255, 255, 255) : ThemeColors.BrandSoft;
             minimizeButton.IconColor = iconColor;
             minimizeButton.HoverFillColor = hover;
             closeButton.IconColor = iconColor;
@@ -85,7 +86,7 @@ namespace Hue_travel.Theme
         private void LayoutButtons()
         {
             int top = (Height - closeButton.Height) / 2;
-            closeButton.Location = new Point(Width - Ui.S(12) - closeButton.Width, top);
+            closeButton.Location = new Point(Width - Ui.S(14) - closeButton.Width, top);
             minimizeButton.Location = new Point(closeButton.Left - Ui.S(4) - minimizeButton.Width, top);
         }
 
@@ -143,29 +144,37 @@ namespace Hue_travel.Theme
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            Color back = prominent ? ThemeColors.Primary : ThemeColors.Sky50;
-            Color fore = prominent ? Color.White : ThemeColors.OnSurface;
-            using (var brush = new SolidBrush(back))
+            Graphics g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            Color fore = prominent ? Color.White : ThemeColors.Ink;
+            if (prominent)
             {
-                e.Graphics.FillRectangle(brush, ClientRectangle);
-            }
-            if (!prominent)
-            {
-                using (var pen = new Pen(ThemeColors.Sky100))
+                using (var brush = new LinearGradientBrush(ClientRectangle, ThemeColors.Brand, ThemeColors.BrandDeep, LinearGradientMode.Horizontal))
                 {
-                    e.Graphics.DrawLine(pen, 0, Height - 1, Width, Height - 1);
+                    g.FillRectangle(brush, ClientRectangle);
+                }
+                // a thin white line under the header
+                using (var line = new SolidBrush(Color.FromArgb(80, Color.White)))
+                {
+                    g.FillRectangle(line, 0, Height - Math.Max(2, Ui.S(2)), Width, Math.Max(2, Ui.S(2)));
                 }
             }
+            else
+            {
+                using (var brush = new SolidBrush(ThemeColors.Paper)) g.FillRectangle(brush, ClientRectangle);
+                using (var pen = new Pen(ThemeColors.Line)) g.DrawLine(pen, 0, Height - 1, Width, Height - 1);
+            }
 
-            int x = Ui.S(12);
+            int x = Ui.S(16);
             if (iconName.Length > 0)
             {
-                Color iconColor = prominent ? Color.White : ThemeColors.Primary;
-                int iconPx = Ui.S(16);
-                e.Graphics.DrawImage(IconFont.Get(iconName, iconPx, iconColor), x, (Height - iconPx) / 2, iconPx, iconPx);
-                x += iconPx + Ui.S(6);
+                Color iconColor = prominent ? Color.White : ThemeColors.Brand;
+                int iconPx = Ui.S(20);
+                g.DrawImage(IconFont.Get(iconName, iconPx, iconColor), x, (Height - iconPx) / 2, iconPx, iconPx);
+                x += iconPx + Ui.S(10);
             }
-            TextRenderer.DrawText(e.Graphics, Text, Font, new Rectangle(x, 0, Math.Max(0, (minimizeButton.Visible ? minimizeButton.Left : closeButton.Left) - x), Height), fore,
+            int right = (minimizeButton.Visible ? minimizeButton.Left : closeButton.Left) - Ui.S(8);
+            TextRenderer.DrawText(g, Text, Font, new Rectangle(x, 0, Math.Max(0, right - x), Height), fore,
                 TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine);
         }
     }

@@ -21,10 +21,10 @@ namespace Hue_travel.Shell
         private static readonly string[] Labels = { "Khám phá", "Lộ trình", "Trợ lý", "Hồ sơ" };
         private static readonly string[] Tips = { "Tìm địa điểm theo tên và nhóm", "Lên lộ trình tham quan ngắn nhất", "Hỏi trợ lý du lịch Huế", "Hồ sơ, yêu thích, lộ trình đã lưu và đăng xuất" };
 
-        private const int DesignWidth = 80;
+        private const int DesignWidth = 64;
         private const int ItemHeight = 76;
         private const int TopMargin = 10;
-        private const int PillWidth = 56;
+        private const int PillWidth = 44;
         private const int PillHeight = 32;
         private const int IconSize = 22;
 
@@ -65,6 +65,9 @@ namespace Hue_travel.Shell
             get { return activeIndex; }
             set { if (activeIndex == value) return; activeIndex = value; Invalidate(); }
         }
+
+        /// <summary>Height the rail needs, so the hosting map can size the floating card around it.</summary>
+        public int WantedHeight => Ui.S(TopMargin) * 2 + Icons.Length * Ui.S(ItemHeight);
 
         private int IndexAt(Point p)
         {
@@ -141,7 +144,6 @@ namespace Hue_travel.Shell
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(BackColor);
-            using (var pen = new Pen(ThemeColors.Slate200)) g.DrawLine(pen, Width - 1, 0, Width - 1, Height);
 
             for (int i = 0; i < Icons.Length; i++)
             {

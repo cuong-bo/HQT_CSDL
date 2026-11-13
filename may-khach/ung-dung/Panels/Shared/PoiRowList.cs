@@ -38,8 +38,8 @@ namespace Hue_travel.Panels.Shared
     /// </summary>
     internal sealed class PoiRowList : Control
     {
-        private const int RowHeight = 60;
-        private const int BadgeSize = 38;
+        private const int RowHeight = 72;
+        private const int ThumbSize = 52;
 
         private readonly PressFeedback press;
         private List<PoiRow> rows = new List<PoiRow>();
@@ -57,7 +57,7 @@ namespace Hue_travel.Panels.Shared
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer
                 | ControlStyles.ResizeRedraw | ControlStyles.Selectable, true);
-            BackColor = Color.White;
+            BackColor = ThemeColors.Paper;
             Cursor = Cursors.Hand;
             press = new PressFeedback(this);
         }
@@ -299,11 +299,11 @@ namespace Hue_travel.Panels.Shared
                 }
 
                 int sink = press.SinkFor(i);
-                int badge = Ui.S(BadgeSize);
-                var badgeRect = new Rectangle(Ui.S(14), top + (RowPx - badge) / 2 + sink, badge, badge);
-                DrawBadge(g, row.Poi.Category, badgeRect, dim);
+                int thumb = Ui.S(ThumbSize);
+                var thumbRect = new Rectangle(Ui.S(14), top + (RowPx - thumb) / 2 + sink, thumb, thumb);
+                PoiThumbs.Draw(g, row.Poi, thumbRect, dim);
 
-                int textLeft = badgeRect.Right + Ui.S(12);
+                int textLeft = thumbRect.Right + Ui.S(12);
                 int rightEdge = rightLimit - Ui.S(14);
                 if (ShowSwitch)
                 {
@@ -340,12 +340,12 @@ namespace Hue_travel.Panels.Shared
                     Color dotColor = status.State == OpenState.Closed ? ThemeColors.Red500
                         : status.State == OpenState.ClosingSoon ? ThemeColors.Amber500 : ThemeColors.Emerald500;
                     using (var brush = new SolidBrush(dim ? Color.FromArgb(90, dotColor) : dotColor))
-                        g.FillEllipse(brush, textLeft, top + Ui.S(18) + sink, dot, dot);
+                        g.FillEllipse(brush, textLeft, top + Ui.S(19) + sink, dot, dot);
                     nameLeft += dot + Ui.S(6);
                 }
-                TextRenderer.DrawText(g, row.Poi.Name ?? "", ThemeFonts.SemiBold(14), new Rectangle(nameLeft, top + Ui.S(11) + sink, Math.Max(Ui.S(30), rightEdge - nameLeft), Ui.S(20)),
+                TextRenderer.DrawText(g, row.Poi.Name ?? "", ThemeFonts.SemiBold(14), new Rectangle(nameLeft, top + Ui.S(13) + sink, Math.Max(Ui.S(30), rightEdge - nameLeft), Ui.S(20)),
                     dim ? ThemeColors.Slate400 : ThemeColors.Slate800, flags);
-                TextRenderer.DrawText(g, subtitle, ThemeFonts.Regular(12), new Rectangle(textLeft, top + Ui.S(33) + sink, textWidth, Ui.S(18)),
+                TextRenderer.DrawText(g, subtitle, ThemeFonts.Regular(12), new Rectangle(textLeft, top + Ui.S(38) + sink, textWidth, Ui.S(18)),
                     dim ? ThemeColors.Slate300 : ThemeColors.Slate500, flags);
 
                 if (i < rows.Count - 1)

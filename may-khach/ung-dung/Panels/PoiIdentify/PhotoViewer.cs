@@ -120,7 +120,7 @@ namespace Hue_travel.Panels.PoiIdentify
                 float w = photo.Width * scale, h = photo.Height * scale;
                 var target = new RectangleF(area.X + (area.Width - w) / 2f, area.Y + (area.Height - h) / 2f, w, h);
                 g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                using (GraphicsPath path = Ui.RoundedRect(target, Ui.S(10)))
+                using (GraphicsPath path = Ui.RoundedRect(target, Ui.S(ThemeMetrics.RadiusMd)))
                 {
                     GraphicsState state = g.Save();
                     g.SetClip(path, CombineMode.Intersect);

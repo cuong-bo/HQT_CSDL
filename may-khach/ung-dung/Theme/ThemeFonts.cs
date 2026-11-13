@@ -12,7 +12,9 @@ namespace Hue_travel.Theme
     public static class ThemeFonts
     {
         public const string FamilyName = "Plus Jakarta Sans";
+        public const string SerifFamily = "Lora";
         private const string FallbackFamily = "Segoe UI";
+        private const string SerifFallback = "Georgia";
         private const string MonoFamily = "Consolas";
 
         private static readonly Dictionary<string, Font> Cache = new Dictionary<string, Font>();
@@ -21,6 +23,9 @@ namespace Hue_travel.Theme
         public static Font Medium(float px) => Make(FamilyName + " Medium", px, FontStyle.Regular);
         public static Font SemiBold(float px) => Make(FamilyName + " SemiBold", px, FontStyle.Regular);
         public static Font Bold(float px) => Make(FamilyName, px, FontStyle.Bold);
+        /// <summary>The serif of titles and place names (Lora SemiBold); Georgia when the font file is missing.</summary>
+        public static Font Serif(float px) => Make(SerifFamily + " SemiBold", px, FontStyle.Regular);
+        public static Font SerifBold(float px) => Make(SerifFamily, px, FontStyle.Bold);
         public static Font Mono(float px) => Make(MonoFamily, px, FontStyle.Regular);
         public static Font MonoBold(float px) => Make(MonoFamily, px, FontStyle.Bold);
 
@@ -43,17 +48,18 @@ namespace Hue_travel.Theme
                 if (Cache.TryGetValue(key, out cached)) return cached;
 
                 float points = px * 72f / 96f;
+                string fallback = family.StartsWith(SerifFamily) ? SerifFallback : FallbackFamily;
                 FontFamily embedded = family == MonoFamily ? null : FontLoader.Find(family);
                 Font font;
                 try
                 {
                     font = embedded != null && embedded.IsStyleAvailable(style)
                         ? new Font(embedded, points, style, GraphicsUnit.Point)
-                        : new Font(family == MonoFamily ? MonoFamily : FallbackFamily, points, style, GraphicsUnit.Point);
+                        : new Font(family == MonoFamily ? MonoFamily : fallback, points, style, GraphicsUnit.Point);
                 }
                 catch (ArgumentException)
                 {
-                    font = new Font(FallbackFamily, points, FontStyle.Regular, GraphicsUnit.Point);
+                    font = new Font(fallback, points, FontStyle.Regular, GraphicsUnit.Point);
                 }
                 Cache[key] = font;
                 return font;

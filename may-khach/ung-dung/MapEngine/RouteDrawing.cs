@@ -236,7 +236,7 @@ namespace Hue_travel.MapEngine
         private void DrawLegs()
         {
             int firstPosition = lowestPlacePosition();
-            int edge = Ui.S(9), line = Ui.S(5);
+            int edge = Ui.S(11), line = Ui.S(7);
             var created = new List<int>();
             for (int pass = 0; pass < 2; pass++)
             {
@@ -294,12 +294,44 @@ namespace Hue_travel.MapEngine
             labels.HaloVisible = false;
             map.set_DrawingLabelsVisible(badgeDrawing, true);
 
-            Badge(badgeDrawing, plan.StartPoint, Color.FromArgb(22, 163, 74), "BĐ", true, mpp);
+            Badge(badgeDrawing, plan.StartPoint, ThemeColors.Lacquer, "BĐ", true, mpp);
             for (int i = 0; i < plan.Stops.Count; i++)
             {
                 Badge(badgeDrawing, new MapXY(plan.Stops[i].X, plan.Stops[i].Y), RoutePalette.ColorOf(i), (i + 1).ToString(), false, mpp);
             }
+            DrawArrows(badgeDrawing, mpp);
             lastBadgeMetresPerPixel = mpp;
+        }
+
+        // White chevrons along the route every ~110 px so the direction of travel reads at a glance.
+        private void DrawArrows(int layer, double mpp)
+        {
+            if (points.Count < 2 || total <= 0 || mpp <= 0) return;
+            double spacing = Ui.S(110) * mpp;                      // metres between arrows at this zoom
+            int count = (int)Math.Min(400, total / spacing);       // never hundreds of polygons when zoomed far in
+            PointF[] chevron =
+            {
+                new PointF(Ui.S(5f), 0), new PointF(-Ui.S(3.5f), -Ui.S(4.5f)), new PointF(-Ui.S(1f), 0), new PointF(-Ui.S(3.5f), Ui.S(4.5f)),
+            };
+            for (int i = 1; i <= count; i++)
+            {
+                double at = i * spacing;
+                if (NearStop(at, mpp)) continue;                  // leave the numbered badges clear
+                double x, y, heading;
+                if (!Locate(at, out x, out y, out heading)) break;
+                Polygon(layer, chevron, x, y, heading, mpp, Color.White, 235);
+            }
+        }
+
+        // True when a point is within about 30 px of a stop, so an arrow does not sit on its badge.
+        private bool NearStop(double distance, double mpp)
+        {
+            double clearance = Ui.S(30) * mpp;
+            foreach (double end in legEnds)
+            {
+                if (Math.Abs(distance - end) < clearance) return true;
+            }
+            return false;
         }
 
         private void Badge(int layer, MapXY at, Color color, string text, bool start, double mpp)

@@ -1,14 +1,23 @@
-﻿using System;
+using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Hue_travel.Theme;
 
 namespace Hue_travel.Shell
 {
-    public partial class TitleBar : UserControl
+    /// <summary>
+    /// The slim title strip of the main window (40 px): the brand mark and name on a light sky-blue strip, the account and
+    /// weather chips, and the window buttons. The search box floats on the map (<see cref="SearchPill"/>).
+    /// Written in code, without a designer file. Same events as before for the window buttons.
+    /// </summary>
+    public sealed class TitleBar : Control
     {
-        private const int WM_NCLBUTTONDOWN = 0xA1;
-        private const int HTCAPTION = 0x2;
+        public const int DesignHeight = 40;
+
+        private const int WmNcLButtonDown = 0xA1;
+        private const int HtCaption = 0x2;
 
         [DllImport("user32.dll")]
         private static extern bool ReleaseCapture();
@@ -20,167 +29,134 @@ namespace Hue_travel.Shell
         public event EventHandler MaximizeClicked;
         public event EventHandler CloseClicked;
 
-        /// <summary>Raised as the text of the search box changes (also when it is cleared).</summary>
-        public event EventHandler<string> SearchTextChanged;
-
-        /// <summary>Raised when Enter is pressed in the search box.</summary>
-        public event EventHandler<string> SearchSubmitted;
-
-
-        private const int EdgePadding = 0;       // window buttons touch the edge
+        private readonly IconButton btnMinimize = new IconButton();
+        private readonly IconButton btnMaximize = new IconButton();
+        private readonly IconButton btnClose = new IconButton();
+        private string weather = "";
+        private string user = "";
 
         public TitleBar()
         {
-            InitializeComponent();
-            LayoutRightGroup();
-            Resize += (s, e) => LayoutRightGroup(); // widths change once the window is scaled to the screen DPI
+            SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
+            Dock = DockStyle.Top;
+            Height = DesignHeight;
 
-            // Double-clicking the bar maximises / restores, like a normal window caption.
-            EventHandler toggleMaximize = (s, e) => MaximizeClicked?.Invoke(this, EventArgs.Empty);
-            panelRoot.DoubleClick += toggleMaximize;
-            lblLogo.DoubleClick += toggleMaximize;
-            picLogo.DoubleClick += toggleMaximize;
+            StyleWindowButton(btnMinimize, "minimize", false);
+            StyleWindowButton(btnMaximize, "crop_square", false);
+            StyleWindowButton(btnClose, "close", true);
+            btnMinimize.Click += (s, e) => MinimizeClicked?.Invoke(this, EventArgs.Empty);
+            btnMaximize.Click += (s, e) => MaximizeClicked?.Invoke(this, EventArgs.Empty);
+            btnClose.Click += (s, e) => CloseClicked?.Invoke(this, EventArgs.Empty);
+
+            Controls.Add(btnMinimize);
+            Controls.Add(btnMaximize);
+            Controls.Add(btnClose);
+            LayoutChildren();
         }
 
         /// <summary>Shows the "restore" icon while the window is maximised, "maximise" otherwise.</summary>
-        public void SetMaximized(bool isMaximized)
-        {
-            btnMaximize.IconName = isMaximized ? "filter_none" : "crop_square";
-        }
+        public void SetMaximized(bool isMaximized) => btnMaximize.IconName = isMaximized ? "filter_none" : "crop_square";
 
         /// <summary>Who is using the app: "Khách", the signed-in person's name, or empty (offline) to show nothing.</summary>
         public void SetUser(string text)
         {
-            lblUser.Text = text ?? "";
-            lblUser.Visible = lblUser.Text.Length > 0;
-            LayoutRightGroup();
+            user = text ?? "";
+            Invalidate();
         }
 
-        /// <summary>
-        /// Positions the right-hand group (auth button, window buttons)
-        /// from the measured widths so the spacing matches the mockup's flex gaps. The
-        /// controls are right-anchored, so this only needs to run once.
-        /// </summary>
-        private void LayoutRightGroup()
+        /// <summary>The weather chip on the right ("27°C · Trời nắng"); empty text hides it.</summary>
+        public void SetWeather(string text)
         {
-            int right = Width - EdgePadding;
-            btnClose.Left = right - btnClose.Width;
-            btnMaximize.Left = btnClose.Left - btnMaximize.Width;
-            btnMinimize.Left = btnMaximize.Left - btnMinimize.Width;
-
-            int gap = Hue_travel.Theme.Ui.S(16);
-            lblUser.Left = btnMinimize.Left - gap - lblUser.Width;
-            lblUser.Top = (Height - lblUser.Height) / 2;
-            LayoutSearch();
+            weather = text ?? "";
+            Invalidate();
         }
 
-        // The search box is centred in the bar and shrinks before it would touch the logo or the window buttons.
-        private void LayoutSearch()
+        private static void StyleWindowButton(IconButton button, string icon, bool isClose)
         {
-            int gap = Hue_travel.Theme.Ui.S(24);
-            int userSpace = lblUser.Visible ? lblUser.Width + gap : 0;
-            int free = btnMinimize.Left - userSpace - gap - (lblLogo.Right + gap);
-            int width = System.Math.Max(Hue_travel.Theme.Ui.S(200), System.Math.Min(Hue_travel.Theme.Ui.S(560), free));
-            int height = Hue_travel.Theme.Ui.S(38);
-            int left = System.Math.Max(lblLogo.Right + gap, (Width - width) / 2);
-            if (left + width > btnMinimize.Left - gap) left = btnMinimize.Left - gap - width;
-            boxSearch.SetBounds(left, (Height - 1 - height) / 2, width, height);
-            boxSearch.Radius = 19;
-
-            int pad = Hue_travel.Theme.Ui.S(14);
-            iconSearch.Location = new System.Drawing.Point(pad, (height - iconSearch.Height) / 2);
-            int clearSize = Hue_travel.Theme.Ui.S(22);
-            btnClearSearch.SetBounds(width - pad - clearSize + Hue_travel.Theme.Ui.S(4), (height - clearSize) / 2, clearSize, clearSize);
-            int textLeft = iconSearch.Right + Hue_travel.Theme.Ui.S(10);
-            int textRight = width - pad - clearSize - Hue_travel.Theme.Ui.S(6);
-            // Tall enough for the whole line, or the tails of g, y, p are cut off.
-            txtSearch.AutoSize = false;
-            int textHeight = txtSearch.Font.Height + Hue_travel.Theme.Ui.S(4);
-            txtSearch.SetBounds(textLeft, (height - textHeight) / 2, System.Math.Max(Hue_travel.Theme.Ui.S(40), textRight - textLeft), textHeight);
-            lblSearchHint.Bounds = txtSearch.Bounds;
+            button.AutoWidth = false;
+            button.TabStop = false;
+            button.IconName = icon;
+            button.IconSize = 16;
+            button.Radius = 0;
+            button.IconColor = ThemeColors.Slate600;
+            button.FillColor = Color.Transparent;
+            button.HoverFillColor = isClose ? ThemeColors.Lacquer : ThemeColors.Slate100;
+            if (isClose) button.HoverIconColor = Color.White;
         }
 
-        // Clicking the hint text puts the caret in the box, like clicking the box itself.
-        private void lblSearchHint_Click(object sender, EventArgs e) => txtSearch.Focus();
-
-        /// <summary>Empties the search box without raising a search for the empty text.</summary>
-        public void ClearSearch() => txtSearch.Clear();
-
-        private void txtSearch_TextChanged(object sender, EventArgs e)
+        private void LayoutChildren()
         {
-            btnClearSearch.Visible = txtSearch.TextLength > 0;
-            lblSearchHint.Visible = txtSearch.TextLength == 0;
-            SearchTextChanged?.Invoke(this, txtSearch.Text);
+            int w = Ui.S(46);
+            btnClose.SetBounds(Width - w, 0, w, Height);
+            btnMaximize.SetBounds(btnClose.Left - w, 0, w, Height);
+            btnMinimize.SetBounds(btnMaximize.Left - w, 0, w, Height);
         }
 
-        /// <summary>Raised for the up (-1) and down (+1) keys, to move through the results shown under the box.</summary>
-        public event EventHandler<int> SearchMoved;
-
-        /// <summary>Raised when the caret leaves the box (the results under it are then dismissed).</summary>
-        public event EventHandler SearchFocusLost;
-
-        /// <summary>Raised when the caret comes back into a box that already has text (the results show again).</summary>
-        public event EventHandler SearchFocusGained;
-
-        /// <summary>Where the search box is, in the title bar's coordinates (the bar sits at the top-left of the window).</summary>
-        public Rectangle SearchBoxBounds => boxSearch.Bounds;
-
-        /// <summary>The text in the search box.</summary>
-        public string SearchText => txtSearch.Text;
-
-        private void txtSearch_KeyDown(object sender, KeyEventArgs e)
+        protected override void OnResize(EventArgs e)
         {
-            if (e.KeyCode == Keys.Enter)
+            base.OnResize(e);
+            LayoutChildren();
+        }
+
+        // Control.Scale grows children after OnResize ran, so lay out again once scaling is done.
+        protected override void OnLayout(LayoutEventArgs levent)
+        {
+            base.OnLayout(levent);
+            LayoutChildren();
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            Graphics g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            using (var brush = new SolidBrush(ThemeColors.SurfaceContainerLowest)) g.FillRectangle(brush, ClientRectangle);
+            using (var line = new SolidBrush(ThemeColors.Slate200)) g.FillRectangle(line, 0, Height - 1, Width, 1);
+
+            int icon = Ui.S(22);
+            int x = Ui.S(16);
+            g.DrawImage(IconFont.Get("place", icon, ThemeColors.Primary), x, (Height - icon) / 2, icon, icon);
+            x += icon + Ui.S(8);
+            TextRenderer.DrawText(g, "Huế Travel", ThemeFonts.Serif(17), new Rectangle(x, 0, Ui.S(180), Height), ThemeColors.Slate900,
+                TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine);
+
+            if (weather.Length == 0 && user.Length == 0) return;
+            int chipRight = btnMinimize.Left - Ui.S(16);
+            if (weather.Length > 0) chipRight = DrawChip(g, weather, chipRight);
+            if (user.Length > 0) DrawChip(g, user, chipRight - Ui.S(6));
+        }
+
+        // A light sky pill with slate text, right-aligned at <paramref name="right"/>; returns its left edge.
+        private int DrawChip(Graphics g, string text, int right)
+        {
+            Font font = ThemeFonts.Medium(12);
+            Size size = TextRenderer.MeasureText(text, font, Size.Empty, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine);
+            var chip = new Rectangle(right - size.Width - Ui.S(28), (Height - Ui.S(26)) / 2, size.Width + Ui.S(28), Ui.S(26));
+            using (GraphicsPath path = Ui.RoundedRect(chip, chip.Height / 2f))
+            using (var fill = new SolidBrush(ThemeColors.Sky50))
+            using (var pen = new Pen(ThemeColors.Sky200))
             {
-                e.SuppressKeyPress = true;
-                SearchSubmitted?.Invoke(this, txtSearch.Text);
+                g.FillPath(fill, path);
+                g.DrawPath(pen, path);
             }
-            else if (e.KeyCode == Keys.Down || e.KeyCode == Keys.Up)
-            {
-                e.SuppressKeyPress = true;
-                SearchMoved?.Invoke(this, e.KeyCode == Keys.Down ? 1 : -1);
-            }
-            else if (e.KeyCode == Keys.Escape)
-            {
-                e.SuppressKeyPress = true;
-                txtSearch.Clear();
-            }
+            TextRenderer.DrawText(g, text, font, chip, ThemeColors.Slate700,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine);
+            return chip.Left;
         }
 
-        // Web-style focus: the pill turns white with a blue ring while it has the caret.
-        private void txtSearch_FocusChanged(object sender, EventArgs e)
+        // FormBorderStyle.None has no caption: dragging the bar moves the window, double-clicking maximises / restores.
+        protected override void OnMouseDown(MouseEventArgs e)
         {
-            bool focused = txtSearch.Focused;
-            if (focused && txtSearch.TextLength > 0) SearchFocusGained?.Invoke(this, EventArgs.Empty);
-            else if (!focused) SearchFocusLost?.Invoke(this, EventArgs.Empty);
-            Color fill = focused ? Hue_travel.Theme.ThemeColors.SurfaceContainerLowest : Hue_travel.Theme.ThemeColors.Slate100;
-            boxSearch.FillColor = fill;
-            boxSearch.BorderColor = focused ? Hue_travel.Theme.ThemeColors.Primary : Hue_travel.Theme.ThemeColors.Slate200;
-            txtSearch.BackColor = fill;
-            boxSearch.Invalidate();
-        }
-
-        private void btnClearSearch_Click(object sender, EventArgs e)
-        {
-            txtSearch.Clear();
-            txtSearch.Focus();
-        }
-
-        /// <summary>Lets the user drag the borderless MainForm by its title bar (FormBorderStyle.None has no built-in move handle).</summary>
-        private void panelRoot_MouseDown(object sender, MouseEventArgs e)
-        {
-            if (e.Button != MouseButtons.Left) return;
-            var form = FindForm();
-            if (form == null) return;
-
+            base.OnMouseDown(e);
+            Form form = FindForm();
+            if (e.Button != MouseButtons.Left || form == null || form.WindowState == FormWindowState.Maximized) return;
             ReleaseCapture();
-            SendMessage(form.Handle, WM_NCLBUTTONDOWN, HTCAPTION, 0);
+            SendMessage(form.Handle, WmNcLButtonDown, HtCaption, 0);
         }
 
-        private void btnMinimize_Click(object sender, EventArgs e) => MinimizeClicked?.Invoke(this, EventArgs.Empty);
-
-        private void btnMaximize_Click(object sender, EventArgs e) => MaximizeClicked?.Invoke(this, EventArgs.Empty);
-
-        private void btnClose_Click(object sender, EventArgs e) => CloseClicked?.Invoke(this, EventArgs.Empty);
+        protected override void OnMouseDoubleClick(MouseEventArgs e)
+        {
+            base.OnMouseDoubleClick(e);
+            if (e.Button == MouseButtons.Left) MaximizeClicked?.Invoke(this, EventArgs.Empty);
+        }
     }
 }

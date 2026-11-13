@@ -13,12 +13,12 @@ namespace Hue_travel.MapEngine
         {
             switch (category)
             {
-                case PoiCategory.Heritage: return ThemeColors.Amber600;
-                case PoiCategory.Scenery: return ThemeColors.Emerald700;
-                case PoiCategory.Food: return ThemeColors.Orange600;
-                case PoiCategory.Stay: return ThemeColors.Blue600;
-                case PoiCategory.Service: return ThemeColors.Sky600;
-                default: return ThemeColors.Cyan600;
+                case PoiCategory.Heritage: return ThemeColors.CatHeritage;
+                case PoiCategory.Scenery: return ThemeColors.CatScenery;
+                case PoiCategory.Food: return ThemeColors.CatFood;
+                case PoiCategory.Stay: return ThemeColors.CatStay;
+                case PoiCategory.Service: return ThemeColors.CatService;
+                default: return ThemeColors.CatTransport;
             }
         }
     }

@@ -217,7 +217,7 @@ namespace Hue_travel.Panels.RouteOptimizer
                     Color color = RoutePalette.ColorOf(i);
                     Color rest = i == active ? ThemeColors.Sky50 : (i == hover ? ThemeColors.Slate50 : Color.White);
                     Color fill = press.Fill(i, rest, ThemeColors.Slate200);
-                    using (GraphicsPath path = Ui.RoundedRect(new Rectangle(card.X, card.Y, card.Width - 1, card.Height - 1), Ui.S(12)))
+                    using (GraphicsPath path = Ui.RoundedRect(new Rectangle(card.X, card.Y, card.Width - 1, card.Height - 1), Ui.S(ThemeMetrics.RadiusMd)))
                     {
                         using (var brush = new SolidBrush(fill)) g.FillPath(brush, path);
                         using (var pen = new Pen(i == active ? color : ThemeColors.Slate200, i == active ? 2f : 1f)) g.DrawPath(pen, path);
@@ -370,7 +370,7 @@ namespace Hue_travel.Panels.RouteOptimizer
 
         public TripResultPanel()
         {
-            BackColor = Color.White;
+            BackColor = ThemeColors.Paper;
             KeyPreview = true;
 
             Round(btnFold, "expand_more");
@@ -394,11 +394,11 @@ namespace Hue_travel.Panels.RouteOptimizer
             btnStop.IconSize = 16;
             btnStop.Gap = 6;
             btnStop.Font = ThemeFonts.SemiBold(13);
-            btnStop.Radius = 10;
+            btnStop.Radius = ThemeMetrics.RadiusSm;
             btnStop.ForeColor = Color.White;
             btnStop.IconColor = Color.White;
-            btnStop.FillColor = Color.FromArgb(220, 38, 38);
-            btnStop.HoverFillColor = Color.FromArgb(185, 28, 28);
+            btnStop.FillColor = ThemeColors.Lacquer;
+            btnStop.HoverFillColor = Color.FromArgb(143, 29, 23);
             new ToolTip().SetToolTip(btnFold, "Thu nhỏ thành biểu tượng");
             new ToolTip().SetToolTip(btnClose, "Dừng lại và xoá kết quả");
 
@@ -431,7 +431,7 @@ namespace Hue_travel.Panels.RouteOptimizer
             b.IconColor = ThemeColors.Slate600;
             b.FillColor = ThemeColors.Slate100;
             b.HoverFillColor = ThemeColors.Slate200;
-            b.Radius = 14;
+            b.Radius = ThemeMetrics.RadiusMd;
         }
 
         private static void Style(IconButton b, string text, string icon)
@@ -443,7 +443,7 @@ namespace Hue_travel.Panels.RouteOptimizer
             b.Gap = 6;
             b.HorizontalPadding = 8;
             b.Font = ThemeFonts.Medium(13);
-            b.Radius = 10;
+            b.Radius = ThemeMetrics.RadiusSm;
             b.ForeColor = ThemeColors.Slate700;
             b.IconColor = ThemeColors.Primary;
             b.FillColor = Color.White;
@@ -459,7 +459,7 @@ namespace Hue_travel.Panels.RouteOptimizer
             b.IconName = "";
             b.HorizontalPadding = 0;
             b.Font = ThemeFonts.SemiBold(11);
-            b.Radius = 8;
+            b.Radius = ThemeMetrics.RadiusSm;
             b.BorderColor = ThemeColors.Slate300;
         }
 

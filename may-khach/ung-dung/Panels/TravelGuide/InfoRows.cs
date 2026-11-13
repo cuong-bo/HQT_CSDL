@@ -28,7 +28,7 @@ namespace Hue_travel.Panels.TravelGuide
         public InfoRows()
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
-            BackColor = Color.White;
+            BackColor = ThemeColors.Paper;
             press = new PressFeedback(this);
         }
 
@@ -151,7 +151,7 @@ namespace Hue_travel.Panels.TravelGuide
                     Rectangle r = ActionRect(top, h);
                     int sink = press.SinkFor(i);
                     Color fill = press.Fill(i, hoverAction == i ? ThemeColors.Slate100 : Color.White, ThemeColors.Slate200);
-                    using (GraphicsPath path = Ui.RoundedRect(new RectangleF(r.X + 0.5f, r.Y + 0.5f + sink, r.Width - 1f, r.Height - 1f), Ui.S(8)))
+                    using (GraphicsPath path = Ui.RoundedRect(new RectangleF(r.X + 0.5f, r.Y + 0.5f + sink, r.Width - 1f, r.Height - 1f), Ui.S(ThemeMetrics.RadiusSm)))
                     using (var brush = new SolidBrush(fill))
                     using (var pen = new Pen(ThemeColors.Slate300))
                     {

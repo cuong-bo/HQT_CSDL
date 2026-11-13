@@ -41,7 +41,7 @@ namespace Hue_travel.Panels.RouteOptimizer
         public StopList()
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
-            BackColor = Color.White;
+            BackColor = ThemeColors.Paper;
             press = new PressFeedback(this);
         }
 

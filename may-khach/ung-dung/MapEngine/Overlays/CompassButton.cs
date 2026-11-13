@@ -48,7 +48,7 @@ namespace Hue_travel.MapEngine.Overlays
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             Color fill = press.Fill(0, isHovered ? ThemeColors.Slate50 : Color.White, ThemeColors.Slate200);
-            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), Ui.S(8)))
+            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), Width / 2f))
             using (var brush = new SolidBrush(fill))
             using (var pen = new Pen(ThemeColors.Slate200, 1f))
             {
@@ -60,9 +60,9 @@ namespace Hue_travel.MapEngine.Overlays
             // Sizes follow the control (design size 36) so the tile looks the same at any screen scale.
             int sink = press.SinkFor(0);
             int iconPx = Width * 16 / 36;
-            TextRenderer.DrawText(g, "N", ThemeFonts.Bold(10), new Rectangle(0, Height / 12 + sink, Width, Height / 3), ThemeColors.Red500,
+            TextRenderer.DrawText(g, "N", ThemeFonts.Bold(10), new Rectangle(0, Height / 12 + sink, Width, Height / 3), ThemeColors.Lacquer,
                 TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
-            g.DrawImage(IconFont.Get("navigation", iconPx, ThemeColors.Sky600), (Width - iconPx) / 2, Height * 16 / 36 + sink, iconPx, iconPx);
+            g.DrawImage(IconFont.Get("navigation", iconPx, ThemeColors.Brand), (Width - iconPx) / 2, Height * 16 / 36 + sink, iconPx, iconPx);
         }
     }
 }

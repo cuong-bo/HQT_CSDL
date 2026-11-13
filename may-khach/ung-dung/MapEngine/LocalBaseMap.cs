@@ -75,24 +75,23 @@ namespace Hue_travel.MapEngine
                 Shapefile provinces = BuildProvinces(folder);
                 if (provinces != null)
                 {
-                    StyleArea(provinces, Color.FromArgb(243, 239, 230), Color.FromArgb(167, 139, 250), 1.8f);
-                    provinces.DefaultDrawingOptions.LineStipple = tkDashStyle.dsDash;
-                    StyleLabels(provinces.Labels, Color.FromArgb(91, 42, 134), Color.FromArgb(243, 239, 230), 11, false, ProvinceNamesFromScale, Unlimited);
+                    StyleArea(provinces, Color.FromArgb(243, 239, 230), Color.FromArgb(206, 196, 178), 1.0f);
+                    StyleLabels(provinces.Labels, Color.FromArgb(94, 84, 112), Color.FromArgb(243, 239, 230), 11, false, ProvinceNamesFromScale, Unlimited);
                     Register(map, provinces, handles);
                 }
 
                 Shapefile communes = Open(Path.Combine(folder, "rgXa.shp"));
                 if (communes != null)
                 {
-                    StyleArea(communes, Color.FromArgb(243, 239, 230), Color.FromArgb(188, 176, 214), 1.2f);
-                    AddLabels(communes, "ten_xa", Color.FromArgb(148, 163, 184), Color.FromArgb(243, 239, 230), 10, true, 0, CommuneNamesUntilScale);
+                    StyleArea(communes, Color.FromArgb(243, 239, 230), Color.FromArgb(226, 218, 203), 0.8f);
+                    AddLabels(communes, "ten_xa", Color.FromArgb(125, 114, 140), Color.FromArgb(243, 239, 230), 10, true, 0, CommuneNamesUntilScale);
                     Register(map, communes, handles);
                 }
 
                 Shapefile lakes = Open(Path.Combine(folder, "song_2n.shp"));
                 if (lakes != null)
                 {
-                    StyleArea(lakes, Color.FromArgb(165, 212, 238), Color.FromArgb(140, 196, 228), 1f);
+                    StyleArea(lakes, Color.FromArgb(170, 214, 226), Color.FromArgb(143, 196, 212), 1f);
                     Register(map, lakes, handles);
                 }
 
@@ -101,7 +100,7 @@ namespace Hue_travel.MapEngine
                 {
                     ShapeDrawingOptions style = streams.DefaultDrawingOptions;
                     style.LineVisible = true;
-                    style.LineColor = Ole(Color.FromArgb(150, 202, 232));
+                    style.LineColor = Ole(Color.FromArgb(143, 196, 212));
                     style.LineWidth = Ui.S(1.6f);
                     Register(map, streams, handles);
                 }
@@ -262,13 +261,13 @@ namespace Hue_travel.MapEngine
             RoadLayers.Add(roads);
             ShapeDrawingOptions other = roads.DefaultDrawingOptions;   // footpaths, steps, unknown
             other.LineVisible = true;
-            other.LineColor = Ole(casing ? Color.FromArgb(243, 239, 230) : Color.FromArgb(214, 217, 224));
+            other.LineColor = Ole(casing ? Color.FromArgb(243, 239, 230) : Color.FromArgb(230, 223, 210));
             other.LineWidth = casing ? 0f : Ui.S(1f);
             other.Visible = !casing;
 
             AddClass(roads, "major", casing ? Color.FromArgb(214, 160, 58) : Color.FromArgb(252, 205, 120), Ui.S(casing ? 7.5f : 5.5f));
-            AddClass(roads, "medium", casing ? Color.FromArgb(185, 192, 203) : Color.White, Ui.S(casing ? 5.5f : 3.8f));
-            AddClass(roads, "minor", casing ? Color.FromArgb(206, 211, 219) : Color.White, Ui.S(casing ? 3.6f : 2.2f));
+            AddClass(roads, "medium", casing ? Color.FromArgb(205, 196, 180) : Color.White, Ui.S(casing ? 5.5f : 3.8f));
+            AddClass(roads, "minor", casing ? Color.FromArgb(221, 213, 198) : Color.White, Ui.S(casing ? 3.6f : 2.2f));
 
             int count = Math.Min(types.Length, roads.NumShapes);
             for (int i = 0; i < count; i++)

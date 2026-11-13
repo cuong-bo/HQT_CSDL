@@ -79,6 +79,10 @@
     <Compile Include="Theme\ThemeMetrics.cs" />
     <Compile Include="Theme\FontLoader.cs" />
     <Compile Include="Theme\IconFont.cs" />
+    <Compile Include="Theme\IconsExtra.cs" />
+    <Compile Include="Theme\ChromeLayer.cs" />
+    <Compile Include="Theme\OverlayCard.cs" />
+    <Compile Include="Theme\WindowChrome.cs" />
     <Compile Include="Theme\AppImages.cs" />
     <Compile Include="Theme\Ui.cs" />
     <Compile Include="Theme\IconButton.cs">
@@ -207,12 +211,8 @@
     <Compile Include="MapEngine\MapHost.Designer.cs">
       <DependentUpon>MapHost.cs</DependentUpon>
     </Compile>
-    <Compile Include="Shell\TitleBar.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Shell\TitleBar.Designer.cs">
-      <DependentUpon>TitleBar.cs</DependentUpon>
-    </Compile>
+    <Compile Include="Shell\TitleBar.cs" />
+    <Compile Include="Shell\SearchPill.cs" />
     <Compile Include="Shell\NavRail.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -221,13 +221,13 @@
     </Compile>
     <Compile Include="Theme\PressFeedback.cs" />
     <Compile Include="Panels\Shared\PoiRowList.cs" />
+    <Compile Include="Panels\Shared\PoiThumbs.cs" />
     <Compile Include="Panels\Layers\LayerPanel.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Panels\Explore\ExplorePanel.cs">
       <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Shell\SearchDropdown.cs">
+    </Compile>    <Compile Include="Shell\SearchDropdown.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Theme\ToggleSwitch.cs">
@@ -238,6 +238,7 @@
     </Compile>
     <Compile Include="MapEngine\LocalBaseMap.cs" />
     <Compile Include="MapEngine\PoiMarkerIcons.cs" />
+    <Compile Include="MapEngine\PoiPin.cs" />
     <Compile Include="Shell\StatusBar.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -337,6 +338,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\PlusJakartaSans-Bold.ttf">
       <LogicalName>Hue_travel.Resources.PlusJakartaSans-Bold.ttf</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Lora.ttf">
+      <LogicalName>Hue_travel.Resources.Lora.ttf</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\MaterialSymbolsSubset.ttf">
       <LogicalName>Hue_travel.Resources.MaterialSymbolsSubset.ttf</LogicalName>

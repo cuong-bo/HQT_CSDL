@@ -49,7 +49,7 @@ namespace Hue_travel.Theme
             HoverFillColor = ThemeColors.Slate100;
             IconColor = ThemeColors.Primary;
             TrailingIconColor = ThemeColors.Slate400;
-            Radius = 6;
+            Radius = ThemeMetrics.RadiusSm;
             Size = new Size(100, 28);
             hoverTimer.Tick += (s, e) => StepHover();
         }
@@ -94,6 +94,41 @@ namespace Hue_travel.Theme
         [Category("Appearance")] public Color IconColor { get; set; }
         [Category("Appearance")] public Color TrailingIconColor { get; set; }
         [Category("Appearance")] public int Radius { get; set; }
+
+        /// <summary>Ready-made looks. Set Kind first, then override single colours if a button needs it.</summary>
+        public enum ButtonKind { Custom, Primary, Tonal, Outline, Ghost, Danger }
+
+        private ButtonKind kind = ButtonKind.Custom;
+
+        [Category("Appearance"), DefaultValue(ButtonKind.Custom)]
+        public ButtonKind Kind { get { return kind; } set { kind = value; ApplyKind(); Invalidate(); } }
+
+        private void ApplyKind()
+        {
+            switch (kind)
+            {
+                case ButtonKind.Primary:   // the one main action of a screen
+                    FillColor = ThemeColors.Brand; HoverFillColor = ThemeColors.BrandDeep; BorderColor = Color.Empty;
+                    ForeColor = Color.White; IconColor = Color.White; TrailingIconColor = Color.White; Elevated = true;
+                    break;
+                case ButtonKind.Tonal:     // a secondary action that still deserves attention
+                    FillColor = ThemeColors.BrandSoft; HoverFillColor = Color.FromArgb(233, 219, 245); BorderColor = Color.Empty;
+                    ForeColor = ThemeColors.Brand; IconColor = ThemeColors.Brand; TrailingIconColor = ThemeColors.Brand; Elevated = false;
+                    break;
+                case ButtonKind.Outline:
+                    FillColor = Color.White; HoverFillColor = ThemeColors.BrandSoft; BorderColor = ThemeColors.Brand;
+                    ForeColor = ThemeColors.Brand; IconColor = ThemeColors.Brand; TrailingIconColor = ThemeColors.Brand; Elevated = false;
+                    break;
+                case ButtonKind.Ghost:     // icon buttons and quiet actions
+                    FillColor = Color.Transparent; HoverFillColor = ThemeColors.BrandSoft; BorderColor = Color.Empty;
+                    ForeColor = ThemeColors.InkSoft; IconColor = ThemeColors.InkSoft; TrailingIconColor = ThemeColors.InkSoft; Elevated = false;
+                    break;
+                case ButtonKind.Danger:
+                    FillColor = ThemeColors.Lacquer; HoverFillColor = Color.FromArgb(143, 29, 23); BorderColor = Color.Empty;
+                    ForeColor = Color.White; IconColor = Color.White; TrailingIconColor = Color.White; Elevated = false;
+                    break;
+            }
+        }
         /// <summary>When set (and no icon is), draws an 8px status dot before the text.</summary>
         [Category("Appearance")] public Color DotColor { get; set; }
         /// <summary>Icon colour while hovered; Color.Empty keeps <see cref="IconColor"/>.</summary>

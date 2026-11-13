@@ -17,7 +17,7 @@ namespace Hue_travel.Theme
                 | ControlStyles.ResizeRedraw | ControlStyles.SupportsTransparentBackColor, true);
             BackColor = Color.Transparent;
             FillColor = Color.White;
-            Radius = 6;
+            Radius = ThemeMetrics.RadiusSm;
         }
 
         [Category("Appearance")] public Color FillColor { get; set; }

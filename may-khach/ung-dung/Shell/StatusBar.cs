@@ -1,16 +1,29 @@
 using System;
+using System.Drawing;
 using System.Windows.Forms;
+using Hue_travel.Theme;
 
 namespace Hue_travel.Shell
 {
     public partial class AppStatusBar : UserControl
     {
-        private const int EdgePadding = 12; // px-3
+        private const int EdgePadding = 14; // px-3.5
         private const int GroupGap = 12;    // gap-3 inside the right group
 
         public AppStatusBar()
         {
             InitializeComponent();
+            // The pill is compact: the captions ("Khu vực đang xem:", "Thời tiết hôm nay:") only add noise, the icons say enough.
+            captionArea.Visible = false;
+            captionWeather.Visible = false;
+            lblAreaValue.AutoSize = false;
+            lblAreaValue.AutoEllipsis = true;
+            lblAreaValue.TextAlign = ContentAlignment.MiddleLeft;
+            lblWeatherValue.AutoSize = false;
+            lblWeatherValue.AutoEllipsis = true;
+            lblWeatherValue.TextAlign = ContentAlignment.MiddleCenter;
+            lblCoords.TextAlign = ContentAlignment.MiddleLeft;
+            lblScale.TextAlign = ContentAlignment.MiddleRight;
             LayoutItems();
             Resize += (s, e) => LayoutItems();
         }
@@ -44,36 +57,30 @@ namespace Hue_travel.Shell
         }
 
         /// <summary>
-        /// Reproduces the mockup's "justify-between" footer: area group pinned left, scale
-        /// and coordinates pinned right, weather group centred in the space between them.
+        /// A compact single-row pill: area on the left, weather in the middle, coordinates and scale on the right.
+        /// Everything is clipped with an ellipsis, so a narrow window never overlaps the groups.
         /// </summary>
         private void LayoutItems()
         {
-            int top = (Height - lblAreaValue.Height) / 2;
+            int pad = Ui.S(EdgePadding);
+            int height = Height;
+            if (height <= 0) return;
 
-            captionArea.Left = Hue_travel.Theme.Ui.S(EdgePadding);
-            lblAreaValue.Left = captionArea.Right;
-            lblAreaValue.Top = top;
-            captionArea.Top = (Height - captionArea.Height) / 2;
+            lblScale.AutoSize = false;
+            lblCoords.AutoSize = false;
+            int lineHeight = Math.Min(height, lblAreaValue.Font.Height + Ui.S(4));
+            int top = (height - lineHeight) / 2;
+            lblScale.SetBounds(Width - pad - Ui.S(92), top, Ui.S(92), lineHeight);
+            lblCoords.SetBounds(lblScale.Left - Ui.S(GroupGap) - Ui.S(150), top, Ui.S(150), lineHeight);
+            dividerCoords.Visible = false;
 
-            lblScale.Left = Width - Hue_travel.Theme.Ui.S(EdgePadding) - lblScale.Width;
-            lblScale.Top = top;
+            int left = pad;
+            int right = lblCoords.Left - Ui.S(GroupGap);
+            int areaWidth = Math.Max(Ui.S(80), (right - left) * 45 / 100);
+            lblAreaValue.SetBounds(left, top, areaWidth, lineHeight);
 
-            // Fixed-width read-out so the digits changing under the pointer do not shift the layout.
-            lblCoords.Width = TextRenderer.MeasureText("E 000,000 \u00B7 N 0,000,000", lblCoords.Font, System.Drawing.Size.Empty, TextFormatFlags.NoPadding).Width + Hue_travel.Theme.Ui.S(8);
-            dividerCoords.Left = lblScale.Left - Hue_travel.Theme.Ui.S(GroupGap) - dividerCoords.Width;
-            dividerCoords.Top = (Height - dividerCoords.Height) / 2;
-            lblCoords.Left = dividerCoords.Left - Hue_travel.Theme.Ui.S(GroupGap) - lblCoords.Width;
-            lblCoords.Top = (Height - lblCoords.Height) / 2;
-
-            int leftEnd = lblAreaValue.Right;
-            int rightStart = lblCoords.Left;
-            int weatherWidth = captionWeather.Width + lblWeatherValue.Width;
-            int weatherLeft = leftEnd + (rightStart - leftEnd - weatherWidth) / 2;
-            captionWeather.Left = weatherLeft;
-            captionWeather.Top = (Height - captionWeather.Height) / 2;
-            lblWeatherValue.Left = captionWeather.Right;
-            lblWeatherValue.Top = top;
+            int weatherLeft = left + areaWidth + Ui.S(GroupGap);
+            lblWeatherValue.SetBounds(weatherLeft, top, Math.Max(0, right - weatherLeft), lineHeight);
         }
     }
 }

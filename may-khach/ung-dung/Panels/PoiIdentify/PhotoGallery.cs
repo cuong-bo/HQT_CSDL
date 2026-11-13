@@ -34,7 +34,7 @@ namespace Hue_travel.Panels.PoiIdentify
         public PhotoGallery()
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
-            BackColor = Color.White;
+            BackColor = ThemeColors.Paper;
             Cursor = Cursors.Hand;
             press = new PressFeedback(this);
         }
@@ -236,7 +236,7 @@ namespace Hue_travel.Panels.PoiIdentify
                 bool selected = i == index;
                 int sink = press.SinkFor(id);
                 var box = new Rectangle(r.X, r.Y + sink, r.Width, r.Height);
-                using (GraphicsPath clip = Ui.RoundedRect(box, Ui.S(8)))
+                using (GraphicsPath clip = Ui.RoundedRect(box, Ui.S(ThemeMetrics.RadiusMd)))
                 {
                     GraphicsState state = g.Save();
                     g.SetClip(clip, CombineMode.Intersect);

@@ -119,7 +119,7 @@ namespace Hue_travel.MapEngine.Overlays
             var box = new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f);
             int itemPx = ItemPx;
             int iconPx = itemPx / 2;
-            using (GraphicsPath path = Ui.RoundedRect(box, Ui.S(8)))
+            using (GraphicsPath path = Ui.RoundedRect(box, Ui.S(ThemeMetrics.RadiusMd)))
             {
                 using (var fill = new SolidBrush(Color.White)) g.FillPath(fill, path);
 

@@ -32,20 +32,23 @@ namespace Hue_travel.Shell
 
         private readonly Chip[] chips =
         {
-            new Chip { Label = "Tất cả", Icon = "apps", IconColor = ThemeColors.Slate600, Category = null },
-            new Chip { Label = "Di tích", Icon = "account_balance", IconColor = ThemeColors.CategoryHeritage, Category = PoiCategory.Heritage },
-            new Chip { Label = "Cảnh quan", Icon = "landscape", IconColor = ThemeColors.CategoryScenery, Category = PoiCategory.Scenery },
-            new Chip { Label = "Ẩm thực", Icon = "restaurant", IconColor = ThemeColors.CategoryFood, Category = PoiCategory.Food },
-            new Chip { Label = "Lưu trú", Icon = "hotel", IconColor = ThemeColors.CategoryStay, Category = PoiCategory.Stay },
-            new Chip { Label = "Dịch vụ", Icon = "support_agent", IconColor = ThemeColors.Emerald700, Category = PoiCategory.Service },
-            new Chip { Label = "Giao thông", Icon = "train", IconColor = ThemeColors.Slate600, Category = PoiCategory.Transport },
-            new Chip { Label = "Đang mở cửa", Icon = "schedule", IconColor = ThemeColors.Emerald700, OpenOnly = true },
+            new Chip { Label = "Tất cả", Icon = "apps", IconColor = ThemeColors.CatTransport, Category = null },
+            new Chip { Label = "Di tích", Icon = "account_balance", IconColor = ThemeColors.CatHeritage, Category = PoiCategory.Heritage },
+            new Chip { Label = "Cảnh quan", Icon = "landscape", IconColor = ThemeColors.CatScenery, Category = PoiCategory.Scenery },
+            new Chip { Label = "Ẩm thực", Icon = "restaurant", IconColor = ThemeColors.CatFood, Category = PoiCategory.Food },
+            new Chip { Label = "Lưu trú", Icon = "hotel", IconColor = ThemeColors.CatStay, Category = PoiCategory.Stay },
+            new Chip { Label = "Dịch vụ", Icon = "support_agent", IconColor = ThemeColors.CatService, Category = PoiCategory.Service },
+            new Chip { Label = "Giao thông", Icon = "train", IconColor = ThemeColors.CatTransport, Category = PoiCategory.Transport },
+            new Chip { Label = "Đang mở cửa", Icon = "schedule", IconColor = ThemeColors.Jade, OpenOnly = true },
         };
 
         private readonly PressFeedback press;
         private int selectedIndex;
         private int hoverIndex = -1;
         private bool openOnly;
+
+        /// <summary>Width the chips need, so the hosting map can size the floating pill around them.</summary>
+        public int WantedWidth { get; private set; }
 
         /// <summary>The picked kind of place; null means "Tất cả" (everything).</summary>
         public event EventHandler<PoiCategory?> CategorySelected;
@@ -58,7 +61,7 @@ namespace Hue_travel.Shell
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
             BackColor = ThemeColors.SurfaceContainerLowest;
             Cursor = Cursors.Hand;
-            Height = 48;
+            Height = 40;
             press = new PressFeedback(this);
         }
 
@@ -88,6 +91,7 @@ namespace Hue_travel.Shell
                 chips[i].Bounds = new Rectangle(x, y, width, height);
                 x += width + Ui.S(ChipGap);
             }
+            WantedWidth = x - Ui.S(ChipGap) + Ui.S(SidePadding);
             Invalidate();
         }
 
@@ -156,7 +160,6 @@ namespace Hue_travel.Shell
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(BackColor);
-            using (var pen = new Pen(ThemeColors.Slate200)) g.DrawLine(pen, 0, Height - 1, Width, Height - 1);
 
             for (int i = 0; i < chips.Length; i++)
             {

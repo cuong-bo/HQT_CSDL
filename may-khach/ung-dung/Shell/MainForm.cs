@@ -43,6 +43,11 @@ namespace Hue_travel.Shell
 
             InitializeComponent();
             Icon = AppImages.AppIcon();
+            // The slim title bar leaves the map edge to edge: the search box, chip bar, rail and status pill become
+            // floating cards on the map. The drop-down gets the same soft shadow as the panels.
+            mapHost.HostOverlays(this, searchPill, filterBar, navRail, statusBar);
+            OverlayCard.Attach(this, searchDropdown, ThemeMetrics.RadiusMd, Elevation.Panel);
+            WindowChrome.Attach(this);
             chatPanel.SetService(api != null ? new ApiChatService(api) : null, api != null);
             chatPanel.SelectedPoiId = () => poiIdentifyCard.CurrentPoiId;
             if (api != null) SetUpAccount();
@@ -137,15 +142,15 @@ namespace Hue_travel.Shell
                 mapHost.SetOpenOnly(value);
                 explorePanel.OpenOnly = value;
                 layerPanel.OpenOnly = value;
-                UpdateSearchResults(titleBar.SearchText);
+                UpdateSearchResults(searchPill.SearchText);
             };
 
             // The search box lists its results right under itself (no new window).
-            titleBar.SearchTextChanged += (s, text) => UpdateSearchResults(text);
-            titleBar.SearchFocusGained += (s, e) => UpdateSearchResults(titleBar.SearchText);
-            titleBar.SearchFocusLost += (s, e) => searchDropdown.Dismiss();
-            titleBar.SearchMoved += (s, delta) => searchDropdown.MoveSelection(delta);
-            titleBar.SearchSubmitted += (s, text) =>
+            searchPill.SearchTextChanged += (s, text) => UpdateSearchResults(text);
+            searchPill.SearchFocusGained += (s, e) => UpdateSearchResults(searchPill.SearchText);
+            searchPill.SearchFocusLost += (s, e) => searchDropdown.Dismiss();
+            searchPill.SearchMoved += (s, delta) => searchDropdown.MoveSelection(delta);
+            searchPill.SearchSubmitted += (s, text) =>
             {
                 if (!searchDropdown.ChooseSelected()) UpdateSearchResults(text);
             };
@@ -181,7 +186,12 @@ namespace Hue_travel.Shell
 
             // Status bar: live scale and area from the map view, weather from Open-Meteo (no fixed placeholder text).
             statusBar.SetWeather(weatherUpdater.Text);
-            weatherUpdater.TextChanged += (s, text) => statusBar.SetWeather(text);
+            titleBar.SetWeather(weatherUpdater.Text);
+            weatherUpdater.TextChanged += (s, text) =>
+            {
+                statusBar.SetWeather(text);
+                titleBar.SetWeather(text);
+            };
             statusBar.CoordinatesClicked += (s, e) =>
             {
                 showDegrees = !showDegrees;
@@ -351,8 +361,7 @@ namespace Hue_travel.Shell
             List<Poi> matches = Hue_travel.Panels.SearchPoi.PoiSearchFilter.Apply(PoiCatalog.All.Where(p => p.X != 0 || p.Y != 0), text.Trim(), null, openOnly)
                 .OrderBy(p => Hue_travel.Panels.SearchPoi.PoiSearchFilter.Fold(p.Name).StartsWith(wanted, StringComparison.Ordinal) ? 0 : 1)
                 .ThenBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
-            System.Drawing.Rectangle box = titleBar.SearchBoxBounds;
-            box.Offset(titleBar.Location);
+            System.Drawing.Rectangle box = RectangleToClient(searchPill.RectangleToScreen(searchPill.ClientRectangle));
             searchDropdown.ShowResults(matches, box);
         }
 
@@ -384,7 +393,12 @@ namespace Hue_travel.Shell
         // The server's approved photos of the place come down in the background; the card shows them as soon as they are here.
         private async Task SyncPhotosAsync(Poi poi)
         {
-            if (await PhotoSync.SyncAsync(api, poi.Id, lifetime.Token)) poiIdentifyCard.ReloadPhotos(poi.Id);
+            if (await PhotoSync.SyncAsync(api, poi.Id, lifetime.Token))
+            {
+                Hue_travel.Panels.Shared.PoiThumbs.Clear();   // thumbnails now have real photos to show
+                poiIdentifyCard.ReloadPhotos(poi.Id);
+                explorePanel.Invalidate();
+            }
         }
 
         private void ShowArea()

@@ -7,14 +7,14 @@ namespace Hue_travel.MapEngine
     {
         private static readonly Color[] Colors =
         {
-            Color.FromArgb(0, 122, 204),    // blue
-            Color.FromArgb(234, 88, 12),    // orange
-            Color.FromArgb(22, 163, 74),    // green
-            Color.FromArgb(147, 51, 234),   // purple
-            Color.FromArgb(220, 38, 38),    // red
+            Color.FromArgb(0, 122, 204),    // xanh dương
+            Color.FromArgb(234, 88, 12),    // cam
+            Color.FromArgb(22, 163, 74),    // xanh lá
+            Color.FromArgb(220, 38, 38),    // đỏ
             Color.FromArgb(13, 148, 136),   // teal
-            Color.FromArgb(219, 39, 119),   // pink
-            Color.FromArgb(79, 70, 229),    // indigo
+            Color.FromArgb(219, 39, 119),   // hồng
+            Color.FromArgb(79, 70, 229),    // chàm
+            Color.FromArgb(202, 138, 4),    // vàng đất
         };
 
         public static Color ColorOf(int leg) => Colors[((leg % Colors.Length) + Colors.Length) % Colors.Length];

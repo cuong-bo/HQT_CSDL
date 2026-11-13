@@ -9,6 +9,7 @@ using Hue_travel.Services.Area;
 using Hue_travel.Services.Hours;
 using Hue_travel.Services.Online;
 using Hue_travel.Services.Routing;
+using Hue_travel.Shell;
 using Hue_travel.Theme;
 using Interop.MapWinGIS;
 
@@ -42,9 +43,15 @@ namespace Hue_travel.MapEngine
         private IReadOnlyList<Poi> lastPois = new List<Poi>();
         private readonly HashSet<string> hiddenPoiIds = new HashSet<string>();
         private bool openOnly;
-        private const int MarkerDesignPixels = 34;               // the round badge on the map
+        private const int MarkerDesignPixels = 34;               // the pin's width on the map
         private const double LabelMaxScaleDenominator = 45000;   // names appear once zoomed in to about 1:45 000
         private int pressX = int.MinValue, pressY = int.MinValue;   // MinValue = no press seen since the last release
+
+        // The controls that float on the map (they used to be docked strips of the window).
+        private SearchPill searchPill;
+        private Hue_travel.Shell.FilterBar filterBar;
+        private Hue_travel.Shell.NavRail navRail;
+        private Hue_travel.Shell.AppStatusBar statusBar;
 
         /// <summary>Raised after the visible extent (or the control width) changed: new centre and scale.</summary>
         public event EventHandler<MapViewChangedEventArgs> ViewChanged;
@@ -205,7 +212,7 @@ namespace Hue_travel.MapEngine
             bool show = highlighted != null && (highlighted.X != 0 || highlighted.Y != 0) && !hiddenPoiIds.Contains(highlighted.Id);
             if (show && highlightRing == null)
             {
-                highlightRing = new HighlightRing(Ui.S(HighlightDesignPixels * 2), Ui.S(MarkerDesignPixels), HighlightCenterOnScreen);
+                highlightRing = new HighlightRing(Ui.S(HighlightDesignPixels * 2), PoiPin.HeadDiameter(Ui.S(MarkerDesignPixels)), HighlightCenterOnScreen);
                 Disposed += (s, e) => highlightRing.Dispose();
             }
             if (highlightRing != null) highlightRing.Run(show, FindForm());
@@ -217,8 +224,8 @@ namespace Hue_travel.MapEngine
             if (highlighted == null || !IsHandleCreated) return null;
             double px = 0, py = 0;
             axMap.ProjToPixel(highlighted.X, highlighted.Y, ref px, ref py);
-            // The marker picture stands on its point (its bottom centre is the place), so its centre is half a marker above it.
-            var local = new System.Drawing.Point((int)Math.Round(px), (int)Math.Round(py) - Ui.S(MarkerDesignPixels) / 2 - 2);
+            // The pin stands on its point (its tip is the place), so the ring goes around the middle of its round head.
+            var local = new System.Drawing.Point((int)Math.Round(px), (int)Math.Round(py - PoiPin.HeadCenterAboveTip(Ui.S(MarkerDesignPixels))));
             return ClientRectangle.Contains(local) ? PointToScreen(local) : (System.Drawing.Point?)null;
         }
 
@@ -292,7 +299,7 @@ namespace Hue_travel.MapEngine
 
         // The badge of the group as the point symbol (a picture drawn at the screen's own resolution, so it stays sharp).
         private static bool UsePictureMarker(ShapeDrawingOptions style, PoiCategory category) =>
-            UsePicture(style, PoiMarkerIcons.FilePath(category, Ui.S(MarkerDesignPixels)));
+            UsePicture(style, PoiMarkerIcons.PinFilePath(category, Ui.S(MarkerDesignPixels), false));
 
         // A picture file as the point symbol.
         private static bool UsePicture(ShapeDrawingOptions style, string path)
@@ -329,7 +336,7 @@ namespace Hue_travel.MapEngine
             labels.HaloColor = (uint)System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.White);
             labels.HaloSize = 3;
             labels.Alignment = tkLabelAlignment.laTopCenter;
-            labels.OffsetY = Ui.S(MarkerDesignPixels) / 2 + Ui.S(1);
+            labels.OffsetY = Ui.S(2);   // the pin stands on the place: its name goes just below the tip
             labels.AvoidCollisions = true;
             labels.DynamicVisibility = true;
             labels.MaxVisibleScale = LabelMaxScaleDenominator;
@@ -346,17 +353,20 @@ namespace Hue_travel.MapEngine
             axMap.MapCursor = state == 3 ? tkCursor.crsrMapDefault : state == 2 ? tkCursor.crsrHand : state == 4 ? tkCursor.crsrCross : tkCursor.crsrArrow;
         }
 
-        // The nearest visible marker within HitRadius of a pixel, or null.
+        // The nearest visible marker whose head is within reach of a pixel, or null.
         private Poi FindPoiAt(int pixelX, int pixelY)
         {
             Poi best = null;
-            double bestSquared = Math.Pow(Ui.S(HitRadius), 2);
+            double head = PoiPin.HeadCenterAboveTip(Ui.S(MarkerDesignPixels));
+            double radius = Math.Max(Ui.S(HitRadius), PoiPin.HeadDiameter(Ui.S(MarkerDesignPixels)) / 2.0 + Ui.S(3));
+            double bestSquared = radius * radius;
             foreach (PoiMarker marker in markers)
             {
                 if (!poiLayers.IsVisible(marker.LayerHandle)) continue;
                 double px = 0, py = 0;
                 axMap.ProjToPixel(marker.Poi.X, marker.Poi.Y, ref px, ref py);
-                double squared = (px - pixelX) * (px - pixelX) + (py - pixelY) * (py - pixelY);
+                double dx = px - pixelX, dy = (py - head) - pixelY;
+                double squared = dx * dx + dy * dy;
                 if (squared > bestSquared) continue;
                 bestSquared = squared;
                 best = marker.Poi;
@@ -620,7 +630,7 @@ namespace Hue_travel.MapEngine
             axMap.InertiaOnPanning = tkCustomState.csTrue;   // the map glides after a drag
             axMap.SendMouseMove = true;
             axMap.SendMouseUp = true;
-            axMap.BackColor = System.Drawing.ColorTranslator.FromHtml("#E2E8F0");
+            axMap.BackColor = System.Drawing.ColorTranslator.FromHtml("#CFE8F5");
             MapCrs.Apply(axMap);
             viewTracker.Tick += (s, e) => PublishViewIfChanged();
             viewTracker.Start();
@@ -632,11 +642,33 @@ namespace Hue_travel.MapEngine
             ZoomToFull();
         }
 
-        // Anchors the overlay controls in the top-right column.
+        // Anchors the overlay controls and the floating cards that host the search box, chips, rail and status pill.
         protected override void OnLayout(LayoutEventArgs e)
         {
             base.OnLayout(e);
             LayoutOverlays(); // Control.Scale grows children after the Resize handler ran
+        }
+
+        /// <summary>Moves the search box, the chip bar, the tool rail and the status pill onto the map as floating cards.</summary>
+        public void HostOverlays(Form host, SearchPill search, Hue_travel.Shell.FilterBar chips, Hue_travel.Shell.NavRail rail, Hue_travel.Shell.AppStatusBar status)
+        {
+            searchPill = search; filterBar = chips; navRail = rail; statusBar = status;
+            foreach (Control c in new Control[] { search, chips, rail, status })
+            {
+                if (c.Parent != null) c.Parent.Controls.Remove(c);
+                c.Dock = DockStyle.None;
+                Controls.Add(c);
+                c.BringToFront();
+            }
+            OverlayCard.Attach(host, search, ThemeMetrics.RadiusFull);
+            OverlayCard.Attach(host, chips, ThemeMetrics.RadiusFull);
+            OverlayCard.Attach(host, rail, ThemeMetrics.RadiusLg);
+            OverlayCard.Attach(host, status, ThemeMetrics.RadiusFull);
+            OverlayCard.Attach(host, stackZoom, ThemeMetrics.RadiusMd);
+            OverlayCard.Attach(host, stackTools, ThemeMetrics.RadiusMd);
+            OverlayCard.Attach(host, compass, ThemeMetrics.RadiusFull);
+            OverlayCard.Attach(host, tripChip, ThemeMetrics.RadiusFull);
+            LayoutOverlays();
         }
 
         private void LayoutOverlays()
@@ -645,11 +677,25 @@ namespace Hue_travel.MapEngine
             compass.Location = new System.Drawing.Point(x + (stackZoom.Width - compass.Width) / 2, Ui.S(ColumnTop));
             stackZoom.Location = new System.Drawing.Point(x, compass.Bottom + Ui.S(StackGap + 4));
             stackTools.Location = new System.Drawing.Point(x, stackZoom.Bottom + Ui.S(StackGap + 4));
+
+            // Floating cards on the map: search pill top-left, chip bar to its right, rail under it, status pill at the bottom.
+            if (searchPill != null)
+            {
+                int m = Ui.S(16);
+                searchPill.SetBounds(m, m, Ui.S(420), Ui.S(48));
+                int chipsLeft = searchPill.Right + Ui.S(12);
+                int chipsRoom = Width - chipsLeft - Ui.S(RightMargin) - stackZoom.Width - Ui.S(12);
+                filterBar.SetBounds(chipsLeft, m + Ui.S(4), Math.Max(Ui.S(120), Math.Min(filterBar.WantedWidth, chipsRoom)), Ui.S(40));
+                navRail.SetBounds(Ui.S(12), searchPill.Bottom + Ui.S(12), Ui.S(64), navRail.WantedHeight);
+                int statusWidth = Math.Min(Ui.S(720), Width - Ui.S(24));
+                statusBar.SetBounds((Width - statusWidth) / 2, Height - Ui.S(32) - Ui.S(12), statusWidth, Ui.S(32));
+            }
+
             int chipWidth = Ui.S(206), chipHeight = Ui.S(46);
             // Centred on the window (like the result panel it stands for), not on the map, which starts to the right of the rail.
             Form window = FindForm();
             int centre = window != null && window.IsHandleCreated ? PointToClient(window.PointToScreen(new System.Drawing.Point(window.ClientSize.Width / 2, 0))).X : Width / 2;
-            tripChip.SetBounds(centre - chipWidth / 2, Height - chipHeight - Ui.S(22), chipWidth, chipHeight);
+            tripChip.SetBounds(centre - chipWidth / 2, Height - chipHeight - Ui.S(56), chipWidth, chipHeight);
         }
 
         // ------------------------------------------------------------------ the button the folded route result leaves on the map

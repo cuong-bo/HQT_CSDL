@@ -96,7 +96,7 @@ namespace Hue_travel.Shell
         private void UpdateRegion()
         {
             if (Width <= 0 || Height <= 0) return;
-            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0, 0, Width, Height), Ui.S(14)))
+            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0, 0, Width, Height), Ui.S(ThemeMetrics.RadiusMd)))
             {
                 Region = new Region(path);
             }
@@ -120,7 +120,7 @@ namespace Hue_travel.Shell
                 TextRenderer.DrawText(g, note, ThemeFonts.Regular(12), strip, ThemeColors.Slate500,
                     TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine);
             }
-            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), Ui.S(14)))
+            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), Ui.S(ThemeMetrics.RadiusMd)))
             using (var pen = new Pen(ThemeColors.Slate300, 1.2f))
             {
                 g.DrawPath(pen, path);

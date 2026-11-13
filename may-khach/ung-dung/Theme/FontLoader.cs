@@ -24,6 +24,7 @@ namespace Hue_travel.Theme
             "PlusJakartaSans-Medium.ttf",
             "PlusJakartaSans-SemiBold.ttf",
             "PlusJakartaSans-Bold.ttf",
+            "Lora.ttf",
         };
 
         [DllImport("gdi32.dll")]

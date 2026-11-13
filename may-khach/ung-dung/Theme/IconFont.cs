@@ -214,6 +214,11 @@ namespace Hue_travel.Theme
                 DrawChevron(bmp, px, color);
                 return bmp;
             }
+            if (name == "favorite" || name == "favorite_fill") { IconsExtra.DrawHeart(bmp, px, color, name == "favorite_fill"); return bmp; }
+            if (name == "bookmark" || name == "bookmark_fill") { IconsExtra.DrawBookmark(bmp, px, color, name == "bookmark_fill"); return bmp; }
+            if (name == "share") { IconsExtra.DrawShare(bmp, px, color); return bmp; }
+            if (name == "content_copy") { IconsExtra.DrawCopy(bmp, px, color); return bmp; }
+            if (name == "language") { IconsExtra.DrawGlobe(bmp, px, color); return bmp; }
             if (name == "arrow_forward")
             {
                 DrawArrow(bmp, px, color);

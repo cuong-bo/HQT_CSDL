@@ -3,6 +3,7 @@
 | File | Source | License |
 |---|---|---|
 | `PlusJakartaSans-{Regular,Medium,SemiBold,Bold}.ttf` | https://github.com/tokotype/PlusJakartaSans | SIL Open Font License 1.1 |
+| `Lora.ttf` (variable font; exposes Lora, Lora Medium, Lora SemiBold) | https://github.com/google/fonts/tree/main/ofl/lora | SIL Open Font License 1.1 |
 | `MaterialSymbolsSubset.ttf` | Subset (about 60 glyphs, instanced at FILL 0 / wght 400 / opsz 20) of *Material Symbols Outlined* from https://github.com/google/material-design-icons | Apache License 2.0 |
 | `hue-travel.ico` | The Hue Travel mark (house and lotus), cut from the sign-in picture `dangnhap.jpg`; the icon of the application, the installer and every window | As supplied by the project owner |
 | Weather data (runtime, not a file) | https://open-meteo.com via `Services/Weather/OpenMeteoWeatherService.cs` | CC BY 4.0, free for non-commercial use; keep the attribution |

@@ -47,7 +47,7 @@ namespace Hue_travel.Panels.RouteOptimizer
         // ------------------------------------------------------------------ state
 
         private readonly PanelHeader header = new PanelHeader { IconName = "route", Text = "Lộ trình tham quan", Prominent = true };
-        private readonly NoAutoScrollPanel body = new NoAutoScrollPanel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Color.White };
+        private readonly NoAutoScrollPanel body = new NoAutoScrollPanel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = ThemeColors.Paper };
 
         private readonly Label lblStartTitle = Caption("Điểm bắt đầu");
         private readonly Label startLabel = new Label { AutoSize = false, Font = ThemeFonts.Medium(13), ForeColor = ThemeColors.Slate500, BackColor = ThemeColors.Slate50, TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(12, 0, 8, 0), Text = "Chưa chọn điểm bắt đầu" };
@@ -212,7 +212,7 @@ namespace Hue_travel.Panels.RouteOptimizer
             b.Gap = 6;
             b.HorizontalPadding = 8;
             b.Font = ThemeFonts.Medium(13);
-            b.Radius = 10;
+            b.Radius = ThemeMetrics.RadiusSm;
             b.ForeColor = ThemeColors.Slate700;
             b.IconColor = ThemeColors.Primary;
             b.FillColor = Color.White;
@@ -228,7 +228,7 @@ namespace Hue_travel.Panels.RouteOptimizer
             b.IconSize = 18;
             b.Gap = 8;
             b.Font = ThemeFonts.SemiBold(14);
-            b.Radius = 12;
+            b.Radius = ThemeMetrics.RadiusSm;
             b.ForeColor = Color.White;
             b.IconColor = Color.White;
             b.FillColor = ThemeColors.Primary;

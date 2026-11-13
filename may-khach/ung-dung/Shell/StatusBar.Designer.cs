@@ -36,12 +36,13 @@ namespace Hue_travel.Shell
             this.dividerCoords = new Panel();
             this.SuspendLayout();
 
-            // h-7 white footer, 1px slate-200 top border, 12px slate-600 text.
-            this.BackColor = ThemeColors.SurfaceContainerLowest;
+            // h-8 white footer, no hard top border: the status pill floats on the map.
+            this.BackColor = ThemeColors.Paper;
 
             this.panelTopBorder.Dock = DockStyle.Top;
             this.panelTopBorder.Height = 1;
             this.panelTopBorder.BackColor = ThemeColors.Slate200;
+            this.panelTopBorder.Visible = false;
 
             this.captionArea.Text = "Khu vực đang xem:";
             this.captionArea.IconName = "explore";
