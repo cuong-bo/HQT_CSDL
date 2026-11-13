@@ -46,6 +46,8 @@ Công khai: `GET /pois` (`group` nhiều lần, `q` không dấu, `bbox`, `page`
 `POST /route` nhận thêm `departAt` (ISO 8601 kèm múi giờ Việt Nam) và `stayMinutes[]` (một giá trị cho mỗi điểm đến): khi
 `optimize=true`, máy chủ xếp thứ tự theo giờ mở cửa, cho phép chờ ngắn và bỏ qua thứ tự không thể vào kịp; không có
 `departAt` thì chỉ xếp theo thời gian đi đường như trước.
+`POST /chat` ({`messages[]`, `context.selectedPoiId`}) trả `{reply, places[], route?, remaining}`; đây là trợ lý DeepSeek, công cụ
+chỉ đọc dữ liệu, không nhận `system`/`tool` từ máy khách. `GET /config` có thêm `chatEnabled`.
 Tài khoản: `POST /auth/register|login|refresh`, `GET|PUT /me`, `POST /me/password`.
 Ảnh: `GET /pois/{id}/photos` (ảnh đã duyệt), `GET /photos/{id}` (ảnh gốc, JPEG).
 Người dùng: `/favorites`, `/itineraries`, `GET /me/reviews`, `POST|DELETE /pois/{id}/reviews`, `POST /pois/{id}/reports`.

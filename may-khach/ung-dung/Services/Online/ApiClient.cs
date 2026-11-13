@@ -36,6 +36,8 @@ namespace Hue_travel.Services.Online
     public sealed class ApiClient : IDisposable
     {
         public const string Unreachable = "Không kết nối được máy chủ. Hãy kiểm tra mạng hoặc dùng chế độ ngoại tuyến.";
+        private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(15);
+        private static readonly TimeSpan ChatTimeout = TimeSpan.FromSeconds(60);
 
         static ApiClient()
         {
@@ -59,7 +61,8 @@ namespace Hue_travel.Services.Online
             this.store = store;
             this.verifier = verifier;
             http = handler == null ? new HttpClient() : new HttpClient(handler);
-            http.Timeout = TimeSpan.FromSeconds(15);
+            // The per-request timeout is applied in SendOnceAsync; chat needs much longer than the other calls.
+            http.Timeout = Timeout.InfiniteTimeSpan;
         }
 
         public string AccessToken { get; private set; }
@@ -96,9 +99,14 @@ namespace Hue_travel.Services.Online
 
         public Task<ApiResponse> DeleteAsync(string path, CancellationToken ct = default(CancellationToken)) => SendAsync(HttpMethod.Delete, path, null, ct);
 
-        public async Task<ApiResponse> SendAsync(HttpMethod method, string path, object body, CancellationToken ct = default(CancellationToken))
+        /// <summary>The assistant may take 30–60 seconds; every other call keeps the short timeout.</summary>
+        public Task<ApiResponse> ChatAsync(object body, CancellationToken ct = default(CancellationToken)) =>
+            SendAsync(HttpMethod.Post, "/v1/chat", body, ct, ChatTimeout);
+
+        public async Task<ApiResponse> SendAsync(HttpMethod method, string path, object body, CancellationToken ct = default(CancellationToken),
+            TimeSpan? timeout = null)
         {
-            ApiResponse response = await SendOnceAsync(method, path, body, ct).ConfigureAwait(true);
+            ApiResponse response = await SendOnceAsync(method, path, body, ct, timeout).ConfigureAwait(true);
             bool authPath = path.StartsWith("/v1/auth/", StringComparison.Ordinal);
             bool canRefresh = response.StatusCode == 401 && !string.IsNullOrEmpty(RefreshToken) && !authPath;
             if (!canRefresh)
@@ -109,7 +117,7 @@ namespace Hue_travel.Services.Online
                 return response;
             }
             if (!await TryRefreshAsync(ct).ConfigureAwait(true)) return response;
-            return await SendOnceAsync(method, path, body, ct).ConfigureAwait(true);
+            return await SendOnceAsync(method, path, body, ct, timeout).ConfigureAwait(true);
         }
 
         private async Task<bool> TryRefreshAsync(CancellationToken ct)
@@ -119,7 +127,7 @@ namespace Hue_travel.Services.Online
             try
             {
                 if (RefreshToken != used) return !string.IsNullOrEmpty(AccessToken);   // another request already refreshed
-                ApiResponse r = await SendOnceAsync(HttpMethod.Post, "/v1/auth/refresh", new Dictionary<string, object> { { "refreshToken", used } }, ct).ConfigureAwait(true);
+                ApiResponse r = await SendOnceAsync(HttpMethod.Post, "/v1/auth/refresh", new Dictionary<string, object> { { "refreshToken", used } }, ct, null).ConfigureAwait(true);
                 string access = r.IsSuccess ? JsonHelper.Str(r.Object, "accessToken") : null;
                 string refresh = r.IsSuccess ? JsonHelper.Str(r.Object, "refreshToken") : null;
                 if (access != null && refresh != null)
@@ -141,7 +149,7 @@ namespace Hue_travel.Services.Online
             }
         }
 
-        private async Task<ApiResponse> SendOnceAsync(HttpMethod method, string path, object body, CancellationToken ct)
+        private async Task<ApiResponse> SendOnceAsync(HttpMethod method, string path, object body, CancellationToken ct, TimeSpan? timeout)
         {
             using (var request = new HttpRequestMessage(method, baseUrl + path))
             {
@@ -149,17 +157,21 @@ namespace Hue_travel.Services.Online
                 if (!string.IsNullOrEmpty(AccessToken)) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
                 try
                 {
-                    using (HttpResponseMessage reply = await http.SendAsync(request, ct).ConfigureAwait(true))
+                    using (var cts = CancellationTokenSource.CreateLinkedTokenSource(ct))
                     {
-                        byte[] bytes = await reply.Content.ReadAsByteArrayAsync().ConfigureAwait(true);
-                        string problem;
-                        if (!IsGenuine(method, request.RequestUri, reply, bytes, out problem))
-                            return new ApiResponse { StatusCode = 0, Error = problem };   // treated like "server not reachable": nothing from it is used
-                        string text = Encoding.UTF8.GetString(bytes);
-                        object json = JsonHelper.Parse(text);
-                        var response = new ApiResponse { StatusCode = (int)reply.StatusCode, Body = text, Json = json };
-                        if (!response.IsSuccess) response.Error = ErrorText(json, response.StatusCode);
-                        return response;
+                        cts.CancelAfter(timeout ?? DefaultTimeout);
+                        using (HttpResponseMessage reply = await http.SendAsync(request, cts.Token).ConfigureAwait(true))
+                        {
+                            byte[] bytes = await reply.Content.ReadAsByteArrayAsync().ConfigureAwait(true);
+                            string problem;
+                            if (!IsGenuine(method, request.RequestUri, reply, bytes, out problem))
+                                return new ApiResponse { StatusCode = 0, Error = problem };   // treated like "server not reachable": nothing from it is used
+                            string text = Encoding.UTF8.GetString(bytes);
+                            object json = JsonHelper.Parse(text);
+                            var response = new ApiResponse { StatusCode = (int)reply.StatusCode, Body = text, Json = json };
+                            if (!response.IsSuccess) response.Error = ErrorText(json, response.StatusCode);
+                            return response;
+                        }
                     }
                 }
                 catch (HttpRequestException)
@@ -168,7 +180,7 @@ namespace Hue_travel.Services.Online
                 }
                 catch (TaskCanceledException) when (!ct.IsCancellationRequested)
                 {
-                    return new ApiResponse { StatusCode = 0, Error = Unreachable };   // the 15 second timeout
+                    return new ApiResponse { StatusCode = 0, Error = Unreachable };   // the request's timeout
                 }
             }
         }

@@ -72,6 +72,7 @@ nano .env
 | `POSTGRES_PASSWORD` | Mật khẩu quản trị cơ sở dữ liệu |
 | `APP_DB_PASSWORD` | Mật khẩu tài khoản cơ sở dữ liệu mà API dùng |
 | `JWT_KEY` | Khóa ký phiên đăng nhập, **tối thiểu 32 ký tự** |
+| `DeepSeek__ApiKey` | Khóa trợ lý chat DeepSeek (để trống thì trợ lý tắt, các chức năng khác vẫn chạy) |
 
 Lưu trong `nano`: `Ctrl+O`, Enter, rồi `Ctrl+X`. Các dòng còn lại để mặc định (xem chú thích trong tệp). **Không đưa `.env` lên Git, không gửi cho ai.**
 

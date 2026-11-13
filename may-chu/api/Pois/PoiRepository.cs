@@ -52,6 +52,17 @@ public sealed class PoiRepository(NpgsqlDataSource db)
         return await r.ReadAsync(ct) ? Map(r) : null;
     }
 
+    /// <summary>Names of the given places, for the chat tool that describes a route.</summary>
+    public async Task<Dictionary<string, string>> NamesAsync(string[] ids, CancellationToken ct)
+    {
+        var names = new Dictionary<string, string>();
+        await using NpgsqlCommand cmd = db.CreateCommand("select id, ten from poi where id = any(@ids) and deleted_at is null");
+        cmd.Parameters.AddWithValue("ids", ids);
+        await using NpgsqlDataReader r = await cmd.ExecuteReaderAsync(ct);
+        while (await r.ReadAsync(ct)) names[r.GetString(0)] = r.GetString(1);
+        return names;
+    }
+
     /// <summary>The places a user marked as favourites, newest first.</summary>
     public async Task<IReadOnlyList<PoiDto>> FavoritesAsync(long userId, CancellationToken ct) =>
         await ListAsync("select " + Columns + " from favorite f join poi p on p.id = f.poi_id where f.user_id = @u " +

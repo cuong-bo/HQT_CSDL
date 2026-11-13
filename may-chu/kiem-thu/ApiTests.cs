@@ -244,6 +244,7 @@ public class ApiTests(ApiFixture fixture)
         JsonElement config = await Json(await fixture.CreateClient().GetAsync("/v1/config"));
         Assert.False(string.IsNullOrEmpty(config.GetProperty("minimumClientVersion").GetString()));
         Assert.False(config.TryGetProperty("tileUrl", out _));
+        Assert.False(config.GetProperty("chatEnabled").GetBoolean());   // the test server has no DeepSeek key
     }
 
     [RequiresDbFact]

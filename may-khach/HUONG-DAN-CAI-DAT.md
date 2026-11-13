@@ -30,7 +30,7 @@ Bộ cài đã gồm ứng dụng, thành phần bản đồ **MapWinGIS** (tự
 ### A3. Lần đầu mở ứng dụng
 1. Màn hình **đăng nhập** có ba lựa chọn: **Đăng nhập**, **Đăng ký**, **Dùng thử không cần tài khoản**. Chưa cấu hình máy chủ
    thì chỉ có nút **Tiếp tục ngoại tuyến**.
-2. Bản đồ hiện sau vài giây. Thanh bên trái: Khám phá, Lộ trình, Hướng dẫn, Hồ sơ (khách thấy **Đăng nhập** ở mục cuối).
+2. Bản đồ hiện sau vài giây. Thanh bên trái: Khám phá, Lộ trình, Trợ lý, Hồ sơ (khách thấy **Đăng nhập** ở mục cuối).
 3. **Khách** (không cần tài khoản) xem bản đồ, tìm kiếm, lọc nhóm, mở thẻ địa điểm, đọc đánh giá và thông báo, xem thời tiết,
    đo khoảng cách/diện tích, lập lộ trình tới 12 điểm, xem tuyến và chạy xe mô phỏng.
 4. Các việc gắn với tài khoản vẫn hiện nút bình thường: **Yêu thích**, **Viết đánh giá**, **Báo sai**, **Nhận quản lý**, mục
@@ -45,6 +45,9 @@ Bộ cài đã gồm ứng dụng, thành phần bản đồ **MapWinGIS** (tự
 7. **Xe mô phỏng** chạy đúng thời gian ước tính của máy chủ; nút **1× 2× 4× 8×** đổi tốc độ, tốc độ được nhớ cho lần sau.
    Kéo thanh mảnh phía trên hàng nút để tua tới bất kỳ thời điểm nào; khi bảng kết quả đang được chọn, phím **Space** tạm
    dừng/chạy, **+ / -** đổi tốc độ, **← / →** tua lùi/tới 30 giây.
+8. **Tab Trợ lý**: hỏi về địa điểm, giờ mở cửa, lộ trình, thời tiết. Câu trả lời có chip địa điểm bấm được và thẻ lộ trình
+   mở sang tab Lộ trình. Trợ lý cần máy chủ có khóa DeepSeek; khi ngoại tuyến hoặc chưa bật, tab này hiện cẩm nang tĩnh có
+   số khẩn cấp. Không nhập thông tin cá nhân vào ô chat.
 
 ### A4. Đổi địa chỉ máy chủ sau khi cài
 Có ba cách, ứng dụng lấy theo thứ tự này (cách trên thắng cách dưới):

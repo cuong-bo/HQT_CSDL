@@ -552,6 +552,28 @@ $api10 = $apiT.GetConstructors()[0].Invoke([object[]]@('http://test.local', [Act
 Check 'config: a server error keeps the default version' ((Await ($cfgT.GetMethod('FetchAsync').Invoke($null, [object[]]@($api10, $none)))).MinimumVersion) '1.0.0'
 Remove-Item $sessionPath -ErrorAction SilentlyContinue
 
+# ---- the chat service parses the server's reply, places and route
+$chatT = GetT ($online + 'ApiChatService')
+$turnT = GetT ($online + 'ChatTurn')
+$turnListT = [System.Collections.Generic.List`1].MakeGenericType($turnT)
+$turns = [Activator]::CreateInstance($turnListT)
+$turns.Add([Activator]::CreateInstance($turnT, [object[]]@('user', 'Dai Noi o dau?')))
+$h11 = New-Object FakeHandler
+$h11.Responses.Enqueue([object[]]@(200, '{"reply":"Dai Noi o [[DL021]]","places":[{"id":"DL021","name":"Dai Noi","group":"heritage"}],"route":{"order":["DL021"],"meters":1200,"seconds":600,"stops":[{"id":"DL021","name":"Dai Noi"}]},"remaining":9}'))
+$chat = [Activator]::CreateInstance($chatT, @((New-Api $h11)))
+$chatReply = Await ($chatT.GetMethod('AskAsync').Invoke($chat, [object[]]@($turns, 'DL021', $none)))
+Check 'chat: reply text' $chatReply.Reply 'Dai Noi o [[DL021]]'
+Check 'chat: place chip' "$($chatReply.Places.Count)|$($chatReply.Places[0].Id)" '1|DL021'
+Check 'chat: route meters' $chatReply.Route.Meters '1200'
+Check 'chat: route stop' $chatReply.Route.Stops[0].Name 'Dai Noi'
+Check 'chat: remaining' $chatReply.Remaining '9'
+$h12 = New-Object FakeHandler
+$h12.Responses.Enqueue([object[]]@(429, '{"detail":"Het luot"}'))
+$chat2 = [Activator]::CreateInstance($chatT, @((New-Api $h12)))
+$chatError = Await ($chatT.GetMethod('AskAsync').Invoke($chat2, [object[]]@($turns, $null, $none)))
+Check 'chat: a refusal is returned as an error' "$($chatError.Ok)|$($chatError.Error)" 'False|Het luot'
+Remove-Item $sessionPath -ErrorAction SilentlyContinue
+
 # ---- PlaceFileReader (admin import: CSV or GeoJSON into rows for /v1/admin/pois/import)
 $readerT = GetT 'Hue_travel.Services.Data.PlaceFileReader'
 $readCsv = $readerT.GetMethod('ReadCsv')

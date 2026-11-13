@@ -200,6 +200,9 @@ namespace Hue_travel.Panels.PoiIdentify
         private Poi shown;
         private bool signedIn;
 
+        /// <summary>The place whose card is open, or null; the assistant uses it for "chỗ này".</summary>
+        public string CurrentPoiId => Visible && shown != null ? shown.Id : null;
+
         /// <summary>Raised by the buttons that need an account; the host knows who is signed in.</summary>
         public event EventHandler<Poi> FavoriteToggled;
         public event EventHandler<Poi> ClaimRequested;

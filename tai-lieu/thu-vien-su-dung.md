@@ -130,6 +130,7 @@ Các bài kiểm thử cơ sở dữ liệu cần biến môi trường `HUE_TES
 | **OpenStreetMap** (hình học đường, sông) | © OpenStreetMap contributors, ODbL 1.0 (phải ghi nguồn) | Gốc của mạng đường dùng để tìm đường và vẽ bản đồ nền |
 | Dữ liệu địa điểm, ranh giới tỉnh/xã | Dữ liệu của dự án (`may-chu/du-lieu/shp`, `nen-ban-do`) | Nội dung các bảng `poi`, `ranh_tinh`, `ranh_xa`… |
 | **Open-Meteo** | CC BY 4.0, miễn phí phi thương mại (phải ghi nguồn) | Thời tiết hiện tại, máy chủ gọi rồi nhớ tạm để máy khách không gọi trực tiếp |
+| **DeepSeek API** | Dịch vụ bên ngoài; khóa chỉ ở máy chủ, xem điều khoản và giá tại api-docs.deepseek.com | Trợ lý chat; gửi câu hỏi và lịch sử ngắn, không gửi danh tính, không lưu nội dung chat trên máy chủ |
 | **Plus Jakarta Sans** (4 độ đậm) | SIL Open Font License 1.1 | Phông chữ của toàn bộ giao diện, nhúng sẵn trong ứng dụng |
 | **Material Symbols Outlined** (bản con ~60 biểu tượng) | Apache License 2.0 | Phông biểu tượng (kính lúp, sao, khóa, chuông…) |
 | Bản đồ nền | Dữ liệu của dự án (`may-chu/du-lieu/shp`, `nen-ban-do`) | Vẽ trực tiếp trong ứng dụng bằng MapWinGIS, không dùng tile web |

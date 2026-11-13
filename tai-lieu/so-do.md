@@ -17,7 +17,7 @@ Máy khách chỉ lo giao diện và vẽ bản đồ; mọi dữ liệu dùng c
 ```mermaid
 flowchart LR
     subgraph KH["Máy khách Windows (may-khach)"]
-        UI["Giao diện WinForms<br/>Khám phá · Lộ trình · Hướng dẫn · Hồ sơ"]
+        UI["Giao diện WinForms<br/>Khám phá · Lộ trình · Trợ lý · Hồ sơ"]
         MAP["Bản đồ MapWinGIS<br/>(bản đồ nền lưu trên máy)"]
         CACHE["Bộ nhớ tạm<br/>địa điểm · ảnh · phiên đăng nhập"]
         UI --- MAP
@@ -26,7 +26,7 @@ flowchart LR
 
     subgraph MC["Máy chủ VPS (may-chu, Docker Compose)"]
         CADDY["Caddy :80<br/>cổng vào, tệp bản đồ nền"]
-        API["API .NET 8<br/>xác thực · địa điểm · tìm đường · ảnh<br/>đánh giá · quản trị · ký phản hồi"]
+        API["API .NET 8<br/>xác thực · địa điểm · tìm đường · ảnh<br/>đánh giá · quản trị · trợ lý chat · ký phản hồi"]
         DB[("PostgreSQL 17<br/>PostGIS + pgRouting")]
         CADDY --> API --> DB
     end
@@ -52,7 +52,7 @@ flowchart LR
 
     ROOT --> A["A. Bản đồ và tìm kiếm"]
     ROOT --> B["B. Lộ trình"]
-    ROOT --> C["C. Hướng dẫn du lịch"]
+    ROOT --> C["C. Trợ lý chat"]
     ROOT --> D["D. Tài khoản và hồ sơ"]
     ROOT --> E["E. Chủ quản địa điểm"]
     ROOT --> F["F. Quản trị"]
@@ -73,8 +73,9 @@ flowchart LR
     B --> B5["Lưu và mở lại lộ trình"]
     B --> B6["Giờ khởi hành, thời gian lưu lại,<br/>giờ đến / giờ rời, cảnh báo đóng cửa"]
 
-    C --> C1["Tour dựng sẵn: bấm là chạy"]
-    C --> C2["Nội dung hướng dẫn<br/>viết sẵn trong ứng dụng"]
+    C --> C1["Hỏi đáp về địa điểm, lộ trình,<br/>thời tiết, cách dùng ứng dụng"]
+    C --> C2["Máy chủ gọi DeepSeek;<br/>dữ liệu lấy qua công cụ đọc"]
+    C --> C3["Cẩm nang tĩnh có số khẩn cấp<br/>khi ngoại tuyến hoặc chưa bật"]
 
     D --> D1["Đăng ký, chọn loại tài khoản<br/>đăng nhập, đổi mật khẩu"]
     D --> D2["Địa điểm yêu thích"]
@@ -124,7 +125,7 @@ tuyến** (chỉ xem bản đồ và địa điểm đi kèm). Giao diện hiệ
 | Chức năng | Người dùng | Chủ quản | Quản trị viên |
 |---|:-:|:-:|:-:|
 | Xem bản đồ, tìm địa điểm, thời tiết, đo đạc | ✔ | ✔ | ✔ |
-| Lập lộ trình, dùng Hướng dẫn | ✔ | ✔ | ✔ |
+| Lập lộ trình, hỏi trợ lý | ✔ | ✔ | ✔ |
 | Đọc đánh giá và ảnh đã duyệt | ✔ | ✔ | ✔ |
 | Yêu thích, lưu lộ trình | ✔ | ✔ | ✔ |
 | Viết, sửa, xóa đánh giá của mình | ✔ | ✔ (trừ địa điểm của mình) | ✔ |

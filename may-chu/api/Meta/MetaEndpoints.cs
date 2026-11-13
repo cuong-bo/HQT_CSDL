@@ -1,10 +1,11 @@
+using Hue_travel.Api.Chat;
 using Hue_travel.Api.Options;
 using Microsoft.Extensions.Options;
 using Npgsql;
 
 namespace Hue_travel.Api.Meta;
 
-public sealed record ClientConfigDto(string ApiVersion, string MinimumClientVersion);
+public sealed record ClientConfigDto(string ApiVersion, string MinimumClientVersion, bool ChatEnabled);
 
 public static class MetaEndpoints
 {
@@ -21,8 +22,8 @@ public static class MetaEndpoints
             return Results.Ok(new { status = "ok" });
         });
 
-        app.MapGet("/v1/config", (IOptions<ClientSettings> client) =>
-            Results.Ok(new ClientConfigDto(ApiVersion, client.Value.MinimumVersion)));
+        app.MapGet("/v1/config", (IOptions<ClientSettings> client, IOptions<ChatOptions> chat) =>
+            Results.Ok(new ClientConfigDto(ApiVersion, client.Value.MinimumVersion, chat.Value.Enabled)));
 
         // The base map the app downloads: latest.json, written by scripts/pack-basemap.py, is sent as it is. Because the answer goes through
         // the /v1 signing, the app can trust the checksums in it (and so the package it names) as much as any other reply.

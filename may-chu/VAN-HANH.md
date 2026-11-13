@@ -51,6 +51,26 @@ scripts/gen-signing-key.sh
   (bộ cài có ô nhập), hoặc biến `HUE_API_PUBLIC_KEY`. Khi app có khóa công khai, nó **từ chối** mọi phản hồi thiếu chữ ký hoặc sai chữ ký.
 - Chữ ký không che nội dung: mật khẩu và token vẫn đi dạng chữ thường. Đổi khóa thì phải phát hành lại khóa công khai cho mọi máy.
 
+### Trợ lý chat (DeepSeek)
+
+Trợ lý trả lời câu hỏi du lịch trong tab **Trợ lý** của ứng dụng. Khóa DeepSeek **chỉ nằm trên máy chủ** (không bao giờ
+nằm trong bộ cài hay phản hồi API). Điền trong `may-chu/.env`:
+
+```bash
+DeepSeek__ApiKey=sk-...
+CHAT_MODEL=deepseek-flash        # hoặc model hiện hành của DeepSeek
+```
+
+rồi chạy `scripts/deploy.sh up`. Để trống khóa thì trợ lý tắt (endpoint trả 503, ứng dụng hiện cẩm nang tĩnh có số khẩn cấp);
+các chức năng khác không bị ảnh hưởng. Đổi khóa chỉ cần sửa `.env` và dựng lại API; không phát hành lại bộ cài.
+
+Máy chủ không lưu nội dung chat; chỉ ghi số lượt/token. Hạn mức nằm trong `ChatOptions` (mặc định khách 20 câu/ngày/IP,
+người đăng nhập 100 câu/ngày, tổng 2 triệu token/ngày, 6 lượt/phút/IP). Nếu bị lạm dụng, hạ các số này hoặc xóa khóa để tắt
+trợ lý. Chi phí do DeepSeek tính theo token; xem bảng giá tại https://api-docs.deepseek.com/quick_start/pricing.
+
+Khi thử: `curl http://IP_VPS:8082/v1/config` phải thấy `"chatEnabled":true`; gửi một câu qua `POST /v1/chat` (xem
+`tai-lieu/tai-lieu-du-lieu.md`). Nếu 502, kiểm tra VPS gọi được `api.deepseek.com` và khóa còn tiền.
+
 ## 3. Cập nhật và quay lui
 
 ```bash

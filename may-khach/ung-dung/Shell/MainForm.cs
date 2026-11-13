@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using Hue_travel.Account;
 using Hue_travel.MapEngine;
 using Hue_travel.Models;
+using Hue_travel.Panels.Assistant;
 using Hue_travel.SampleData;
 using Hue_travel.Services;
 using Hue_travel.Services.Area;
@@ -42,11 +43,13 @@ namespace Hue_travel.Shell
 
             InitializeComponent();
             Icon = AppImages.AppIcon();
+            chatPanel.SetService(api != null ? new ApiChatService(api) : null, api != null);
+            chatPanel.SelectedPoiId = () => poiIdentifyCard.CurrentPoiId;
             if (api != null) SetUpAccount();
             WireEvents();
             var all = new List<FloatingPanelForm>
             {
-                explorePanel, routeOptimizerPanel, travelGuidePanel, poiIdentifyCard, layerPanel, tripResultPanel,
+                explorePanel, routeOptimizerPanel, chatPanel, poiIdentifyCard, layerPanel, tripResultPanel,
             };
             if (accountPanel != null) all.Add(accountPanel);
             panels = all.ToArray();
@@ -108,7 +111,7 @@ namespace Hue_travel.Shell
             titleBar.CloseClicked += (s, e) => Close();
 
             // Left rail: one tab per tool; the tools' panels share the side slot, so opening one closes the others.
-            sidePanels = new FloatingPanelForm[] { explorePanel, routeOptimizerPanel, travelGuidePanel, accountPanel, layerPanel };
+            sidePanels = new FloatingPanelForm[] { explorePanel, routeOptimizerPanel, chatPanel, accountPanel, layerPanel };
             navRail.ItemClicked += (s, index) =>
             {
                 if (sidePanels[index] == null)
@@ -245,10 +248,17 @@ namespace Hue_travel.Shell
                 double longitude, latitude;
                 if (mapHost.TryToDegrees(point, out longitude, out latitude)) routeOptimizerPanel.SetStartFromMap(point, longitude, latitude);
             };
-            travelGuidePanel.TourChosen += (s, tour) =>
+            chatPanel.RouteChosen += (s, tour) =>
             {
                 ShowSidePanel(NavRail.Route);                  // the form shows the tour, and the reason if the route cannot be found
                 Safe(routeOptimizerPanel.LoadTourAsync(tour.Places));
+            };
+            chatPanel.PlaceChosen += (s, id) =>
+            {
+                Poi poi = PoiCatalog.All.FirstOrDefault(p => p.Id == id);
+                if (poi == null) return;
+                ShowOnMap(poi);
+                ShowPoiCard(poi);
             };
             poiIdentifyCard.AddToRouteRequested += (s, poi) =>
             {
@@ -529,6 +539,7 @@ namespace Hue_travel.Shell
                 if (auth.CurrentUser != null) await LoadFavoritesAsync();   // already signed in on the sign-in screen
 
                 ApiConfigSource config = await ApiConfigSource.FetchAsync(api, lifetime.Token);
+                chatPanel.SetEnabled(config.ChatEnabled);
                 if (config.UpdateRequired(Application.ProductVersion))
                     toast.ShowMessage("Máy chủ yêu cầu ứng dụng từ phiên bản " + config.MinimumVersion + " trở lên. Hãy cập nhật ứng dụng.", ToastKind.Info);
 

@@ -27,6 +27,7 @@ public sealed class RateLimitSettings
     public int GlobalPerMinute { get; set; } = 300;
     public int AuthPerMinute { get; set; } = 10;
     public int HeavyPerMinute { get; set; } = 30;   // route planning
+    public int ChatPerMinute { get; set; } = 6;     // assistant questions
 }
 
 public sealed class ClientSettings

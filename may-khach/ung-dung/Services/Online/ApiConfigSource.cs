@@ -9,6 +9,9 @@ namespace Hue_travel.Services.Online
     {
         public string MinimumVersion { get; private set; } = "1.0.0";
 
+        /// <summary>True when the server has a DeepSeek key and the assistant is switched on.</summary>
+        public bool ChatEnabled { get; private set; }
+
         /// <summary>Reads /v1/config; a missing or unreadable answer gives the built-in defaults, never an error.</summary>
         public static async Task<ApiConfigSource> FetchAsync(ApiClient api, CancellationToken cancellationToken)
         {
@@ -18,6 +21,7 @@ namespace Hue_travel.Services.Online
 
             string minimum = JsonHelper.Str(r.Object, "minimumClientVersion");
             if (!string.IsNullOrWhiteSpace(minimum)) result.MinimumVersion = minimum.Trim();
+            result.ChatEnabled = JsonHelper.Bool(r.Object, "chatEnabled");
             return result;
         }
 

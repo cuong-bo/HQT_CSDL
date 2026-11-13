@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text.Json;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace Hue_travel.Api.Weather;
 
@@ -38,39 +37,17 @@ public static class WeatherParser
 
 public static class WeatherEndpoints
 {
-    public const double HueLatitude = 16.4637;
-    public const double HueLongitude = 107.5909;
-    private static readonly TimeSpan CacheFor = TimeSpan.FromMinutes(15);
-    private const string CacheKey = "weather";
-
     public static void MapWeatherEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGet("/v1/weather", GetAsync);
     }
 
     /// <summary>Current weather in Hue. Open-Meteo is asked at most once per 15 minutes, whatever the number of app users.</summary>
-    private static async Task<IResult> GetAsync(IHttpClientFactory clients, IMemoryCache cache, TimeProvider clock, ILogger<WeatherDto> log, CancellationToken ct)
+    private static async Task<IResult> GetAsync(WeatherService weather, CancellationToken ct)
     {
-        if (cache.TryGetValue(CacheKey, out WeatherDto? cached) && cached != null) return Results.Ok(cached);
-
-        string url = string.Create(CultureInfo.InvariantCulture,
-            $"https://api.open-meteo.com/v1/forecast?latitude={HueLatitude}&longitude={HueLongitude}&current=temperature_2m,apparent_temperature,weather_code,is_day,precipitation,wind_speed_10m,uv_index&timezone=Asia%2FBangkok");
-        try
-        {
-            using HttpClient client = clients.CreateClient("openmeteo");
-            string body = await client.GetStringAsync(url, ct);
-            WeatherDto? fresh = WeatherParser.TryParse(body, clock.GetUtcNow());
-            if (fresh != null)
-            {
-                cache.Set(CacheKey, fresh, CacheFor);
-                return Results.Ok(fresh);
-            }
-            log.LogWarning("Open-Meteo returned an unexpected response");
-        }
-        catch (Exception ex) when ((ex is HttpRequestException or TaskCanceledException) && !ct.IsCancellationRequested)
-        {
-            log.LogWarning(ex, "Open-Meteo request failed");
-        }
-        return Results.Problem(detail: "Chưa lấy được thời tiết.", statusCode: StatusCodes.Status503ServiceUnavailable);
+        WeatherDto? current = await weather.GetAsync(ct);
+        return current != null
+            ? Results.Ok(current)
+            : Results.Problem(detail: "Chưa lấy được thời tiết.", statusCode: StatusCodes.Status503ServiceUnavailable);
     }
 }

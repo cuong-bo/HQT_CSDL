@@ -3,7 +3,7 @@ using Hue_travel.Panels.PoiIdentify;
 using Hue_travel.Panels.RouteOptimizer;
 using Hue_travel.Panels.Explore;
 using Hue_travel.Panels.Layers;
-using Hue_travel.Panels.TravelGuide;
+using Hue_travel.Panels.Assistant;
 using Hue_travel.Auth;
 using Hue_travel.Theme;
 
@@ -29,7 +29,7 @@ namespace Hue_travel.Shell
         private ExplorePanel explorePanel;
         private LayerPanel layerPanel;
         private SearchDropdown searchDropdown;
-        private TravelGuidePanel travelGuidePanel;
+        private ChatPanel chatPanel;
         private PoiIdentifyCard poiIdentifyCard;
         private Toast toast;
 
@@ -51,7 +51,7 @@ namespace Hue_travel.Shell
             this.explorePanel = new ExplorePanel();
             this.layerPanel = new LayerPanel();
             this.searchDropdown = new SearchDropdown();
-            this.travelGuidePanel = new TravelGuidePanel();
+            this.chatPanel = new ChatPanel();
             this.poiIdentifyCard = new PoiIdentifyCard();
             this.toast = new Toast();
             this.SuspendLayout();
@@ -95,7 +95,7 @@ namespace Hue_travel.Shell
             this.routeOptimizerPanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
             // The route result is a wide panel centred under the map (no left or right edge: it stays centred horizontally).
             this.tripResultPanel.AttachTo(this, new System.Drawing.Point((this.ClientSize.Width - TripResultPanel.DesignWidth) / 2, this.ClientSize.Height - TripResultPanel.DesignHeight - 56), System.Windows.Forms.AnchorStyles.Bottom);
-            this.travelGuidePanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
+            this.chatPanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
             // The place card sits at the bottom right of the map, clear of the map's control column (400px wide card, 92px from the right).
             this.poiIdentifyCard.AttachTo(this, new System.Drawing.Point(1044, 198), System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right);
 
