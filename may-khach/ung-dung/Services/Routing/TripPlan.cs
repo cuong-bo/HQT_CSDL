@@ -104,7 +104,8 @@ namespace Hue_travel.Services.Routing
                 var end = new MapXY(to.X, to.Y);
                 IReadOnlyList<MapXY> path;
                 IReadOnlyList<double> times;
-                Joined(previousPoint, leg, end, out path, out times);
+                double joinSeconds;
+                Joined(previousPoint, leg, end, out path, out times, out joinSeconds);
 
                 int stayed = stays.ContainsKey(to.Id) ? stays[to.Id] : DefaultStayMinutes(to.Category);
                 DateTime? arrive = null, leave = null;
@@ -113,7 +114,7 @@ namespace Hue_travel.Services.Routing
                 int wait = 0;
                 if (clock.HasValue)
                 {
-                    DateTime arrival = clock.Value.AddSeconds(leg.Seconds);
+                    DateTime arrival = clock.Value.AddSeconds(leg.Seconds + joinSeconds);
                     DateTime effective = arrival;
 
                     // A short wait for the door to open is part of the visit; a closed place later in the day is not.
@@ -142,7 +143,7 @@ namespace Hue_travel.Services.Routing
                     FromName = previousName,
                     ToName = to.Name,
                     Meters = leg.Meters,
-                    Seconds = leg.Seconds,
+                    Seconds = leg.Seconds + joinSeconds,
                     Path = path,
                     Times = times,
                     ArriveAt = arrive,
@@ -162,7 +163,7 @@ namespace Hue_travel.Services.Routing
                 Stops = stops,
                 Legs = legs,
                 TotalMeters = route.TotalMeters,
-                TotalSeconds = route.TotalSeconds,
+                TotalSeconds = legs.Sum(l => l.Seconds),
                 DepartAt = departAt,
                 TotalVisitMinutes = legs.Sum(l => l.StayMinutes),
                 SavedSeconds = asListed == null ? 0 : Math.Max(0, asListed.TotalSeconds - route.TotalSeconds),
@@ -183,10 +184,14 @@ namespace Hue_travel.Services.Routing
         }
 
         // The road line with the leg's own end points added, so the line reaches the markers; the times follow the same points.
-        private static void Joined(MapXY from, OnlineLeg leg, MapXY to, out IReadOnlyList<MapXY> path, out IReadOnlyList<double> times)
+        // The few metres from a marker to its snapped road are walked at about 6 m/s instead of taking no time at all.
+        private static void Joined(MapXY from, OnlineLeg leg, MapXY to, out IReadOnlyList<MapXY> path, out IReadOnlyList<double> times,
+            out double extraSeconds)
         {
+            const double WalkingMetresPerSecond = 6.0;
             IReadOnlyList<MapXY> road = leg.Path;
             var points = new List<MapXY>();
+            extraSeconds = 0;
             if (road == null || road.Count == 0)
             {
                 points.Add(from);
@@ -195,19 +200,29 @@ namespace Hue_travel.Services.Routing
                 times = new[] { 0.0, leg.Seconds };
                 return;
             }
+
+            bool knownFrom = from.X != 0 || from.Y != 0;
+            bool knownTo = to.X != 0 || to.Y != 0;
+            double startJoin = knownFrom && Distance(from, road[0]) > JoinToleranceMeters ? Distance(from, road[0]) / WalkingMetresPerSecond : 0;
+            double endJoin = knownTo && Distance(road[road.Count - 1], to) > JoinToleranceMeters ? Distance(road[road.Count - 1], to) / WalkingMetresPerSecond : 0;
+            extraSeconds = startJoin + endJoin;
+
             bool aligned = leg.Times != null && leg.Times.Count == road.Count;
             var elapsed = new List<double>();
-            if (Distance(from, road[0]) > JoinToleranceMeters)
+            if (startJoin > 0)
             {
                 points.Add(from);
                 elapsed.Add(0);
             }
             points.AddRange(road);
-            if (aligned) elapsed.AddRange(leg.Times);
-            if (Distance(road[road.Count - 1], to) > JoinToleranceMeters)
+            if (aligned)
+            {
+                foreach (double time in leg.Times) elapsed.Add(startJoin + time);
+            }
+            if (endJoin > 0)
             {
                 points.Add(to);
-                if (aligned) elapsed.Add(leg.Times[leg.Times.Count - 1]);
+                if (aligned) elapsed.Add(startJoin + leg.Times[leg.Times.Count - 1] + endJoin);
             }
             path = points;
             times = aligned ? elapsed : null;

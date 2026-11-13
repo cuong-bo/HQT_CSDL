@@ -360,6 +360,8 @@ $mapXyT = GetT ($online + 'MapXY')
 $tripT = GetT 'Hue_travel.Services.Routing.TripPlanner'
 $placeList = [Activator]::CreateInstance($listT)
 $place.Id = 'DL001'
+$place.X = 775200
+$place.Y = 1821000
 $placeList.Add($place)
 $farStart = [Activator]::CreateInstance($mapXyT, @([double]774900, [double]1821000))
 $fromOnline = $tripT.GetMethods() | Where-Object { $_.Name -eq 'FromOnline' -and $_.GetParameters().Count -eq 5 }
@@ -368,7 +370,8 @@ $tripLeg = $plan.Legs[0]
 Check 'trip: times stay as long as the line (start and stop joined on)' "$($tripLeg.Times.Count)|$($tripLeg.Path.Count)" "$($tripLeg.Path.Count)|$($tripLeg.Path.Count)"
 Check 'trip: joined start has time 0' $tripLeg.Times[0] '0'
 Check 'trip: times never go back' ((@(1..($tripLeg.Times.Count - 1) | Where-Object { $tripLeg.Times[$_] -lt $tripLeg.Times[$_ - 1] })).Count) '0'
-Check 'trip: last time is the leg time' $tripLeg.Times[$tripLeg.Times.Count - 1] '60'
+Check 'trip: walking from the marker to the road takes time' ([math]::Round($tripLeg.Seconds, 1)) '76.7'
+Check 'trip: last time matches the leg time' ([math]::Round($tripLeg.Times[$tripLeg.Times.Count - 1], 1)) ([math]::Round($tripLeg.Seconds, 1))
 Check 'trip: no times from the server means none' (($fromOnline.Invoke($null, @($route, 'Start', $farStart, $placeList, $null))).Legs.Count -ge 0) 'True'
 
 # departure time, stay at the stop and the opening-hours warning
@@ -386,6 +389,8 @@ $early = $fromOnlineTimed.Invoke($null, @($timed, 'Start', $farStart, $placeList
 Check 'trip: a morning visit fits' $early.Legs[0].HoursWarning 'False'
 $waitPlace = MakePoi 'Đại Nội Huế' 'Heritage'
 $waitPlace.Id = 'DL001'
+$waitPlace.X = 775200
+$waitPlace.Y = 1821000
 $waitPlace.OpeningHours = '09:00-17:00'
 $waitList = [Activator]::CreateInstance($listT)
 $waitList.Add($waitPlace)
