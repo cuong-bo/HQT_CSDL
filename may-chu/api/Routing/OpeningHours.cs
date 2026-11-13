@@ -121,9 +121,9 @@ public sealed class OpeningHours
 
         if (!ClosingKnown)
         {
-            // "Mở cửa từ 07:00": from an opening moment onwards the place stays open; no closing time to miss.
-            DateTimeOffset? latestStart = ranges.Where(r => r.Start <= now).Select(r => (DateTimeOffset?)r.Start).Max();
-            if (latestStart.HasValue)
+            // "Mở cửa từ 07:00": while today's range is running there is no closing time to miss; before it, wait for it.
+            var open = ranges.Where(r => r.Start <= now && now < r.End).OrderBy(r => r.End).FirstOrDefault();
+            if (open.End > now)
             {
                 leave = now + stay;
                 return true;
