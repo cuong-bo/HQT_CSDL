@@ -370,7 +370,6 @@ namespace Hue_travel.Panels.RouteOptimizer
 
         public TripResultPanel()
         {
-            Size = new Size(DesignWidth, DesignHeight);
             BackColor = Color.White;
             KeyPreview = true;
 
@@ -418,6 +417,9 @@ namespace Hue_travel.Panels.RouteOptimizer
             btnSave.Click += (s, e) => SaveItinerary();
             btnPrint.Click += (s, e) => PrintItinerary();
             btnStop.Click += (s, e) => StopRequested?.Invoke(this, EventArgs.Empty);
+
+            // Set last: resizing calls LayoutAll, which needs every field above (speedButtons in particular).
+            Size = new Size(DesignWidth, DesignHeight);
         }
 
         // A small round icon-only button in the title row.
