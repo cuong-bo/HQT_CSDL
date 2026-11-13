@@ -132,6 +132,6 @@ Các bài kiểm thử cơ sở dữ liệu cần biến môi trường `HUE_TES
 | **Open-Meteo** | CC BY 4.0, miễn phí phi thương mại (phải ghi nguồn) | Thời tiết hiện tại, máy chủ gọi rồi nhớ tạm để máy khách không gọi trực tiếp |
 | **Plus Jakarta Sans** (4 độ đậm) | SIL Open Font License 1.1 | Phông chữ của toàn bộ giao diện, nhúng sẵn trong ứng dụng |
 | **Material Symbols Outlined** (bản con ~60 biểu tượng) | Apache License 2.0 | Phông biểu tượng (kính lúp, sao, khóa, chuông…) |
-| Địa chỉ tile bản đồ Google | Còn trong `MapEngine/BaseMapCatalog.cs` nhưng **đã tắt** (`UseLocalData = true`) | Không dùng; bản đồ nền vẽ từ dữ liệu của dự án |
+| Bản đồ nền | Dữ liệu của dự án (`may-chu/du-lieu/shp`, `nen-ban-do`) | Vẽ trực tiếp trong ứng dụng bằng MapWinGIS, không dùng tile web |
 
 Chi tiết nguồn và giấy phép của tài nguyên nhúng nằm ở `may-khach/ung-dung/Resources/LICENSES.md`.

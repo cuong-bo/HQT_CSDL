@@ -86,24 +86,6 @@ Check 'utm' $cf.GetMethod('FormatUtm').Invoke($null, @([double]775116.47, [doubl
 Check 'degrees north-east' $cf.GetMethod('FormatDegrees').Invoke($null, @([double]107.5786, [double]16.4698)) ('16.4698' + $deg + 'N, 107.5786' + $deg + 'E')
 Check 'degrees south-west' $cf.GetMethod('FormatDegrees').Invoke($null, @([double]-70.25, [double]-33.5)) ('33.5000' + $deg + 'S, 70.2500' + $deg + 'W')
 
-# ---- BaseMapCatalog (all base maps are tile maps; the drawn light/night maps are gone)
-$bc = GetT 'Hue_travel.MapEngine.BaseMapCatalog'
-$find = $bc.GetMethod('Find')
-Check 'catalog has four base maps' ($bc.GetProperty('All').GetValue($null).Count) '4'
-Check 'default base map is the roadmap' $bc.GetField('DefaultId').GetValue($null) 'roadmap'
-foreach ($id in 'roadmap','satellite','hybrid','terrain') { Check "$id has a tile url" ($find.Invoke($null, @($id)).TileUrl -ne $null) 'True' }
-Check 'standard map is gone' ($find.Invoke($null, @('standard')) -eq $null) 'True'
-Check 'night map is gone' ($find.Invoke($null, @('night')) -eq $null) 'True'
-Check 'hybrid url uses lyrs=y' ($find.Invoke($null, @('hybrid')).TileUrl.Contains('lyrs=y')) 'True'
-Check 'satellite url uses lyrs=s' ($find.Invoke($null, @('satellite')).TileUrl.Contains('lyrs=s')) 'True'
-Check 'url uses MapWinGIS placeholders' ($find.Invoke($null, @('terrain')).TileUrl.Contains('{x}') -and $find.Invoke($null, @('terrain')).TileUrl.Contains('{zoom}')) 'True'
-Check 'tile layers credit Google' ($find.Invoke($null, @('satellite')).Attribution.Contains('Google')) 'True'
-Check 'unknown id gives null' ($find.Invoke($null, @('nope')) -eq $null) 'True'
-$pid1 = $find.Invoke($null, @('satellite')).ProviderId
-$pid2 = $find.Invoke($null, @('hybrid')).ProviderId
-Check 'provider ids are distinct' ($pid1 -ne $pid2) 'True'
-Check 'provider ids avoid the reserved range' ($pid1 -gt 10000) 'True'
-
 # ---- PoiLayerFilter (left rail: show only one kind of object)
 $catType = GetT 'Hue_travel.Models.PoiCategory'
 $heritage = [Enum]::Parse($catType, 'Heritage'); $food = [Enum]::Parse($catType, 'Food'); $stay = [Enum]::Parse($catType, 'Stay')
@@ -472,36 +454,19 @@ Check 'auth: restore succeeds' (Await ($auth8.RestoreAsync())) 'True'
 Check 'auth: restore knows the password is temporary' "$($auth8.MustChangePassword)" 'True'
 Remove-Item $sessionPath -ErrorAction SilentlyContinue
 
-# server-announced tile addresses
+# the server announces the oldest client version it still accepts
 $cfgT = GetT ($online + 'ApiConfigSource')
 $h9 = New-Object FakeHandler
-$h9.Responses.Enqueue([object[]]@(200, '{"apiVersion":"1.0","tileUrl":"x","tileAttribution":"Map credit","tileUrls":{"roadmap":"https://tiles.example/{zoom}/{x}/{y}.png","satellite":"ftp://bad/{x}/{y}/{zoom}","hybrid":"https://no-placeholders.example/t.png"}}'))
+$h9.Responses.Enqueue([object[]]@(200, '{"apiVersion":"1.0","minimumClientVersion":"1.2.0"}'))
 $api9 = $apiT.GetConstructors()[0].Invoke([object[]]@('http://test.local', [Activator]::CreateInstance($storeT, @($sessionPath)), [System.Net.Http.HttpMessageHandler]$h9, $null))
 $cfg = Await ($cfgT.GetMethod('FetchAsync').Invoke($null, [object[]]@($api9, $none)))
-Check 'config: tile addresses are read' $cfg.TileUrls.Count '3'
-Check 'config: credit line is read' $cfg.TileAttribution 'Map credit'
+Check 'config: minimum version is read' $cfg.MinimumVersion '1.2.0'
+Check 'config: an older app is told to update' $cfg.UpdateRequired('1.0.0.0') 'True'
+Check 'config: the same app is accepted' $cfg.UpdateRequired('1.2.0.0') 'False'
 $h10 = New-Object FakeHandler
 $h10.Responses.Enqueue([object[]]@(500, '{}'))
 $api10 = $apiT.GetConstructors()[0].Invoke([object[]]@('http://test.local', [Activator]::CreateInstance($storeT, @($sessionPath)), [System.Net.Http.HttpMessageHandler]$h10, $null))
-Check 'config: a server error gives empty settings' ((Await ($cfgT.GetMethod('FetchAsync').Invoke($null, [object[]]@($api10, $none)))).TileUrls.Count) '0'
-
-$catT = GetT 'Hue_travel.MapEngine.BaseMapCatalog'
-$apply = $catT.GetMethod('ApplyOverrides')
-Check 'tiles: no addresses means no change' ($apply.Invoke($null, [object[]]@($null, ''))) 'False'
-Check 'tiles: an empty list means no change' ($apply.Invoke($null, [object[]]@(([System.Collections.Generic.Dictionary[string,string]]::new()), ''))) 'False'
-$cfgUrls = New-Object 'System.Collections.Generic.Dictionary[string,string]'
-$cfgUrls['roadmap'] = 'https://tiles.example/{zoom}/{x}/{y}.png'
-$cfgUrls['satellite'] = 'ftp://bad/{x}/{y}/{zoom}'
-$cfgUrls['hybrid'] = 'https://no-placeholders.example/t.png'
-Check 'tiles: a valid address is applied' ($apply.Invoke($null, [object[]]@([System.Collections.Generic.Dictionary[string,string]]$cfgUrls, 'Map credit'))) 'True'
-$maps = $catT.GetProperty('All').GetValue($null)
-Check 'tiles: roadmap uses the new address' (($maps | Where-Object { $_.Id -eq 'roadmap' }).TileUrl) 'https://tiles.example/{zoom}/{x}/{y}.png'
-Check 'tiles: roadmap shows the new credit' (($maps | Where-Object { $_.Id -eq 'roadmap' }).Attribution) 'Map credit'
-Check 'tiles: invalid address keeps the built-in satellite' (($maps | Where-Object { $_.Id -eq 'satellite' }).TileUrl -like 'http://mt1.google.com/*') 'True'
-Check 'tiles: address without placeholders keeps the built-in hybrid' (($maps | Where-Object { $_.Id -eq 'hybrid' }).TileUrl -like 'http://mt1.google.com/*') 'True'
-Check 'tiles: the changed map gets a fresh provider id' ((($maps | Where-Object { $_.Id -eq 'roadmap' }).ProviderId) -ne 10001) 'True'
-[void]$apply.Invoke($null, [object[]]@([System.Collections.Generic.Dictionary[string,string]]$cfgUrls, ''))
-Check 'tiles: no credit announced means no credit shown' ((($catT.GetProperty('All').GetValue($null)) | Where-Object { $_.Id -eq 'roadmap' }).Attribution) ''
+Check 'config: a server error keeps the default version' ((Await ($cfgT.GetMethod('FetchAsync').Invoke($null, [object[]]@($api10, $none)))).MinimumVersion) '1.0.0'
 Remove-Item $sessionPath -ErrorAction SilentlyContinue
 
 # ---- PlaceFileReader (admin import: CSV or GeoJSON into rows for /v1/admin/pois/import)

@@ -75,8 +75,6 @@ nano .env
 
 Lưu trong `nano`: `Ctrl+O`, Enter, rồi `Ctrl+X`. Các dòng còn lại để mặc định (xem chú thích trong tệp). **Không đưa `.env` lên Git, không gửi cho ai.**
 
-Các dòng `TILE_URL_*`: bản đồ nền hiện vẽ ngay trong ứng dụng từ dữ liệu của dự án nên **để trống**.
-
 ## 5. Chạy lần đầu
 
 Mọi lệnh từ đây chạy trong thư mục `may-chu`:

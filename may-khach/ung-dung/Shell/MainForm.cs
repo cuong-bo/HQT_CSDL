@@ -447,7 +447,8 @@ namespace Hue_travel.Shell
                 if (auth.CurrentUser != null) await LoadFavoritesAsync();   // already signed in on the sign-in screen
 
                 ApiConfigSource config = await ApiConfigSource.FetchAsync(api, lifetime.Token);
-                if (BaseMapCatalog.ApplyOverrides(config.TileUrls, config.TileAttribution)) mapHost.ReloadBaseMap();
+                if (config.UpdateRequired(Application.ProductVersion))
+                    toast.ShowMessage("Máy chủ yêu cầu ứng dụng từ phiên bản " + config.MinimumVersion + " trở lên. Hãy cập nhật ứng dụng.", ToastKind.Info);
 
                 IReadOnlyList<Poi> fresh = await ApiPoiSource.FetchAllAsync(api, lifetime.Token);
                 if (fresh.Count == 0) return;

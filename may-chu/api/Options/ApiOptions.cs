@@ -31,10 +31,6 @@ public sealed class RateLimitSettings
 
 public sealed class ClientSettings
 {
+    /// <summary>Clients older than this are told to update (GET /v1/config).</summary>
     public string MinimumVersion { get; set; } = "1.0.0";
-    public string TileUrl { get; set; } = string.Empty;
-    public string TileAttribution { get; set; } = string.Empty;
-
-    /// <summary>Tile address per base map id (roadmap, satellite, hybrid, terrain); empty keeps the app's built-in addresses.</summary>
-    public Dictionary<string, string> TileUrls { get; set; } = new();
 }

@@ -13,7 +13,7 @@ using Interop.MapWinGIS;
 
 namespace Hue_travel.MapEngine
 {
-    /// <summary>The map: MapWinGIS does the tiles, zoom, pan, measuring and coordinates; overlay controls sit on top.</summary>
+    /// <summary>The map: MapWinGIS does zoom, pan, measuring and coordinates; the base map is drawn from local shapefiles.</summary>
     public partial class MapHost : UserControl
     {
         private const int RightMargin = 16;   // right-4
@@ -24,10 +24,6 @@ namespace Hue_travel.MapEngine
         private const int LeftButton = 1;
         private const int HitRadius = 10;         // design pixels around a marker that count as hitting it
 
-        // Order of the icons in the vertical base map switch.
-        private static readonly string[] BaseMapIds = { "roadmap", "satellite", "hybrid", "terrain" };
-
-        private string baseMapId = BaseMapCatalog.DefaultId;
         private readonly Timer viewTracker = new Timer { Interval = 150 };
         private readonly PoiLayerFilter poiLayers = new PoiLayerFilter();
         private double lastXMin, lastXMax, lastYMin, lastYMax;
@@ -63,8 +59,6 @@ namespace Hue_travel.MapEngine
             stackTools.BringToFront();
             stackZoom.BringToFront();
             compass.BringToFront();
-            stackBaseMaps.BringToFront();
-            attribution.BringToFront();
             InitTripChip();
             LayoutOverlays();
             Resize += (s, e) => LayoutOverlays();
@@ -83,8 +77,6 @@ namespace Hue_travel.MapEngine
         }
 
         public AxMap Map => axMap;
-
-        public string BaseMapId => baseMapId;
 
         public bool IsMeasuring => axMap.CursorMode == tkCursorMode.cmMeasure;
 
@@ -521,51 +513,12 @@ namespace Hue_travel.MapEngine
             return stop ? MeasureKind.None : kind;
         }
 
-        public void SetBaseMap(string mapId)
-        {
-            if (BaseMapCatalog.UseLocalData) return;
-            BaseMapInfo info = BaseMapCatalog.Find(mapId);
-            if (info == null) return;
-            baseMapId = mapId;
-            stackBaseMaps.ActiveIndex = Array.IndexOf(BaseMapIds, mapId);
-            ApplyTiles(info);
-        }
-
-        /// <summary>Applies the current base map again, after the catalog got new tile addresses.</summary>
-        public void ReloadBaseMap()
-        {
-            if (BaseMapCatalog.UseLocalData) return;
-            BaseMapInfo info = BaseMapCatalog.Find(baseMapId);
-            if (info != null) ApplyTiles(info);
-        }
-
-        // The base map is drawn from the project's own Shapefiles (the web tiles are switched off); the place layers are added above it.
+        // The base map is drawn from the project's own Shapefiles; the place layers are added above it.
         private void ApplyLocalBase()
         {
             axMap.Tiles.Visible = false;
             axMap.TileProvider = tkTileProvider.ProviderNone;
             LocalBaseMap.Add(axMap);
-            stackBaseMaps.Visible = false;
-            attribution.Visible = false;
-            LayoutOverlays();
-            axMap.Redraw();
-        }
-
-        // The base map is a web tile layer; MapWinGIS still does zoom, pan, measuring and the coordinate read-out.
-        private void ApplyTiles(BaseMapInfo info)
-        {
-            TileProviders providers = axMap.Tiles.Providers;
-            if (providers.get_IndexByProviderId(info.ProviderId) < 0
-                && !providers.Add(info.ProviderId, info.Name, info.TileUrl, tkTileProjection.SphericalMercator, BaseMapCatalog.MinZoom, BaseMapCatalog.MaxZoom, string.Empty))
-            {
-                System.Diagnostics.Debug.WriteLine("MapHost: tile provider rejected: " + providers.get_ErrorMsg(providers.LastErrorCode));
-                attribution.Visible = false;
-                return;
-            }
-            axMap.Tiles.ProviderId = info.ProviderId;
-            axMap.Tiles.Visible = true;
-            attribution.Text = info.Attribution;
-            attribution.Visible = !string.IsNullOrEmpty(info.Attribution);
             LayoutOverlays();
             axMap.Redraw();
         }
@@ -589,7 +542,7 @@ namespace Hue_travel.MapEngine
 
             // Map units are metres (the target CRS, VN-2000 UTM zone 48N, is metric); 96 DPI scaled to the screen.
             double denominator = MapScale.Denominator(xMax - xMin, axMap.Width, 96.0 * Ui.Scale);
-            if (BaseMapCatalog.UseLocalData && LocalBaseMap.ApplyScale(denominator)) axMap.Redraw();   // small roads leave the map as it is zoomed out
+            if (LocalBaseMap.ApplyScale(denominator)) axMap.Redraw();   // small roads leave the map as it is zoomed out
             double centerX = (xMin + xMax) / 2, centerY = (yMin + yMax) / 2, longitude = 0, latitude = 0;
             axMap.ProjToDegrees(centerX, centerY, ref longitude, ref latitude);
             ViewChanged?.Invoke(this, new MapViewChangedEventArgs(centerX, centerY, longitude, latitude, denominator));
@@ -613,12 +566,11 @@ namespace Hue_travel.MapEngine
             pressFilter.Pressed += (s, screen) => NotePress(screen);
             Application.AddMessageFilter(pressFilter);
             axMap.MouseUpEvent += (s, e) => OnMapMouseUp(e.button, e.x, e.y);
-            if (BaseMapCatalog.UseLocalData) ApplyLocalBase();
-            else ApplyTiles(BaseMapCatalog.Find(baseMapId));
+            ApplyLocalBase();
             ZoomToFull();
         }
 
-        // Anchors the overlays like the mockup: controls in the top-right column, credit line bottom-right.
+        // Anchors the overlay controls in the top-right column.
         protected override void OnLayout(LayoutEventArgs e)
         {
             base.OnLayout(e);
@@ -627,12 +579,10 @@ namespace Hue_travel.MapEngine
 
         private void LayoutOverlays()
         {
-            int x = Width - Ui.S(RightMargin) - stackBaseMaps.Width;
-            stackBaseMaps.Location = new System.Drawing.Point(x, Ui.S(ColumnTop));
-            compass.Location = new System.Drawing.Point(x + (stackBaseMaps.Width - compass.Width) / 2, stackBaseMaps.Bottom + Ui.S(StackGap + 4));
-            stackZoom.Location = new System.Drawing.Point(x, compass.Bottom + Ui.S(StackGap));
+            int x = Width - Ui.S(RightMargin) - stackZoom.Width;
+            compass.Location = new System.Drawing.Point(x + (stackZoom.Width - compass.Width) / 2, Ui.S(ColumnTop));
+            stackZoom.Location = new System.Drawing.Point(x, compass.Bottom + Ui.S(StackGap + 4));
             stackTools.Location = new System.Drawing.Point(x, stackZoom.Bottom + Ui.S(StackGap + 4));
-            attribution.Location = new System.Drawing.Point(Width - attribution.Width - Ui.S(8), Height - attribution.Height - Ui.S(8));
             int chipWidth = Ui.S(206), chipHeight = Ui.S(46);
             // Centred on the window (like the result panel it stands for), not on the map, which starts to the right of the rail.
             Form window = FindForm();
@@ -676,8 +626,6 @@ namespace Hue_travel.MapEngine
             tripChip.Visible = visible;
             if (visible) tripChip.BringToFront();
         }
-
-        private void stackBaseMaps_ItemClicked(object sender, int index) => SetBaseMap(BaseMapIds[index]);
 
         private void stackZoom_ItemClicked(object sender, int index)
         {

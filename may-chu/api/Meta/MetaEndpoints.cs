@@ -4,8 +4,7 @@ using Npgsql;
 
 namespace Hue_travel.Api.Meta;
 
-public sealed record ClientConfigDto(
-    string ApiVersion, string MinimumClientVersion, string TileUrl, string TileAttribution, IReadOnlyDictionary<string, string> TileUrls);
+public sealed record ClientConfigDto(string ApiVersion, string MinimumClientVersion);
 
 public static class MetaEndpoints
 {
@@ -23,7 +22,7 @@ public static class MetaEndpoints
         });
 
         app.MapGet("/v1/config", (IOptions<ClientSettings> client) =>
-            Results.Ok(new ClientConfigDto(ApiVersion, client.Value.MinimumVersion, client.Value.TileUrl, client.Value.TileAttribution, client.Value.TileUrls)));
+            Results.Ok(new ClientConfigDto(ApiVersion, client.Value.MinimumVersion)));
 
         // The base map the app downloads: latest.json, written by scripts/pack-basemap.py, is sent as it is. Because the answer goes through
         // the /v1 signing, the app can trust the checksums in it (and so the package it names) as much as any other reply.
