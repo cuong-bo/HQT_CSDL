@@ -410,19 +410,26 @@ namespace Hue_travel.MapEngine
                     tripClock = Math.Min(totalElapsed, tripClock + speed * dt);
                     travelled = tripClock >= totalElapsed ? total : DistanceAt(tripClock);
                     moved = travelled != before;
-                    int arrived = Array.FindIndex(legEnds, end => before < end - 0.001 && travelled >= end - 0.001);
+                    // At x8 one frame can pass more than one short leg; count every stop crossed, not only the first.
+                    int arrived = -1;
+                    for (int i = 0; i < legEnds.Length; i++)
+                    {
+                        if (before < legEnds[i] - 0.001 && travelled >= legEnds[i] - 0.001)
+                        {
+                            arrived = i;
+                            stoppedSeconds += StaySeconds(i);
+                        }
+                    }
                     if (travelled >= total)
                     {
                         finished = true;
-                        if (plan.Legs.Count > 0) stoppedSeconds += StaySeconds(plan.Legs.Count - 1);
                         SetPlaying(false);
                         Finished?.Invoke(this, EventArgs.Empty);
                     }
                     else if (arrived >= 0)
                     {
                         // The stop is a pause in the show, not in the trip: it is shorter when the car runs faster. The simulated
-                        // clock jumps by the planned stay, so the next arrival time matches the itinerary.
-                        stoppedSeconds += StaySeconds(arrived);
+                        // clock already jumped by the planned stay, so the next arrival time matches the itinerary.
                         dwellLeft = DwellSeconds / Math.Min(speed, 4);
                     }
                     UpdateLeg();
