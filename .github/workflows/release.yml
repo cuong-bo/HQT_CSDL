@@ -12,7 +12,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: microsoft/setup-msbuild@v2
       - run: msbuild may-khach/ung-dung/Hue_travel.csproj /restore /p:Configuration=Release /v:minimal
       - name: Zip the client (the Windows installer is built on a machine that has MapWinGIS, see may-khach/bo-cai/README.md)

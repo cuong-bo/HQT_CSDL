@@ -10,7 +10,7 @@ jobs:
     name: API build and unit tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
@@ -21,7 +21,7 @@ jobs:
     name: SQL migrations apply on an empty database
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Start PostGIS + pgRouting
         run: |
           docker build -t huegis-db may-chu/docker-csdl
@@ -38,7 +38,7 @@ jobs:
     name: Windows client build and service tests
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: microsoft/setup-msbuild@v2
       - run: msbuild may-khach/ung-dung/Hue_travel.csproj /restore /p:Configuration=Debug /v:minimal
       - name: Service tests (32-bit PowerShell, the app is x86)
@@ -48,7 +48,7 @@ jobs:
     name: Secret scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: gitleaks/gitleaks-action@v2
