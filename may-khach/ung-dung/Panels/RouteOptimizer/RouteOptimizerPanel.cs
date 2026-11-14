@@ -196,7 +196,7 @@ namespace Hue_travel.Panels.RouteOptimizer
             b.Gap = 6;
             b.HorizontalPadding = 8;
             b.Font = ThemeFonts.Medium(13);
-            b.Radius = 10;
+            b.Radius = ThemeMetrics.RadiusSm;
             b.ForeColor = ThemeColors.Slate700;
             b.IconColor = ThemeColors.Primary;
             b.FillColor = Color.White;
@@ -212,7 +212,7 @@ namespace Hue_travel.Panels.RouteOptimizer
             b.IconSize = 18;
             b.Gap = 8;
             b.Font = ThemeFonts.SemiBold(14);
-            b.Radius = 12;
+            b.Radius = ThemeMetrics.RadiusSm;
             b.ForeColor = Color.White;
             b.IconColor = Color.White;
             b.FillColor = ThemeColors.Primary;

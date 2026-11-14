@@ -57,7 +57,7 @@ namespace Hue_travel.Theme
             kind = messageKind;
             Text = text;
             int textWidth = TextRenderer.MeasureText(text, Font, Size.Empty, TextFormatFlags.NoPadding | TextFormatFlags.SingleLine).Width;
-            Width = textWidth + Ui.S(52);
+            Width = textWidth + Ui.S(70);
             Height = Ui.S(PillHeight);
             if (Parent != null) Left = (Parent.ClientSize.Width - Width) / 2;
             Top = Ui.S(TopOffset);
@@ -77,15 +77,30 @@ namespace Hue_travel.Theme
         {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0, 0, Width, Height), Height / 2f))
+            // a rounded card (not a pill) with a round status mark: tick, "!" or "i"
+            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0, 0, Width - 1, Height - 1), Ui.S(12)))
             using (var fill = new SolidBrush(ThemeColors.Slate800))
+            using (var edge = new Pen(Color.FromArgb(60, 255, 255, 255)))
             {
                 g.FillPath(fill, path);
+                g.DrawPath(edge, path);
             }
 
             Color dot = kind == ToastKind.Success ? ThemeColors.Emerald500 : kind == ToastKind.Error ? ThemeColors.Red500 : ThemeColors.Sky400;
-            using (var brush = new SolidBrush(dot)) g.FillEllipse(brush, Ui.S(16), (Height - Ui.S(9)) / 2f, Ui.S(9), Ui.S(9));
-            TextRenderer.DrawText(g, Text, Font, new Rectangle(Ui.S(34), 0, Width - Ui.S(44), Height), Color.White,
+            int mark = Ui.S(22);
+            var markRect = new Rectangle(Ui.S(12), (Height - mark) / 2, mark, mark);
+            using (var brush = new SolidBrush(dot)) g.FillEllipse(brush, markRect);
+            if (kind == ToastKind.Success)
+            {
+                int px = (int)(mark * 0.7);
+                g.DrawImage(IconFont.Get("check", px, Color.White), markRect.X + (mark - px) / 2, markRect.Y + (mark - px) / 2, px, px);
+            }
+            else
+            {
+                TextRenderer.DrawText(g, kind == ToastKind.Error ? "!" : "i", ThemeFonts.Bold(13), markRect, Color.White,
+                    TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
+            }
+            TextRenderer.DrawText(g, Text, Font, new Rectangle(markRect.Right + Ui.S(10), 0, Width - markRect.Right - Ui.S(22), Height), Color.White,
                 TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.SingleLine);
         }
     }

@@ -59,8 +59,12 @@ namespace Hue_travel.Services.Online
             this.store = store;
             this.verifier = verifier;
             http = handler == null ? new HttpClient() : new HttpClient(handler);
-            http.Timeout = TimeSpan.FromSeconds(15);
+            // The limit is set per request (see SendOnceAsync): most replies are small and quick, but the assistant may need a minute.
+            http.Timeout = Timeout.InfiniteTimeSpan;
         }
+
+        /// <summary>How long an ordinary request may take before it counts as "server not reachable".</summary>
+        public static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(15);
 
         public string AccessToken { get; private set; }
 
@@ -89,18 +93,21 @@ namespace Hue_travel.Services.Online
 
         public Task<ApiResponse> PostAsync(string path, object body, CancellationToken ct = default(CancellationToken)) => SendAsync(HttpMethod.Post, path, body, ct);
 
+        /// <summary>A POST that may take longer than the usual 15 seconds (an upload, the assistant's answer).</summary>
+        public Task<ApiResponse> PostAsync(string path, object body, TimeSpan timeout, CancellationToken ct = default(CancellationToken)) => SendAsync(HttpMethod.Post, path, body, ct, timeout);
+
         public Task<ApiResponse> PutAsync(string path, object body, CancellationToken ct = default(CancellationToken)) => SendAsync(HttpMethod.Put, path, body, ct);
 
         public Task<ApiResponse> DeleteAsync(string path, CancellationToken ct = default(CancellationToken)) => SendAsync(HttpMethod.Delete, path, null, ct);
 
-        public async Task<ApiResponse> SendAsync(HttpMethod method, string path, object body, CancellationToken ct = default(CancellationToken))
+        public async Task<ApiResponse> SendAsync(HttpMethod method, string path, object body, CancellationToken ct = default(CancellationToken), TimeSpan? timeout = null)
         {
-            ApiResponse response = await SendOnceAsync(method, path, body, ct).ConfigureAwait(true);
+            ApiResponse response = await SendOnceAsync(method, path, body, ct, timeout).ConfigureAwait(true);
             bool canRefresh = response.StatusCode == 401 && !string.IsNullOrEmpty(RefreshToken)
                               && !path.StartsWith("/v1/auth/", StringComparison.Ordinal);
             if (!canRefresh) return response;
             if (!await TryRefreshAsync(ct).ConfigureAwait(true)) return response;
-            return await SendOnceAsync(method, path, body, ct).ConfigureAwait(true);
+            return await SendOnceAsync(method, path, body, ct, timeout).ConfigureAwait(true);
         }
 
         private async Task<bool> TryRefreshAsync(CancellationToken ct)
@@ -132,15 +139,17 @@ namespace Hue_travel.Services.Online
             }
         }
 
-        private async Task<ApiResponse> SendOnceAsync(HttpMethod method, string path, object body, CancellationToken ct)
+        private async Task<ApiResponse> SendOnceAsync(HttpMethod method, string path, object body, CancellationToken ct, TimeSpan? timeout = null)
         {
             using (var request = new HttpRequestMessage(method, baseUrl + path))
+            using (var limit = CancellationTokenSource.CreateLinkedTokenSource(ct))
             {
+                limit.CancelAfter(timeout ?? DefaultTimeout);   // when this fires and the caller did not cancel, it is the timeout (handled below)
                 if (body != null) request.Content = new StringContent(JsonHelper.Serialize(body), Encoding.UTF8, "application/json");
                 if (!string.IsNullOrEmpty(AccessToken)) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
                 try
                 {
-                    using (HttpResponseMessage reply = await http.SendAsync(request, ct).ConfigureAwait(true))
+                    using (HttpResponseMessage reply = await http.SendAsync(request, limit.Token).ConfigureAwait(true))
                     {
                         byte[] bytes = await reply.Content.ReadAsByteArrayAsync().ConfigureAwait(true);
                         string problem;

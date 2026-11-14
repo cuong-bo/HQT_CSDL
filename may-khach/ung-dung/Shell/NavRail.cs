@@ -14,14 +14,19 @@ namespace Hue_travel.Shell
     {
         public const int Explore = 0;
         public const int Route = 1;
-        public const int Guide = 2;
-        public const int Profile = 3;
+        public const int Guide = 2;      // the assistant (it replaced the static guide)
+        public const int Feed = 3;       // Khoảnh khắc: the community feed
+        public const int Profile = 4;
 
-        private static readonly string[] Icons = { "search", "alt_route", "menu_book", "account_circle" };
-        private static readonly string[] Labels = { "Khám phá", "Lộ trình", "Hướng dẫn", "Hồ sơ" };
-        private static readonly string[] Tips = { "Tìm địa điểm theo tên và nhóm", "Lên lộ trình tham quan ngắn nhất", "Gợi ý các tour tham quan", "Hồ sơ, yêu thích, lộ trình đã lưu và đăng xuất" };
+        private static readonly string[] Icons = { "search", "alt_route", "assistant", "moments", "account_circle" };
+        private static readonly string[] Labels = { "Khám phá", "Lộ trình", "Trợ lý", "Khoảnh khắc", "Hồ sơ" };
+        private static readonly string[] Tips =
+        {
+            "Tìm địa điểm theo tên và nhóm", "Lên lộ trình tham quan ngắn nhất", "Hỏi trợ lý về Huế, lộ trình và cách dùng ứng dụng",
+            "Chia sẻ và xem khoảnh khắc du lịch Huế", "Hồ sơ, yêu thích, lộ trình đã lưu và đăng xuất",
+        };
 
-        private const int DesignWidth = 80;
+        private const int DesignWidth = 84;
         private const int ItemHeight = 76;
         private const int TopMargin = 10;
         private const int PillWidth = 56;
@@ -44,6 +49,9 @@ namespace Hue_travel.Shell
             Width = DesignWidth;
             press = new PressFeedback(this);
         }
+
+        /// <summary>The height that holds every tab: the host sizes the floating rail to it.</summary>
+        public int WantedHeight => Ui.S(TopMargin) * 2 + Icons.Length * Ui.S(ItemHeight);
 
         /// <summary>The tab whose panel is open, or -1 when none is.</summary>
         public int ActiveIndex
@@ -127,7 +135,6 @@ namespace Hue_travel.Shell
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(BackColor);
-            using (var pen = new Pen(ThemeColors.Slate200)) g.DrawLine(pen, Width - 1, 0, Width - 1, Height);
 
             for (int i = 0; i < Icons.Length; i++)
             {

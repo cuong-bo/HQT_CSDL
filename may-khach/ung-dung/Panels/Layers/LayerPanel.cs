@@ -19,7 +19,7 @@ namespace Hue_travel.Panels.Layers
     {
         private readonly PanelHeader header = new PanelHeader { IconName = "layers", Text = "Lớp dữ liệu", Prominent = true };
         private readonly Panel top = new Panel { Dock = DockStyle.Top, Height = 118, BackColor = ThemeColors.Slate50 };
-        private readonly Label lblTitle = new Label { AutoSize = false, Font = ThemeFonts.Bold(18), ForeColor = ThemeColors.Slate800, TextAlign = ContentAlignment.MiddleLeft, Location = new Point(16, 12), Size = new Size(350, 30) };
+        private readonly Label lblTitle = new Label { AutoSize = false, Font = ThemeFonts.SerifBold(18), ForeColor = ThemeColors.Slate800, TextAlign = ContentAlignment.MiddleLeft, Location = new Point(16, 12), Size = new Size(350, 30) };
         private readonly Label lblCount = new Label { AutoSize = false, Font = ThemeFonts.Regular(12), ForeColor = ThemeColors.Slate500, TextAlign = ContentAlignment.MiddleLeft, Location = new Point(16, 42), Size = new Size(350, 20) };
         private readonly Label lblAll = new Label { AutoSize = false, Font = ThemeFonts.SemiBold(13), ForeColor = ThemeColors.Slate700, TextAlign = ContentAlignment.MiddleLeft, Text = "Hiện tất cả trên bản đồ", Location = new Point(16, 76), Size = new Size(280, 28) };
         private readonly ToggleSwitch masterSwitch = new ToggleSwitch { Location = new Point(322, 78) };

@@ -48,7 +48,7 @@ namespace Hue_travel.MapEngine.Overlays
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             Color fill = press.Fill(0, isHovered ? ThemeColors.Slate50 : Color.White, ThemeColors.Slate200);
-            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), Ui.S(8)))
+            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), Ui.S(ThemeMetrics.RadiusFull)))
             using (var brush = new SolidBrush(fill))
             using (var pen = new Pen(ThemeColors.Slate200, 1f))
             {

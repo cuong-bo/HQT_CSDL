@@ -31,18 +31,8 @@ namespace Hue_travel.Welcome
 
         private static readonly RectangleF CardRect = new RectangleF(1006, 80, 488, 774);
 
-        // Parts of the picture's card that hold baked text or controls: hidden behind a patch of the card's own colour.
-        private static readonly RectangleF[] LoginPatches =
-        {
-            new RectangleF(1046, 140, 270, 150),   // title and subtitle
-            new RectangleF(1050, 296, 400, 66),    // user name box
-            new RectangleF(1050, 380, 400, 66),    // password box
-            new RectangleF(1050, 455, 400, 44),    // remember / forgot row
-            new RectangleF(1050, 512, 398, 66),    // sign-in button
-            new RectangleF(1050, 598, 398, 30),    // "or" divider
-            new RectangleF(1050, 642, 398, 66),    // register button
-            new RectangleF(1086, 774, 400, 36),    // footer text
-        };
+        // The tab strip at the top of the card: a rounded track holding the three tabs (picture pixels).
+        private static readonly RectangleF TabTrack = new RectangleF(1054, 116, 392, 58);
 
         private readonly AppSession session;
         private readonly Bitmap picture = AppImages.LoginBackground();
@@ -63,7 +53,10 @@ namespace Hue_travel.Welcome
         private readonly IconButton btnTypeOwner = new IconButton();
         private readonly IconButton btnPlaces = new IconButton();
         private readonly IconButton btnPrimary = new IconButton();
-        private readonly IconButton btnSecondary = new IconButton();
+        private readonly IconButton btnTabLogin = new IconButton();
+        private readonly IconButton btnTabRegister = new IconButton();
+        private readonly IconButton btnTabGuest = new IconButton();
+        private readonly Label lblGuestHint = new Label();
         private readonly IconButton btnMinimize = new IconButton();
         private readonly IconButton btnMaximize = new IconButton();
         private readonly IconButton btnClose = new IconButton();
@@ -74,7 +67,6 @@ namespace Hue_travel.Welcome
         private bool busy;
         private bool ownerAccount;                                       // registering as a place owner (needs places)
         private IReadOnlyList<Poi> ownerPlaces = new List<Poi>();        // the places the owner asked to manage
-        private int registerDividerY = 724;                              // where "Đã có tài khoản?" is drawn (picture pixels)
         private float scale = 1f, offsetX, offsetY;
 
         private const int WmNcLButtonDown = 0xA1;
@@ -86,9 +78,20 @@ namespace Hue_travel.Welcome
         [DllImport("user32.dll")]
         private static extern int SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
 
-        public LoginForm(AppSession session)
+        // Shown over the main window to a guest who pressed something that needs an account (see MainForm.RunSignedIn): the sentence says
+        // what for, "Quay lại" replaces "Khách" and nothing is restored from a saved session. Null for the start-up sign-in screen.
+        private readonly string reason;
+
+        private bool IsModal => reason != null;
+
+        public LoginForm(AppSession session) : this(session, null)
+        {
+        }
+
+        public LoginForm(AppSession session, string reason)
         {
             this.session = session;
+            this.reason = reason;
             Text = "Hue Travel";
             Icon = AppImages.AppIcon();
             FormBorderStyle = FormBorderStyle.None;
@@ -106,6 +109,11 @@ namespace Hue_travel.Welcome
             WindowState = FormWindowState.Maximized;
 
             BuildControls();
+            if (IsModal)
+            {
+                lblGuestHint.Text = reason;
+                btnTabGuest.Text = "Quay lại";   // back to the map, not into the app
+            }
             SetMode(session.IsOnline ? Mode.Login : Mode.Offline);
         }
 
@@ -129,14 +137,6 @@ namespace Hue_travel.Welcome
         // Design pixels (what ThemeFonts takes) for a size given in picture pixels; whole numbers so the font cache stays small.
         private float FontPx(float imagePx) => (float)Math.Round(imagePx * scale / Ui.Scale);
 
-        private Color Tint(float imageX, float imageY)
-        {
-            float k = picture.Width / ImageWidth;
-            int x = Math.Max(0, Math.Min(picture.Width - 1, (int)(imageX * k)));
-            int y = Math.Max(0, Math.Min(picture.Height - 1, (int)(imageY * k)));
-            return picture.Width > 1 ? picture.GetPixel(x, y) : Color.White;
-        }
-
         // ------------------------------------------------------------------ building
 
         private void BuildControls()
@@ -145,7 +145,10 @@ namespace Hue_travel.Welcome
             lblInfo.ForeColor = Color.FromArgb(73, 69, 98);
             lblInfo.TextAlign = ContentAlignment.MiddleLeft;
             lblInfo.Visible = false;
-            foreach (Label l in new[] { lblTitle, lblSubtitle, lblFooter, lblMessage, lblInfo, lnkForgot })
+            lblGuestHint.Text = "Chỉ muốn xem bản đồ? Chọn \"Khách\" để vào ứng dụng ngay, không cần tài khoản.";
+            lblGuestHint.ForeColor = Color.FromArgb(110, 106, 130);
+            lblGuestHint.TextAlign = ContentAlignment.TopCenter;
+            foreach (Label l in new[] { lblTitle, lblSubtitle, lblFooter, lblMessage, lblInfo, lnkForgot, lblGuestHint })
             {
                 l.AutoSize = false;
                 l.UseMnemonic = false;
@@ -185,7 +188,17 @@ namespace Hue_travel.Welcome
             fieldPass2.EnterPressed += async (s, e) => await RegisterAsync();
 
             StyleButton(btnPrimary, true);
-            StyleButton(btnSecondary, false);
+            btnTabLogin.Text = "Đăng nhập";
+            btnTabRegister.Text = "Đăng ký";
+            btnTabGuest.Text = "Khách";
+            btnTabLogin.Click += (s, e) => { if (!busy) SetMode(Mode.Login); };
+            btnTabRegister.Click += (s, e) => { if (!busy) SetMode(Mode.Register); };
+            btnTabGuest.Click += (s, e) =>
+            {
+                if (busy) return;
+                if (IsModal) DialogResult = DialogResult.Cancel;   // the guest changes their mind: back to the map
+                else EnterApp(true);                               // no sign-in: straight into the app
+            };
             StyleChoice(btnTypeUser, "Người dùng", "account_circle", true);
             StyleChoice(btnTypeOwner, "Chủ quản địa điểm", "pin_drop", false);
             StyleChoice(btnPlaces, "Chọn địa điểm bạn quản lý", "add", false);
@@ -193,7 +206,6 @@ namespace Hue_travel.Welcome
             btnTypeOwner.Click += (s, e) => SetAccountType(true);
             btnPlaces.Click += (s, e) => ChoosePlaces();
             btnPrimary.Click += async (s, e) => await PrimaryAsync();
-            btnSecondary.Click += (s, e) => SetMode(mode == Mode.Login ? Mode.Register : Mode.Login);
 
             // Window buttons like the main window's title bar (minimise, maximise / restore, close).
             StyleWindowButton(btnMinimize, "minimize", false);
@@ -206,9 +218,31 @@ namespace Hue_travel.Welcome
             Control[] all =
             {
                 lblTitle, lblSubtitle, lblFooter, lblMessage, lblInfo, lnkForgot, chkRemember, fieldName, fieldUser, fieldPass, fieldPass2,
-                btnTypeUser, btnTypeOwner, btnPlaces, btnPrimary, btnSecondary, btnMinimize, btnMaximize, btnClose,
+                btnTypeUser, btnTypeOwner, btnPlaces, btnPrimary, lblGuestHint, btnTabLogin, btnTabRegister, btnTabGuest,
+                btnMinimize, btnMaximize, btnClose,
             };
             foreach (Control c in all) Controls.Add(c);
+        }
+
+        // Tab look: the chosen tab is a filled purple pill, the others sit flat on the track and light up on hover.
+        private static void StyleTab(IconButton tab, bool selected)
+        {
+            tab.AutoWidth = false;
+            tab.TabStop = false;
+            tab.Radius = 14;
+            tab.HorizontalPadding = 4;
+            tab.ForeColor = selected ? Color.White : ThemeColors.BrandPurple;
+            tab.FillColor = selected ? ThemeColors.BrandPurple : ThemeColors.BrandPurpleLight;
+            tab.HoverFillColor = selected ? Color.FromArgb(110, 54, 163) : Color.White;
+            tab.BorderColor = Color.Transparent;
+            tab.Elevated = selected;
+        }
+
+        // Leaves the sign-in screen for the main window; a guest has no account and uses what needs none.
+        private void EnterApp(bool guest)
+        {
+            session.IsGuest = guest;
+            DialogResult = DialogResult.OK;
         }
 
         private static void StyleButton(IconButton button, bool primary)
@@ -261,7 +295,7 @@ namespace Hue_travel.Welcome
             StyleChoice(btnTypeOwner, "Chủ quản địa điểm", "pin_drop", owner);
             lblSubtitle.Text = owner
                 ? "Chủ quản chọn địa điểm mình quản lý; quản trị viên sẽ xác minh rồi duyệt."
-                : "Tạo tài khoản để lưu lộ trình và đánh giá địa điểm";
+                : "Lưu lộ trình và đánh giá địa điểm";
             ShowMessage(null, false);
             ApplyModeLayout();
             ApplyRegisterVisibility();
@@ -339,8 +373,8 @@ namespace Hue_travel.Welcome
             btnMaximize.SetBounds(btnClose.Left - buttonWidth, 0, buttonWidth, buttonHeight);
             btnMinimize.SetBounds(btnMaximize.Left - buttonWidth, 0, buttonWidth, buttonHeight);
 
-            Font title = ThemeFonts.Bold(FontPx(46));
-            Font sub = ThemeFonts.Regular(FontPx(23));
+            Font title = ThemeFonts.Bold(FontPx(36));   // 46 was taller than its box and lost the feet of the letters
+            Font sub = ThemeFonts.Regular(FontPx(21));
             Font field = ThemeFonts.Regular(FontPx(21));
             Font button = ThemeFonts.SemiBold(FontPx(23));
             lblTitle.Font = title;
@@ -350,68 +384,71 @@ namespace Hue_travel.Welcome
             lnkForgot.Font = ThemeFonts.SemiBold(FontPx(18));
             chkRemember.Font = ThemeFonts.Medium(FontPx(17));
             foreach (AuthField f in new[] { fieldName, fieldUser, fieldPass, fieldPass2 }) f.Font = field;
-            btnPrimary.Font = btnSecondary.Font = button;
-            btnTypeUser.Font = btnTypeOwner.Font = btnPlaces.Font = ThemeFonts.SemiBold(FontPx(19));
+            btnPrimary.Font = button;
+            btnTabLogin.Font = btnTabRegister.Font = btnTabGuest.Font = ThemeFonts.SemiBold(FontPx(19));
+            lblGuestHint.Font = ThemeFonts.Regular(FontPx(17));
+            btnTypeUser.Font = btnTypeOwner.Font = btnPlaces.Font = ThemeFonts.SemiBold(FontPx(16));   // "Chủ quản địa điểm" must fit beside its icon
             ApplyModeLayout();
         }
 
         private void ApplyModeLayout()
         {
-            lblTitle.Bounds = R(1054, 160, 400, 70);
-            lblFooter.TextAlign = mode == Mode.Login ? ContentAlignment.MiddleLeft : ContentAlignment.MiddleCenter;
+            // The three tabs share the track, each with a 4 px margin inside it.
+            btnTabLogin.Bounds = R(1058, 120, 128, 50);
+            btnTabRegister.Bounds = R(1186, 120, 128, 50);
+            btnTabGuest.Bounds = R(1314, 120, 128, 50);
+            lblFooter.TextAlign = ContentAlignment.MiddleCenter;
+            lblFooter.Bounds = R(1006, 812, 488, 28);
+            // Vertical rhythm (picture pixels, the card is 80..854): every box is tall enough for its text, and the boxes of the
+            // forms are 14-24 apart (they were 6-8, which looked crowded) with the leftover room spent between the blocks.
             if (mode == Mode.Login)
             {
-                lblSubtitle.Bounds = R(1054, 236, 400, 36);
-                fieldUser.Bounds = R(1054, 300, 392, 57);
-                fieldPass.Bounds = R(1054, 384, 392, 57);
-                chkRemember.Bounds = R(1054, 458, 250, 36);
-                lnkForgot.Bounds = R(1290, 458, 158, 36);
-                btnPrimary.Bounds = R(1054, 517, 392, 57);
-                btnSecondary.Bounds = R(1054, 647, 392, 54);
-                lblMessage.Bounds = R(1030, 708, 440, 62);
-                lblFooter.Bounds = R(1088, 778, 396, 32);
+                lblTitle.Bounds = R(1054, 200, 400, 64);
+                lblSubtitle.Bounds = R(1054, 268, 400, 40);
+                fieldUser.Bounds = R(1054, 340, 392, 60);
+                fieldPass.Bounds = R(1054, 424, 392, 60);       // 24 below the user name box
+                chkRemember.Bounds = R(1054, 510, 250, 36);
+                lnkForgot.Bounds = R(1290, 510, 158, 36);
+                btnPrimary.Bounds = R(1054, 572, 392, 60);
+                lblMessage.Bounds = R(1030, 644, 440, 54);
+                lblGuestHint.Bounds = R(1070, 726, 360, 60);
             }
             else if (mode == Mode.Register)
             {
-                lblTitle.Bounds = R(1054, 146, 400, 62);
-                lblSubtitle.Bounds = R(1054, 208, 400, 62);
-                btnTypeUser.Bounds = R(1054, 276, 192, 50);
-                btnTypeOwner.Bounds = R(1254, 276, 192, 50);
-                fieldName.Bounds = R(1054, 338, 392, 54);
-                fieldUser.Bounds = R(1054, 398, 392, 54);
-                fieldPass.Bounds = R(1054, 458, 392, 54);
-                fieldPass2.Bounds = R(1054, 518, 392, 54);
+                lblTitle.Bounds = R(1054, 188, 400, 60);
+                lblSubtitle.Bounds = R(1054, 250, 400, 68);     // two lines of text plus the room the label keeps above the first
+                btnTypeUser.Bounds = R(1054, 326, 192, 46);
+                btnTypeOwner.Bounds = R(1254, 326, 192, 46);
+                fieldName.Bounds = R(1054, 384, 392, 52);
+                fieldUser.Bounds = R(1054, 450, 392, 52);       // 14 between the boxes
+                fieldPass.Bounds = R(1054, 516, 392, 52);
+                fieldPass2.Bounds = R(1054, 582, 392, 52);
                 if (ownerAccount)
                 {
-                    btnPlaces.Bounds = R(1054, 582, 392, 50);
-                    btnPrimary.Bounds = R(1054, 644, 392, 54);
-                    lblMessage.Bounds = R(1030, 700, 440, 40);
-                    registerDividerY = 752;
-                    btnSecondary.Bounds = R(1054, 764, 392, 48);
-                    lblFooter.Bounds = R(1006, 820, 488, 26);
+                    btnPlaces.Bounds = R(1054, 648, 392, 44);
+                    btnPrimary.Bounds = R(1054, 704, 392, 52);
+                    lblMessage.Bounds = R(1030, 762, 440, 40);
                 }
                 else
                 {
-                    btnPrimary.Bounds = R(1054, 586, 392, 54);
-                    lblMessage.Bounds = R(1030, 646, 440, 44);
-                    registerDividerY = 724;
-                    btnSecondary.Bounds = R(1054, 746, 392, 54);
-                    lblFooter.Bounds = R(1006, 812, 488, 28);
+                    btnPrimary.Bounds = R(1054, 664, 392, 58);
+                    lblMessage.Bounds = R(1030, 730, 440, 60);
                 }
             }
             else
             {
-                // Offline: the same card as the sign-in (title, one box of explanation, the button in the same place).
+                // Offline: no tabs (there are no accounts), so the title sits higher; one box of explanation and one button.
+                lblTitle.Bounds = R(1054, 160, 400, 70);
                 lblSubtitle.Font = ThemeFonts.Regular(FontPx(21));
                 lblSubtitle.Bounds = R(1054, 236, 392, 130);
                 lblInfo.Font = ThemeFonts.Regular(FontPx(18));
                 lblInfo.Bounds = R(1078, 396, 344, 164);
                 btnPrimary.Bounds = R(1054, 592, 392, 57);
                 lblMessage.Bounds = R(1030, 668, 440, 40);
-                lblFooter.TextAlign = ContentAlignment.MiddleLeft;
-                lblFooter.Bounds = R(1088, 778, 396, 32);
             }
-            if (mode != Mode.Offline) lblSubtitle.Font = ThemeFonts.Regular(FontPx(23));
+            // The register subtitle is a sentence of two lines; a smaller type keeps both inside their box.
+            if (mode == Mode.Register) lblSubtitle.Font = ThemeFonts.Regular(FontPx(18));
+            else if (mode == Mode.Login) lblSubtitle.Font = ThemeFonts.Regular(FontPx(21));
         }
 
         // ------------------------------------------------------------------ modes
@@ -426,27 +463,28 @@ namespace Hue_travel.Welcome
             fieldName.Visible = fieldPass2.Visible = register;
             if (!register) ownerAccount = false;
             ApplyRegisterVisibility();
-            chkRemember.Visible = lnkForgot.Visible = login;
+            chkRemember.Visible = lnkForgot.Visible = lblGuestHint.Visible = login;
             btnPrimary.Visible = true;
-            btnSecondary.Visible = login || register;
+            btnTabLogin.Visible = btnTabRegister.Visible = btnTabGuest.Visible = login || register;
+            StyleTab(btnTabLogin, login);
+            StyleTab(btnTabRegister, register);
+            StyleTab(btnTabGuest, false);   // never stays chosen: it leaves the screen
             lblInfo.Visible = next == Mode.Offline;
 
             if (login)
             {
-                lblTitle.Text = "Đăng nhập";
+                lblTitle.Text = "Chào mừng trở lại";
                 lblSubtitle.Text = "Cùng khám phá vẻ đẹp Huế";
                 fieldPass.Hint = "Mật khẩu";
                 btnPrimary.IconName = ""; btnPrimary.Text = "Đăng nhập";
-                btnSecondary.Text = "Đăng ký"; btnSecondary.IconName = "account_circle";
                 fieldUser.FocusInput();
             }
             else if (register)
             {
-                lblTitle.Text = "Đăng ký";
-                lblSubtitle.Text = ownerAccount ? "Chủ quản chọn địa điểm mình quản lý; quản trị viên sẽ xác minh rồi duyệt." : "Tạo tài khoản để lưu lộ trình và đánh giá địa điểm";
+                lblTitle.Text = "Tạo tài khoản";
+                lblSubtitle.Text = ownerAccount ? "Chủ quản chọn địa điểm mình quản lý; quản trị viên sẽ xác minh rồi duyệt." : "Lưu lộ trình và đánh giá địa điểm";
                 fieldPass.Hint = "Mật khẩu (tối thiểu " + AuthValidation.MinPasswordLength + " ký tự)";
                 btnPrimary.IconName = ""; btnPrimary.Text = "Tạo tài khoản";
-                btnSecondary.Text = "Đăng nhập"; btnSecondary.IconName = "account_circle";
                 fieldName.FocusInput();
             }
             else
@@ -470,7 +508,8 @@ namespace Hue_travel.Welcome
         {
             busy = value;
             foreach (AuthField f in new[] { fieldName, fieldUser, fieldPass, fieldPass2 }) f.Enabled = !value;
-            chkRemember.Enabled = btnSecondary.Enabled = btnPrimary.Enabled = !value;
+            chkRemember.Enabled = btnPrimary.Enabled = !value;
+            btnTabLogin.Enabled = btnTabRegister.Enabled = btnTabGuest.Enabled = !value;
             btnTypeUser.Enabled = btnTypeOwner.Enabled = btnPlaces.Enabled = !value;
             if (value) { btnPrimary.Text = text; btnPrimary.TrailingIconName = ""; }
             else
@@ -486,6 +525,7 @@ namespace Hue_travel.Welcome
         {
             base.OnShown(e);
             if (mode == Mode.Offline) return;
+            if (IsModal) { fieldUser.FocusInput(); return; }   // asked to sign in over the app: no saved session to restore
             if (!string.IsNullOrEmpty(session.Notice)) ShowMessage(session.Notice, false);
 
             // A remembered session goes straight in.
@@ -494,7 +534,7 @@ namespace Hue_travel.Welcome
             {
                 if (await session.Auth.RestoreAsync())
                 {
-                    if (!IsDisposed) DialogResult = DialogResult.OK;
+                    if (!IsDisposed) EnterApp(false);
                     return;
                 }
             }
@@ -511,7 +551,7 @@ namespace Hue_travel.Welcome
         {
             if (mode == Mode.Login) await LoginAsync();
             else if (mode == Mode.Register) await RegisterAsync();
-            else DialogResult = DialogResult.OK;
+            else EnterApp(false);   // offline: no accounts, the data that ships with the app
         }
 
         private async Task LoginAsync()
@@ -532,7 +572,7 @@ namespace Hue_travel.Welcome
             SetBusy(false);
             if (error != null) { ShowMessage(error, true); return; }
             fieldPass.Text = "";
-            DialogResult = DialogResult.OK;
+            EnterApp(false);
         }
 
         private async Task RegisterAsync()
@@ -556,7 +596,7 @@ namespace Hue_travel.Welcome
             if (IsDisposed) return;
             SetBusy(false);
             if (error != null) { ShowMessage(error, true); return; }
-            DialogResult = DialogResult.OK;
+            EnterApp(false);
         }
 
         // ------------------------------------------------------------------ window behaviour
@@ -596,56 +636,39 @@ namespace Hue_travel.Welcome
             if (backdrop != null) g.DrawImageUnscaled(backdrop, 0, 0);
             else g.Clear(BackColor);
 
-            if (mode == Mode.Register) PaintCardCover(g);
-            else PaintLoginPatches(g);
+            PaintCard(g);
+            if (mode == Mode.Offline) PaintOfflineBox(g);
+            else PaintTabTrack(g);
         }
 
-        // The picture's card already shows the sign-in design; only the parts with baked text get a patch of its own colour.
-        private void PaintLoginPatches(Graphics g)
+        // The soft rounded strip the three tabs sit on.
+        private void PaintTabTrack(Graphics g)
         {
-            foreach (RectangleF patch in LoginPatches)
+            using (GraphicsPath path = Ui.RoundedRect(R(TabTrack), 18f * scale))
+            using (var fill = new SolidBrush(ThemeColors.BrandPurpleLight))
             {
-                // The card's colour at the patch's top-left and bottom-left corners (clear of the baked text), blended downwards.
-                Color top = Tint(patch.X + 2, patch.Y + 2), bottom = Tint(patch.X + 2, patch.Bottom - 3);
-                Rectangle r = R(patch);
-                using (var brush = new LinearGradientBrush(new Rectangle(r.X, r.Y - 1, r.Width, r.Height + 2), top, bottom, LinearGradientMode.Vertical))
-                {
-                    g.FillRectangle(brush, r);
-                }
+                g.FillPath(fill, path);
             }
-
-            if (mode == Mode.Offline)
-            {
-                // The explanation sits in a soft purple box where the fields were.
-                Rectangle box = R(1054, 386, 392, 184);
-                using (GraphicsPath path = Ui.RoundedRect(box, 14f * scale))
-                using (var fill = new SolidBrush(ThemeColors.BrandPurpleLight))
-                using (var pen = new Pen(Color.FromArgb(70, 91, 42, 134), 1.2f))
-                {
-                    g.FillPath(fill, path);
-                    g.DrawPath(pen, path);
-                }
-                int bar = Math.Max(3, Ui.S(4));
-                using (var accent = new SolidBrush(ThemeColors.BrandPurple)) g.FillRectangle(accent, box.X + Ui.S(14), box.Y + Ui.S(18), bar, box.Height - Ui.S(36));
-                return;
-            }
-
-            // "Hoặc" between the two buttons.
-            Rectangle band = R(1054, 598, 392, 30);
-            string text = "Hoặc";
-            Font font = ThemeFonts.Regular(FontPx(19));
-            Size size = TextRenderer.MeasureText(text, font, Size.Empty, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-            int centerX = band.X + band.Width / 2, y = band.Y + band.Height / 2;
-            using (var pen = new Pen(Color.FromArgb(200, 180, 176, 190)))
-            {
-                g.DrawLine(pen, band.X, y, centerX - size.Width / 2 - Ui.S(14), y);
-                g.DrawLine(pen, centerX + size.Width / 2 + Ui.S(14), y, band.Right, y);
-            }
-            TextRenderer.DrawText(g, text, font, new Point(centerX - size.Width / 2, y - size.Height / 2), Color.FromArgb(120, 116, 138), TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
         }
 
-        // Register / offline: the whole card of the picture is hidden behind a plain card of the same colour and shape.
-        private void PaintCardCover(Graphics g)
+        // Offline: the explanation sits in a soft purple box where the fields would be.
+        private void PaintOfflineBox(Graphics g)
+        {
+            Rectangle box = R(1054, 386, 392, 184);
+            using (GraphicsPath path = Ui.RoundedRect(box, 14f * scale))
+            using (var fill = new SolidBrush(ThemeColors.BrandPurpleLight))
+            using (var pen = new Pen(Color.FromArgb(70, 91, 42, 134), 1.2f))
+            {
+                g.FillPath(fill, path);
+                g.DrawPath(pen, path);
+            }
+            int bar = Math.Max(3, Ui.S(4));
+            using (var accent = new SolidBrush(ThemeColors.BrandPurple)) g.FillRectangle(accent, box.X + Ui.S(14), box.Y + Ui.S(18), bar, box.Height - Ui.S(36));
+        }
+
+        // The whole card baked into the picture is hidden behind a plain card of the same colour and shape, so the card is
+        // ours in every mode and nothing of the picture's own text shows through.
+        private void PaintCard(Graphics g)
         {
             Rectangle card = R(CardRect);
             using (GraphicsPath path = Ui.RoundedRect(card, 34f * scale))
@@ -655,19 +678,6 @@ namespace Hue_travel.Welcome
                 g.FillPath(fill, path);
                 g.DrawPath(pen, path);
             }
-            if (mode != Mode.Register) return;
-
-            Rectangle band = R(1054, registerDividerY, 392, 1);
-            string text = "Đã có tài khoản?";
-            Font font = ThemeFonts.Regular(FontPx(19));
-            Size size = TextRenderer.MeasureText(text, font, Size.Empty, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-            int centerX = band.X + band.Width / 2, y = band.Y;
-            using (var pen = new Pen(ThemeColors.Slate300))
-            {
-                g.DrawLine(pen, band.X, y, centerX - size.Width / 2 - Ui.S(14), y);
-                g.DrawLine(pen, centerX + size.Width / 2 + Ui.S(14), y, band.Right, y);
-            }
-            TextRenderer.DrawText(g, text, font, new Point(centerX - size.Width / 2, y - size.Height / 2), ThemeColors.Slate500, TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
         }
     }
 }

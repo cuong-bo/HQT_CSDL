@@ -42,6 +42,7 @@ namespace Hue_travel.Shell
             this.panelTopBorder.Dock = DockStyle.Top;
             this.panelTopBorder.Height = 1;
             this.panelTopBorder.BackColor = ThemeColors.Slate200;
+            this.panelTopBorder.Visible = false;   // the bar floats on the map as a card: its outline comes from the shadow layer
 
             this.captionArea.Text = "Khu vực đang xem:";
             this.captionArea.IconName = "explore";

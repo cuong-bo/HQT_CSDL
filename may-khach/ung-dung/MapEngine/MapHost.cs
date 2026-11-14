@@ -625,8 +625,57 @@ namespace Hue_travel.MapEngine
             LayoutOverlays(); // Control.Scale grows children after the Resize handler ran
         }
 
+        // ------------------------------------------------------------------ the floating cards of the window shell
+
+        private Hue_travel.Shell.SearchPill searchPill;
+        private Hue_travel.Shell.FilterBar filterBar;
+        private Hue_travel.Shell.NavRail navRail;
+        private Hue_travel.Shell.AppStatusBar statusBar;
+
+        /// <summary>
+        /// Moves the search box, the chip bar, the tool rail and the status pill onto the map as floating cards, and gives every card on the
+        /// map (these and the zoom / tool columns) a rounded edge and a soft shadow. They are plain opaque controls: translucency cannot
+        /// composite over the ActiveX map, so each card is rounded with a Region and shadowed by the window's ChromeLayer.
+        /// </summary>
+        public void HostOverlays(Form host, Hue_travel.Shell.SearchPill search, Hue_travel.Shell.FilterBar chips, Hue_travel.Shell.NavRail rail, Hue_travel.Shell.AppStatusBar status)
+        {
+            searchPill = search; filterBar = chips; navRail = rail; statusBar = status;
+            foreach (Control c in new Control[] { search, chips, rail, status })
+            {
+                if (c.Parent != null) c.Parent.Controls.Remove(c);
+                c.Dock = DockStyle.None;
+                Controls.Add(c);
+                c.BringToFront();
+            }
+            OverlayCard.Attach(host, search, ThemeMetrics.RadiusFull);
+            OverlayCard.Attach(host, chips, ThemeMetrics.RadiusFull);
+            OverlayCard.Attach(host, rail, ThemeMetrics.RadiusLg);
+            OverlayCard.Attach(host, status, ThemeMetrics.RadiusFull);
+            OverlayCard.Attach(host, stackBaseMaps, ThemeMetrics.RadiusMd);
+            OverlayCard.Attach(host, stackZoom, ThemeMetrics.RadiusMd);
+            OverlayCard.Attach(host, stackTools, ThemeMetrics.RadiusMd);
+            OverlayCard.Attach(host, compass, ThemeMetrics.RadiusFull);
+            OverlayCard.Attach(host, tripChip, ThemeMetrics.RadiusFull);
+            LayoutOverlays();
+        }
+
+        private void LayoutFloatingCards()
+        {
+            if (searchPill == null) return;
+            int margin = Ui.S(16);
+            searchPill.SetBounds(margin, margin, Ui.S(420), Ui.S(48));
+            int chipsLeft = searchPill.Right + Ui.S(12);
+            int chipsRoom = Width - chipsLeft - Ui.S(RightMargin) - stackBaseMaps.Width - Ui.S(12);
+            filterBar.SetBounds(chipsLeft, margin + Ui.S(4), Math.Max(Ui.S(120), Math.Min(filterBar.WantedWidth, chipsRoom)), Ui.S(40));
+            navRail.SetBounds(Ui.S(12), searchPill.Bottom + Ui.S(12), Ui.S(84), navRail.WantedHeight);
+            // As wide as the window allows: the area, the weather sentence, the coordinates and the scale need the room the old bar had.
+            int statusWidth = Math.Max(Ui.S(300), Width - Ui.S(24));
+            statusBar.SetBounds((Width - statusWidth) / 2, Height - Ui.S(32) - Ui.S(12), statusWidth, Ui.S(32));
+        }
+
         private void LayoutOverlays()
         {
+            LayoutFloatingCards();
             int x = Width - Ui.S(RightMargin) - stackBaseMaps.Width;
             stackBaseMaps.Location = new System.Drawing.Point(x, Ui.S(ColumnTop));
             compass.Location = new System.Drawing.Point(x + (stackBaseMaps.Width - compass.Width) / 2, stackBaseMaps.Bottom + Ui.S(StackGap + 4));

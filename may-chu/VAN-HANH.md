@@ -59,6 +59,26 @@ rồi `scripts/deploy.sh up`. App đọc `GET /v1/config` lúc khởi động v�
 Địa chỉ phải là http(s) và chứa `{x}`, `{y}`, `{zoom}`; địa chỉ sai bị bỏ qua và app giữ địa chỉ có sẵn.
 Khóa của nhà cung cấp nằm trong địa chỉ này, nên ai chạy app đều thấy được; chọn loại khóa giới hạn theo tên miền hoặc theo mức dùng.
 
+### Trợ lý (DeepSeek)
+
+Tab "Trợ lý" của app hỏi máy chủ, máy chủ mới hỏi DeepSeek. **Khóa chỉ nằm ở máy chủ**: đặt `DEEPSEEK_API_KEY` trong `.env` (tệp này không vào git),
+rồi `scripts/deploy.sh up`. Để trống thì trợ lý tắt và app hiện cẩm nang tĩnh (số điện thoại khẩn cấp, lưu ý tham quan). `DEEPSEEK_MODEL` đổi mô hình.
+- Hạn mức mỗi ngày: khách 20 câu, người dùng 100 câu (`Chat:GuestPerDay`, `Chat:UserPerDay`); mỗi IP tối đa 6 câu/phút (`RateLimit:ChatPerMinute`).
+- Xoay khóa: sửa `.env`, chạy lại `up`; thu hồi khóa cũ trên trang DeepSeek. Tắt khẩn cấp: xóa dòng khóa rồi `up`.
+- Nội dung câu hỏi không được ghi vào nhật ký. Tên mô hình và giá cần đối chiếu với tài liệu chính thức của DeepSeek trước khi mở rộng.
+- Máy chủ chưa từng được thử với DeepSeek thật trong lần phát triển này: sau khi đặt khóa, hãy hỏi thử vài câu ("Đại Nội mở cửa mấy giờ?", "gợi ý lịch trình 1 ngày") và xem `scripts/deploy.sh logs`.
+
+### Khoảnh khắc (bản tin cộng đồng)
+
+Mặc định **tắt** (`FEED_ENABLED=false`); khi tắt, mọi đường dẫn của tính năng trả 503 và app hiện "Tính năng này chưa được bật". Cơ sở dữ liệu cần migration `V012__feed.sql`
+(`co-so-du-lieu/run.sh` áp tự động, một lần). Chỉ bật (`FEED_ENABLED=true`, rồi `up`) khi đã có HTTPS và ít nhất một người xử lý báo cáo.
+- Tài khoản mới (dưới 24 giờ, hoặc chưa có 2 bài được quản trị viên duyệt) đăng bài phải chờ duyệt; xem ở Quản trị > Kiểm duyệt > "Bài chờ duyệt".
+- Một bài bị 3 người khác nhau báo cáo thì tự ẩn, chờ quản trị viên quyết định ở tab "Báo cáo bài" (bỏ qua / ẩn / gỡ hẳn).
+- Ảnh lưu ngay trong PostgreSQL (≤ 1600 px và bản thu nhỏ 640 px). Khi `select pg_size_pretty(sum(octet_length(data)+octet_length(thumb))) from post_media` vượt khoảng 2 GB, nên chuyển ảnh ra đĩa (chỉ sửa lớp `MediaStore`).
+- Ảnh tải lên mà không đăng sẽ bị xóa sau 1 ngày (dọn khi có yêu cầu tải ảnh).
+- Xóa tài khoản kéo theo xóa bài, thích và bình luận của tài khoản đó (`on delete cascade`).
+- Chưa kiểm thử với cơ sở dữ liệu thật: sau khi áp migration hãy thử một vòng đăng bài, thích, bình luận, báo cáo, duyệt.
+
 ## 3. Cập nhật và quay lui
 
 ```bash

@@ -41,6 +41,11 @@ services:
       Client__TileUrls__terrain: ${TILE_URL_TERRAIN:-}
       # Optional but recommended over HTTP: replies are signed with this ECDSA key (scripts/gen-signing-key.sh).
       Signing__PrivateKeyPkcs8: ${SIGNING_KEY:-}
+      # The assistant (DeepSeek). Empty key = the assistant is off (the app shows its offline guide). The key lives in .env only.
+      Chat__ApiKey: ${DEEPSEEK_API_KEY:-}
+      Chat__Model: ${DEEPSEEK_MODEL:-deepseek-chat}
+      # The community feed "Khoảnh khắc". Off until you decide (HTTPS, a person who handles reports): see tai-lieu/ke-hoach-feeds.md, muc 10.
+      Feed__Enabled: ${FEED_ENABLED:-false}
       # Only Caddy (inside this subnet) may tell the API the client address (X-Forwarded-For).
       Proxy__KnownNetworks__0: 172.30.0.0/24
       # Bản kê dữ liệu bản đồ nền do "pack-basemap" ghi; GET /v1/basemap/manifest trả nguyên văn.

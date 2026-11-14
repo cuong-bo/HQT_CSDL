@@ -52,7 +52,7 @@ namespace Hue_travel.Shell
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
             BackColor = ThemeColors.SurfaceContainerLowest;
             Cursor = Cursors.Hand;
-            Height = 48;
+            Height = 40;
             press = new PressFeedback(this);
         }
 
@@ -82,8 +82,12 @@ namespace Hue_travel.Shell
                 chips[i].Bounds = new Rectangle(x, y, width, height);
                 x += width + Ui.S(ChipGap);
             }
+            WantedWidth = x - Ui.S(ChipGap) + Ui.S(SidePadding);   // the bar is a floating card exactly as wide as its chips
             Invalidate();
         }
+
+        /// <summary>The width that holds every chip with the side padding; the host sizes the floating bar to it (or less when short of room).</summary>
+        public int WantedWidth { get; private set; }
 
         private int IndexAt(Point p)
         {
@@ -143,7 +147,6 @@ namespace Hue_travel.Shell
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(BackColor);
-            using (var pen = new Pen(ThemeColors.Slate200)) g.DrawLine(pen, 0, Height - 1, Width, Height - 1);
 
             for (int i = 0; i < chips.Length; i++)
             {

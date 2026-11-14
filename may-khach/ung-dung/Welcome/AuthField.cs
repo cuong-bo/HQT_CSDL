@@ -70,7 +70,7 @@ namespace Hue_travel.Welcome
             revealButton.HoverIconColor = ThemeColors.BrandPurple;
             revealButton.FillColor = Color.Transparent;
             revealButton.HoverFillColor = ThemeColors.BrandPurpleLight;
-            revealButton.Radius = 14;
+            revealButton.Radius = ThemeMetrics.RadiusFull;
             revealButton.Visible = false;
             revealButton.TabStop = false;   // Tab goes from field to field, not onto the eye
             revealButton.Click += (s, e) =>
@@ -146,7 +146,7 @@ namespace Hue_travel.Welcome
             g.SmoothingMode = SmoothingMode.AntiAlias;
             var bounds = new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f);
             Color border = hasError ? ThemeColors.Red500 : isFocused ? ThemeColors.BrandPurple : ThemeColors.Slate300;
-            using (GraphicsPath path = Ui.RoundedRect(bounds, Ui.S(12)))
+            using (GraphicsPath path = Ui.RoundedRect(bounds, Ui.S(ThemeMetrics.RadiusSm)))
             using (var fill = new SolidBrush(Enabled ? Color.White : ThemeColors.Slate100))
             using (var pen = new Pen(border, isFocused || hasError ? 1.6f : 1f))
             {

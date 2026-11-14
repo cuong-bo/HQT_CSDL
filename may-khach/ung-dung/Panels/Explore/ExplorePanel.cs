@@ -126,7 +126,7 @@ namespace Hue_travel.Panels.Explore
 
         private readonly PanelHeader header = new PanelHeader { IconName = "search", Text = "Khám phá", Prominent = true };
         private readonly Panel top = new Panel { Dock = DockStyle.Top, Height = 92, BackColor = ThemeColors.Slate50 };
-        private readonly Label lblTitle = new Label { AutoSize = false, Font = ThemeFonts.Bold(18), ForeColor = ThemeColors.Slate800, TextAlign = ContentAlignment.MiddleLeft, Text = "Quanh khu vực đang xem", Location = new Point(16, 10), Size = new Size(350, 30) };
+        private readonly Label lblTitle = new Label { AutoSize = false, Font = ThemeFonts.SerifBold(18), ForeColor = ThemeColors.Slate800, TextAlign = ContentAlignment.MiddleLeft, Text = "Quanh khu vực đang xem", Location = new Point(16, 10), Size = new Size(350, 30) };
         private readonly Label lblArea = new Label { AutoSize = false, Font = ThemeFonts.SemiBold(13), ForeColor = ThemeColors.Primary, TextAlign = ContentAlignment.MiddleLeft, Location = new Point(16, 40), Size = new Size(350, 22) };
         private readonly Label lblHint = new Label { AutoSize = false, Font = ThemeFonts.Regular(12), ForeColor = ThemeColors.Slate500, TextAlign = ContentAlignment.MiddleLeft, Text = "Các điểm trong khung bản đồ, gần tâm nhất xếp trước", Location = new Point(16, 62), Size = new Size(350, 20) };
         private readonly CountChips chips = new CountChips { Dock = DockStyle.Top, Height = 48 };

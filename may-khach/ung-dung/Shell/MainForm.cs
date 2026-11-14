@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using Hue_travel.Account;
 using Hue_travel.MapEngine;
 using Hue_travel.Models;
+using Hue_travel.Panels.Feed;
 using Hue_travel.SampleData;
 using Hue_travel.Services;
 using Hue_travel.Services.Area;
@@ -41,19 +42,24 @@ namespace Hue_travel.Shell
 
             InitializeComponent();
             Icon = AppImages.AppIcon();
+            // The search box, chips, rail and status bar float on the map as cards; the window and the results list are rounded too.
+            mapHost.HostOverlays(this, searchPill, filterBar, navRail, statusBar);
+            OverlayCard.Attach(this, searchDropdown, ThemeMetrics.RadiusMd, Elevation.Panel);
+            WindowChrome.Attach(this);
             if (api != null) SetUpAccount();
             WireEvents();
             var all = new List<FloatingPanelForm>
             {
-                explorePanel, routeOptimizerPanel, travelGuidePanel, poiIdentifyCard, layerPanel, tripResultPanel,
+                explorePanel, routeOptimizerPanel, chatPanel, poiIdentifyCard, layerPanel, tripResultPanel,
             };
             if (accountPanel != null) all.Add(accountPanel);
+            if (feedPanel != null) all.Add(feedPanel);
             panels = all.ToArray();
             foreach (FloatingPanelForm panel in panels) panel.MessageRaised += (s, e) => toast.ShowMessage(e.Text, e.Kind);
         }
 
         private readonly FloatingPanelForm[] panels;
-        private const int LayerSlot = 4;   // the layer list: in the side slot but not a rail tab
+        private const int LayerSlot = 5;   // the layer list: in the side slot but not a rail tab
         private readonly System.Windows.Forms.Timer exploreTimer = new System.Windows.Forms.Timer { Interval = 250 };
         private FloatingPanelForm[] sidePanels;   // in NavRail tab order: explore, route, guide, profile (null while offline)
         private readonly AppSession session;
@@ -105,12 +111,17 @@ namespace Hue_travel.Shell
             titleBar.CloseClicked += (s, e) => Close();
 
             // Left rail: one tab per tool; the tools' panels share the side slot, so opening one closes the others.
-            sidePanels = new FloatingPanelForm[] { explorePanel, routeOptimizerPanel, travelGuidePanel, accountPanel, layerPanel };
+            sidePanels = new FloatingPanelForm[] { explorePanel, routeOptimizerPanel, chatPanel, feedPanel, accountPanel, layerPanel };
             navRail.ItemClicked += (s, index) =>
             {
                 if (sidePanels[index] == null)
                 {
-                    toast.ShowMessage("Chưa có địa chỉ máy chủ nên chưa có hồ sơ cá nhân. Ứng dụng đang chạy ngoại tuyến.", ToastKind.Info);
+                    toast.ShowMessage("Chưa có địa chỉ máy chủ nên chưa dùng được Khoảnh khắc và hồ sơ cá nhân. Ứng dụng đang chạy ngoại tuyến.", ToastKind.Info);
+                    return;
+                }
+                if (index == NavRail.Profile && !sidePanels[index].Visible && auth != null && auth.CurrentUser == null)
+                {
+                    RunSignedIn("Đăng nhập để xem hồ sơ, yêu thích và lộ trình đã lưu.", () => ShowSidePanel(index));
                     return;
                 }
                 ShowSidePanel(sidePanels[index].Visible ? -1 : index);
@@ -127,11 +138,11 @@ namespace Hue_travel.Shell
             layerPanel.PoiSelected += (s, poi) => { ShowOnMap(poi); ShowPoiCard(poi); };
 
             // The search box lists its results right under itself (no new window).
-            titleBar.SearchTextChanged += (s, text) => UpdateSearchResults(text);
-            titleBar.SearchFocusGained += (s, e) => UpdateSearchResults(titleBar.SearchText);
-            titleBar.SearchFocusLost += (s, e) => searchDropdown.Dismiss();
-            titleBar.SearchMoved += (s, delta) => searchDropdown.MoveSelection(delta);
-            titleBar.SearchSubmitted += (s, text) =>
+            searchPill.SearchTextChanged += (s, text) => UpdateSearchResults(text);
+            searchPill.SearchFocusGained += (s, e) => UpdateSearchResults(searchPill.SearchText);
+            searchPill.SearchFocusLost += (s, e) => searchDropdown.Dismiss();
+            searchPill.SearchMoved += (s, delta) => searchDropdown.MoveSelection(delta);
+            searchPill.SearchSubmitted += (s, text) =>
             {
                 if (!searchDropdown.ChooseSelected()) UpdateSearchResults(text);
             };
@@ -218,10 +229,30 @@ namespace Hue_travel.Shell
                 double longitude, latitude;
                 if (mapHost.TryToDegrees(point, out longitude, out latitude)) routeOptimizerPanel.SetStartFromMap(point, longitude, latitude);
             };
-            travelGuidePanel.TourChosen += (s, tour) =>
+            chatPanel.CurrentPlaceId = () => poiIdentifyCard.Visible ? cardPlaceId : null;
+            chatPanel.PlaceChosen += (s, id) =>
             {
-                ShowSidePanel(NavRail.Route);                  // the form shows the tour, and the reason if the route cannot be found
-                Safe(routeOptimizerPanel.LoadTourAsync(tour.Places));
+                Poi poi = PoiCatalog.All.FirstOrDefault(p => p.Id == id);
+                if (poi == null) return;
+                ShowOnMap(poi);
+                ShowPoiCard(poi);
+            };
+            chatPanel.RouteChosen += (s, route) =>
+            {
+                // The places the assistant named that are still in the catalogue; the first is the start.
+                var places = new List<Poi>();
+                foreach (var stop in route.Stops)
+                {
+                    Poi poi = PoiCatalog.All.FirstOrDefault(p => p.Id == stop.Id);
+                    if (poi != null) places.Add(poi);
+                }
+                if (places.Count < 2)
+                {
+                    toast.ShowMessage("Không tìm thấy đủ địa điểm của lộ trình này trên bản đồ", ToastKind.Info);
+                    return;
+                }
+                ShowSidePanel(NavRail.Route);                  // the form shows the route, and the reason if it cannot be found
+                Safe(routeOptimizerPanel.LoadTourAsync(places));
             };
             poiIdentifyCard.AddToRouteRequested += (s, poi) =>
             {
@@ -273,8 +304,8 @@ namespace Hue_travel.Shell
             List<Poi> matches = Hue_travel.Panels.SearchPoi.PoiSearchFilter.Apply(PoiCatalog.All.Where(p => p.X != 0 || p.Y != 0), text.Trim(), null)
                 .OrderBy(p => Hue_travel.Panels.SearchPoi.PoiSearchFilter.Fold(p.Name).StartsWith(wanted, StringComparison.Ordinal) ? 0 : 1)
                 .ThenBy(p => p.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
-            System.Drawing.Rectangle box = titleBar.SearchBoxBounds;
-            box.Offset(titleBar.Location);
+            // The search box lives inside the map now; the results list is a child of this window, so give it the box in this window's coordinates.
+            System.Drawing.Rectangle box = RectangleToClient(searchPill.RectangleToScreen(searchPill.ClientRectangle));
             searchDropdown.ShowResults(matches, box);
         }
 
@@ -295,8 +326,11 @@ namespace Hue_travel.Shell
                 : CoordinateFormatter.FormatUtm(lastCursor.Easting, lastCursor.Northing));
         }
 
+        private string cardPlaceId;   // the place on the card, given to the assistant so "chỗ này" is understood
+
         private void ShowPoiCard(Poi poi)
         {
+            cardPlaceId = poi.Id;
             poiIdentifyCard.FavoriteIds = favoriteIds;
             mapHost.HighlightPoi(poi);   // the place the card is about is ringed on the map until the card is closed
             poiIdentifyCard.ShowPoi(poi);
@@ -316,8 +350,39 @@ namespace Hue_travel.Shell
         }
 
         // ---------------------------------------------------------------- online mode
+        private FeedPanel feedPanel;
+
         private void SetUpAccount()
         {
+            feedPanel = new FeedPanel(new ApiFeedService(api))
+            {
+                SignInGate = RunSignedIn,
+                IsSignedIn = () => auth.CurrentUser != null,
+                CurrentRoute = () => routeOptimizerPanel.CurrentStopIds,
+                CurrentPlace = () => poiIdentifyCard.Visible ? PoiCatalog.All.FirstOrDefault(p => p.Id == cardPlaceId) : null,
+            };
+            feedPanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
+            poiIdentifyCard.MomentsAvailable = true;
+            poiIdentifyCard.MomentsRequested += (s, poi) =>
+            {
+                ShowSidePanel(NavRail.Feed);
+                feedPanel.ShowPlace(poi);
+            };
+            feedPanel.PlaceChosen += (s, id) =>
+            {
+                Poi poi = PoiCatalog.All.FirstOrDefault(p => p.Id == id);
+                if (poi == null) { toast.ShowMessage("Địa điểm này không còn trong danh sách.", ToastKind.Info); return; }
+                ShowOnMap(poi);
+                ShowPoiCard(poi);
+            };
+            feedPanel.RouteChosen += (s, ids) =>
+            {
+                // the places of a shared route that are still here; the first is the start
+                var places = ids.Select(id => PoiCatalog.All.FirstOrDefault(p => p.Id == id)).Where(p => p != null).ToList();
+                if (places.Count < 2) { toast.ShowMessage("Không tìm thấy đủ địa điểm của lộ trình này trên bản đồ.", ToastKind.Info); return; }
+                ShowSidePanel(NavRail.Route);
+                Safe(routeOptimizerPanel.LoadTourAsync(places));
+            };
             accountPanel = new AccountPanel(api, auth);
             accountPanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
             accountPanel.SetRouteSource(() => routeOptimizerPanel.CurrentStopIds);
@@ -336,10 +401,35 @@ namespace Hue_travel.Shell
             accountPanel.PasswordChanged += (s, e) => ReturnToSignIn("Đã đổi mật khẩu. Hãy đăng nhập lại bằng mật khẩu mới.");
             auth.Changed += (s, e) => UpdateAccountUi();
 
-            poiIdentifyCard.FavoriteToggled += (s, poi) => Safe(ToggleFavoriteAsync(poi));
-            poiIdentifyCard.ClaimRequested += (s, poi) => Safe(ClaimAsync(poi));
-            poiIdentifyCard.ReportRequested += (s, poi) => Safe(ReportAsync(poi));
+            // These buttons show to a guest too; pressing one without an account asks to sign in first, then does what was asked.
+            poiIdentifyCard.AccountButtonsAvailable = true;
+            poiIdentifyCard.FavoriteToggled += (s, poi) => RunSignedIn("Đăng nhập để lưu địa điểm yêu thích của bạn.", () => Safe(ToggleFavoriteAsync(poi)));
+            poiIdentifyCard.ClaimRequested += (s, poi) => RunSignedIn("Đăng nhập để gửi yêu cầu nhận quản lý địa điểm.", () => Safe(ClaimAsync(poi)));
+            poiIdentifyCard.ReportRequested += (s, poi) => RunSignedIn("Đăng nhập để báo thông tin sai về địa điểm.", () => Safe(ReportAsync(poi)));
             UpdateAccountUi();
+        }
+
+        /// <summary>
+        /// Runs <paramref name="action"/> for a signed-in person. A guest (the server is there, nobody is signed in) gets the sign-in form over the
+        /// map, with the sentence saying what it is for; the map, the open card and the route stay as they are. After a successful sign-in the
+        /// action runs; if the guest backs out nothing happens. Returns whether the action ran.
+        /// </summary>
+        internal bool RunSignedIn(string reason, Action action)
+        {
+            if (auth != null && auth.CurrentUser != null) { action(); return true; }
+            if (api == null || auth == null)
+            {
+                toast.ShowMessage("Cần kết nối máy chủ để dùng chức năng này.", ToastKind.Info);
+                return false;
+            }
+            using (var form = new Hue_travel.Welcome.LoginForm(session, reason))
+            {
+                if (form.ShowDialog(this) != DialogResult.OK || auth.CurrentUser == null) return false;
+            }
+            session.IsGuest = false;
+            Safe(LoadFavoritesAsync());
+            action();
+            return true;
         }
 
         private void UpdateAccountUi()
@@ -350,7 +440,7 @@ namespace Hue_travel.Shell
             {
                 favoriteIds.Clear();
                 // Signing out or changing the password is handled by the panel's own events; anything else is a session that ended.
-                if (!accountPanel.IsLeaving) ReturnToSignIn("Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.");
+                if (!session.IsGuest && !accountPanel.IsLeaving) ReturnToSignIn("Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.");
             }
             poiIdentifyCard.RefreshAccountButtons();
         }

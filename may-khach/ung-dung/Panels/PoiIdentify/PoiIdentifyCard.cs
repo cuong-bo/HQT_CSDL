@@ -69,7 +69,7 @@ namespace Hue_travel.Panels.PoiIdentify
                 y = chip.Bottom + Ui.S(10);
 
                 // name (up to three lines)
-                Font nameFont = ThemeFonts.Bold(20);
+                Font nameFont = ThemeFonts.SerifBold(20);
                 int nameHeight = Math.Min(TextRenderer.MeasureText(poi.Name ?? "", nameFont, new Size(inner, int.MaxValue), wrap).Height, nameFont.Height * 3);
                 if (g != null) TextRenderer.DrawText(g, poi.Name ?? "", nameFont, new Rectangle(pad, y, inner, nameHeight), ThemeColors.Slate900, wrap);
                 y += nameHeight + Ui.S(4);
@@ -143,6 +143,7 @@ namespace Hue_travel.Panels.PoiIdentify
         private readonly IconButton btnClaim = AccountButton("Chủ quản", "verified_user");
         private readonly IconButton btnReport = AccountButton("Báo sai", "campaign");
         private readonly IconButton btnReviews = AccountButton("Đánh giá và nhận xét", "star");
+        private readonly IconButton btnMoments = AccountButton("Khoảnh khắc ở đây", "moments");
         private Poi shown;
         private bool signedIn;
 
@@ -160,6 +161,16 @@ namespace Hue_travel.Panels.PoiIdentify
         {
             get { return btnReviews.Visible; }
             set { btnReviews.Visible = value; LayoutCard(); }
+        }
+
+        /// <summary>The "Khoảnh khắc ở đây" button: the host opens the community feed filtered to this place.</summary>
+        public event EventHandler<Poi> MomentsRequested;
+
+        /// <summary>Shows the moments button; set when the app is connected to a server.</summary>
+        public bool MomentsAvailable
+        {
+            get { return btnMoments.Visible; }
+            set { btnMoments.Visible = value; LayoutCard(); }
         }
 
         /// <summary>Ids of the signed-in user's favourites, so the star shows the right state.</summary>
@@ -188,7 +199,7 @@ namespace Hue_travel.Panels.PoiIdentify
             btnRoute.IconColor = Color.White;
             btnRoute.FillColor = ThemeColors.Primary;
             btnRoute.HoverFillColor = ThemeColors.PrimaryContainer;
-            btnRoute.Radius = 12;
+            btnRoute.Radius = ThemeMetrics.RadiusSm;
             btnRoute.Elevated = true;
 
             gallery.HeroClicked += (s, i) => PhotoViewer.ShowOver(Owner ?? (Form)this, gallery.Paths, i, shown == null ? "" : shown.Name);
@@ -198,6 +209,8 @@ namespace Hue_travel.Panels.PoiIdentify
             btnReport.Click += (s, e) => { if (shown != null) ReportRequested?.Invoke(this, shown); };
             btnReviews.Click += (s, e) => { if (shown != null) ReviewsRequested?.Invoke(this, shown); };
             btnReviews.Visible = false;
+            btnMoments.Click += (s, e) => { if (shown != null) MomentsRequested?.Invoke(this, shown); };
+            btnMoments.Visible = false;
             foreach (IconButton b in new[] { btnFavorite, btnClaim, btnReport }) b.Visible = false;
 
             Controls.Add(info);
@@ -207,6 +220,7 @@ namespace Hue_travel.Panels.PoiIdentify
             Controls.Add(btnClaim);
             Controls.Add(btnReport);
             Controls.Add(btnReviews);
+            Controls.Add(btnMoments);
             Controls.Add(btnClose);
             btnClose.BringToFront();   // a control added later sits lower in the stack, so lift it above the photo
         }
@@ -237,9 +251,21 @@ namespace Hue_travel.Panels.PoiIdentify
             set { signedIn = value; RefreshAccountButtons(); LayoutCard(); }
         }
 
+        /// <summary>
+        /// True when the app is connected to a server: the favourite / claim / report buttons then show to everybody, a guest included.
+        /// Pressing one without an account asks to sign in (the host decides), like a web map does.
+        /// </summary>
+        public bool AccountButtonsAvailable
+        {
+            get { return accountButtons; }
+            set { accountButtons = value; RefreshAccountButtons(); LayoutCard(); }
+        }
+
+        private bool accountButtons;
+
         public void RefreshAccountButtons()
         {
-            bool visible = signedIn && shown != null;
+            bool visible = accountButtons && shown != null;
             btnFavorite.Visible = btnClaim.Visible = btnReport.Visible = visible;
             if (!visible) return;
             bool favorite = FavoriteIds != null && FavoriteIds.Contains(shown.Id);
@@ -265,11 +291,16 @@ namespace Hue_travel.Panels.PoiIdentify
                 btnReviews.SetBounds(pad, top, width - pad * 2, Ui.S(42));
                 top = btnReviews.Bottom + Ui.S(10);
             }
+            if (btnMoments.Visible)
+            {
+                btnMoments.SetBounds(pad, top, width - pad * 2, Ui.S(42));
+                top = btnMoments.Bottom + Ui.S(10);
+            }
             btnRoute.Font = ThemeFonts.SemiBold(14);
             btnRoute.SetBounds(pad, top, width - pad * 2, Ui.S(48));
             int bottom = btnRoute.Bottom;
 
-            if (signedIn)
+            if (accountButtons)
             {
                 int gap = Ui.S(8), buttonWidth = (width - pad * 2 - gap * 2) / 3, y = btnRoute.Bottom + Ui.S(10), height = Ui.S(38);
                 btnFavorite.SetBounds(pad, y, buttonWidth, height);
@@ -295,7 +326,7 @@ namespace Hue_travel.Panels.PoiIdentify
         {
             return new IconButton
             {
-                AutoWidth = false, Text = text, IconName = icon, IconSize = 16, Font = ThemeFonts.Medium(12), Radius = 10, Gap = 6, HorizontalPadding = 6,
+                AutoWidth = false, Text = text, IconName = icon, IconSize = 16, Font = ThemeFonts.Medium(12), Radius = ThemeMetrics.RadiusSm, Gap = 6, HorizontalPadding = 6,
                 ForeColor = ThemeColors.Slate700, IconColor = ThemeColors.Primary, FillColor = Color.White,
                 HoverFillColor = ThemeColors.Slate100, BorderColor = ThemeColors.Slate300,
             };

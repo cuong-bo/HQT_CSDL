@@ -1,0 +1,32 @@
+
+        // ------------------------------------------------------------------ "Huế · Cố đô" palette (tai-lieu/ke-hoach-giao-dien.md, mục 3.3)
+
+        // Brand: the purple of the sign-in screen, now the colour of the whole app.
+        public static readonly Color Brand = ColorTranslator.FromHtml("#5B2A86");        // buttons, chosen tab, title bar
+        public static readonly Color BrandDeep = ColorTranslator.FromHtml("#3F1D63");    // pressed / hover, header gradient end
+        public static readonly Color BrandSoft = ColorTranslator.FromHtml("#F3ECF9");    // chosen chip, soft highlight
+
+        // Accents. Gold is for decoration and stars: white text on it is only 2.6:1, so put Ink on it, or use GoldText on GoldSoft.
+        public static readonly Color Gold = ColorTranslator.FromHtml("#C99A2E");
+        public static readonly Color GoldSoft = ColorTranslator.FromHtml("#FBF3DC");
+        public static readonly Color GoldText = ColorTranslator.FromHtml("#8A6A12");     // 4.6:1 on GoldSoft
+        public static readonly Color Lacquer = ColorTranslator.FromHtml("#B3261E");      // errors, closed, start point
+        public static readonly Color LacquerSoft = ColorTranslator.FromHtml("#FDECEA");
+        public static readonly Color Jade = ColorTranslator.FromHtml("#0F766E");         // water, nature, "open"
+        public static readonly Color JadeSoft = ColorTranslator.FromHtml("#E3F4F1");
+
+        // Warm neutrals instead of the cold Slate greys.
+        public static readonly Color Paper = ColorTranslator.FromHtml("#FBF8F3");        // card and panel background
+        public static readonly Color PaperDeep = ColorTranslator.FromHtml("#F2EBDD");    // secondary areas, land on the map
+        public static readonly Color Ink = ColorTranslator.FromHtml("#241B2F");          // main text (15.6:1 on Paper)
+        public static readonly Color InkSoft = ColorTranslator.FromHtml("#5E5470");      // secondary text (6.7:1 on Paper)
+        public static readonly Color Line = ColorTranslator.FromHtml("#E7DFD0");         // hairlines and borders
+
+        // One colour per group of places: markers, chips, list badges and the legend must all read it from here.
+        // Each is at least 4.9:1 against white text or icons.
+        public static readonly Color CatHeritage = ColorTranslator.FromHtml("#A0620F");
+        public static readonly Color CatScenery = ColorTranslator.FromHtml("#0F766E");
+        public static readonly Color CatFood = ColorTranslator.FromHtml("#C2410C");
+        public static readonly Color CatStay = ColorTranslator.FromHtml("#3949AB");
+        public static readonly Color CatService = ColorTranslator.FromHtml("#7B3FA0");
+        public static readonly Color CatTransport = ColorTranslator.FromHtml("#475569");

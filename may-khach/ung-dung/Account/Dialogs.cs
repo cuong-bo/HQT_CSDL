@@ -93,7 +93,7 @@ namespace Hue_travel.Account
             Ok.SetBounds(width - side - buttonWidth, y, buttonWidth, buttonHeight);
             Cancel.SetBounds(Ok.Left - Ui.S(10) - buttonWidth, y, buttonWidth, buttonHeight);
             ClientSize = new Size(width, y + buttonHeight + Ui.S(18));
-            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0, 0, Width, Height), Ui.S(14)))
+            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0, 0, Width, Height), Ui.S(ThemeMetrics.RadiusLg)))
                 Region = new Region(path);
         }
 
@@ -101,7 +101,7 @@ namespace Hue_travel.Account
         {
             base.OnPaint(e);
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), Ui.S(14)))
+            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), Ui.S(ThemeMetrics.RadiusLg)))
             using (var pen = new Pen(ThemeColors.Slate300)) e.Graphics.DrawPath(pen, path);
         }
     }

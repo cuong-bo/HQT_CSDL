@@ -3,6 +3,8 @@ using System.Threading.RateLimiting;
 using Hue_travel.Api.Admin;
 using Hue_travel.Api.Area;
 using Hue_travel.Api.Auth;
+using Hue_travel.Api.Chat;
+using Hue_travel.Api.Feeds;
 using Hue_travel.Api.Meta;
 using Hue_travel.Api.Options;
 using Hue_travel.Api.Owner;
@@ -45,6 +47,17 @@ builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSingleton<UserRepository>();
 builder.Services.AddSingleton<PoiRepository>();
 builder.Services.AddSingleton<RouteRepository>();
+builder.Services.AddSingleton<RoutePlanService>();   // the body of POST /v1/route, shared with the assistant's route tool
+builder.Services.AddSingleton<WeatherService>();     // the body of GET /v1/weather, shared with the assistant's weather tool
+builder.Services.Configure<ChatOptions>(builder.Configuration.GetSection(ChatOptions.SectionName));
+builder.Services.AddHttpClient("deepseek");
+builder.Services.AddSingleton<IDeepSeek, DeepSeekClient>();
+builder.Services.AddSingleton<IChatData, ChatData>();
+builder.Services.AddSingleton<ChatTools>();
+builder.Services.AddSingleton<ChatOrchestrator>();
+builder.Services.AddSingleton<ChatQuota>();
+builder.Services.Configure<FeedOptions>(builder.Configuration.GetSection(FeedOptions.SectionName));
+builder.Services.AddSingleton<MediaStore>();
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient("openmeteo", client => client.Timeout = TimeSpan.FromSeconds(10));
 builder.Services.AddProblemDetails();
@@ -82,6 +95,8 @@ builder.Services.AddOptions<RateLimiterOptions>().Configure<IConfiguration>((opt
         context => RateLimitPartition.GetFixedWindowLimiter(Client(context), _ => Window(limits.GlobalPerMinute)));
     options.AddPolicy("auth", context => RateLimitPartition.GetFixedWindowLimiter(Client(context), _ => Window(limits.AuthPerMinute)));
     options.AddPolicy("heavy", context => RateLimitPartition.GetFixedWindowLimiter(Client(context), _ => Window(limits.HeavyPerMinute)));
+    options.AddPolicy("feed", context => RateLimitPartition.GetFixedWindowLimiter(Client(context), _ => Window(limits.FeedPerMinute)));
+    options.AddPolicy("chat", context => RateLimitPartition.GetFixedWindowLimiter(Client(context), _ => Window(limits.ChatPerMinute)));
 });
 
 WebApplication app = builder.Build();
@@ -114,8 +129,8 @@ app.Use(async (context, next) =>
 });
 app.Use(async (context, next) =>
 {
-    // Only photo uploads and the place import carry more than a few kilobytes.
-    long? bigger = PhotoEndpoints.IsUploadRequest(context.Request) ? PhotoEndpoints.MaxBodyBytes
+    // Only photo uploads (places and posts) and the place import carry more than a few kilobytes.
+    long? bigger = PhotoEndpoints.IsUploadRequest(context.Request) || MediaEndpoints.IsUploadRequest(context.Request) ? PhotoEndpoints.MaxBodyBytes
         : HttpMethods.IsPost(context.Request.Method) && context.Request.Path == "/v1/admin/pois/import" ? Hue_travel.Api.Admin.AdminEndpoints.MaxImportBodyBytes : null;
     var sizeLimit = bigger == null ? null : context.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>();
     if (sizeLimit is { IsReadOnly: false }) sizeLimit.MaxRequestBodySize = bigger;   // the in-memory test server has no such limit
@@ -132,9 +147,13 @@ app.MapPoiEndpoints();
 app.MapAreaEndpoints();
 app.MapRouteEndpoints();
 app.MapWeatherEndpoints();
+app.MapChatEndpoints();
 app.MapSocialEndpoints();
 app.MapOwnerEndpoints();
 app.MapPhotoEndpoints();
+app.MapFeedEndpoints();
+app.MapMediaEndpoints();
+app.MapFeedAdminEndpoints();
 app.MapAdminEndpoints();
 
 app.Run();

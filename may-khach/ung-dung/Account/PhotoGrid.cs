@@ -155,7 +155,7 @@ namespace Hue_travel.Account
             {
                 PhotoCell cell = cells[i];
                 Rectangle r = CellRect(i);
-                using (GraphicsPath path = Ui.RoundedRect(r, Ui.S(10)))
+                using (GraphicsPath path = Ui.RoundedRect(r, Ui.S(ThemeMetrics.RadiusMd)))
                 {
                     GraphicsState state = g.Save();
                     g.SetClip(path, CombineMode.Intersect);

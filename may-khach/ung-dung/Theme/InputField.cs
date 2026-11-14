@@ -165,7 +165,7 @@ namespace Hue_travel.Theme
         {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), Ui.S(6)))
+            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), Ui.S(ThemeMetrics.RadiusSm)))
             using (var fill = new SolidBrush(ThemeColors.Slate50))
             using (var pen = new Pen(hasError ? ThemeColors.Red500 : isFocused ? ThemeColors.Primary : ThemeColors.Slate200, 1f))
             {

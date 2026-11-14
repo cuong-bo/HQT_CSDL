@@ -108,6 +108,12 @@
     <Compile Include="Theme\FloatingPanelForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Theme\ChromeLayer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Theme\OverlayCard.cs" />
+    <Compile Include="Theme\IconsExtra.cs" />
+    <Compile Include="Theme\WindowChrome.cs" />
     <Compile Include="Models\PoiCategory.cs" />
     <Compile Include="Models\Poi.cs" />
     <Compile Include="Models\RouteStep.cs" />
@@ -206,12 +212,8 @@
     <Compile Include="MapEngine\MapHost.Designer.cs">
       <DependentUpon>MapHost.cs</DependentUpon>
     </Compile>
-    <Compile Include="Shell\TitleBar.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Shell\TitleBar.Designer.cs">
-      <DependentUpon>TitleBar.cs</DependentUpon>
-    </Compile>
+    <Compile Include="Shell\TitleBar.cs" />
+    <Compile Include="Shell\SearchPill.cs" />
     <Compile Include="Shell\NavRail.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -257,14 +259,30 @@
     <Compile Include="Services\Routing\TripPlan.cs" />
     <Compile Include="MapEngine\RoutePalette.cs" />
     <Compile Include="MapEngine\RouteDrawing.cs" />
-    <Compile Include="Panels\TravelGuide\TravelGuidePanel.cs">
+    <Compile Include="Panels\Assistant\ChatPanel.cs">
       <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Panels\Assistant\ChatView.cs">
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="Panels\TravelGuide\GuideContent.cs" />
     <Compile Include="Panels\TravelGuide\InfoRows.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Panels\TravelGuide\TourList.cs" />
+    <Compile Include="Services\Online\ApiChatService.cs" />
+    <Compile Include="Services\Online\ApiFeedService.cs" />
+    <Compile Include="Panels\Feed\FeedPanel.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Panels\Feed\FeedView.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Panels\Feed\ComposerDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Panels\Feed\CommentsDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Panels\PoiIdentify\PoiIdentifyCard.cs">
       <SubType>Form</SubType>
     </Compile>

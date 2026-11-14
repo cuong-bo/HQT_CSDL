@@ -282,7 +282,7 @@ namespace Hue_travel.Account
                 bool on = i == selected;
                 Color rest = on ? ThemeColors.Primary : hover == i ? ThemeColors.Slate100 : Color.White;
                 Color fill = press.Fill(i, rest, on ? ThemeColors.PrimaryContainer : ThemeColors.Slate200);
-                using (GraphicsPath path = Ui.RoundedRect(new RectangleF(r.X + 0.5f, r.Y + 0.5f, r.Width - 1f, r.Height - 1f), Ui.S(10)))
+                using (GraphicsPath path = Ui.RoundedRect(new RectangleF(r.X + 0.5f, r.Y + 0.5f, r.Width - 1f, r.Height - 1f), Ui.S(ThemeMetrics.RadiusSm)))
                 using (var brush = new SolidBrush(fill))
                 using (var pen = new Pen(on ? ThemeColors.Primary : ThemeColors.Slate300))
                 {

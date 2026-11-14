@@ -3,7 +3,8 @@ using Hue_travel.Panels.PoiIdentify;
 using Hue_travel.Panels.RouteOptimizer;
 using Hue_travel.Panels.Explore;
 using Hue_travel.Panels.Layers;
-using Hue_travel.Panels.TravelGuide;
+using Hue_travel.Panels.Assistant;
+using Hue_travel.Services.Online;
 using Hue_travel.Auth;
 using Hue_travel.Theme;
 
@@ -13,12 +14,14 @@ namespace Hue_travel.Shell
     {
         private System.ComponentModel.IContainer components = null;
 
-        // Side panel slot, in design pixels: rail (80) + 12; header (56) + filter bar (48) + 12; status bar (28) + 12.
-        private const int SideLeft = 92;
+        // Side panel slot, in design pixels (the rail, the search box and the status bar float on the map as cards):
+        // 12 + rail (84) + 12 from the left; title bar (40) + 16 + search box (48) + 12 from the top; 12 + status pill (32) + 12 from the bottom.
+        private const int SideLeft = 108;
         private const int SideTop = 116;
-        private const int SideBottom = 40;
+        private const int SideBottom = 56;
 
         private TitleBar titleBar;
+        private SearchPill searchPill;
         private FilterBar filterBar;
         private NavRail navRail;
         private AppStatusBar statusBar;
@@ -29,7 +32,7 @@ namespace Hue_travel.Shell
         private ExplorePanel explorePanel;
         private LayerPanel layerPanel;
         private SearchDropdown searchDropdown;
-        private TravelGuidePanel travelGuidePanel;
+        private ChatPanel chatPanel;
         private PoiIdentifyCard poiIdentifyCard;
         private Toast toast;
 
@@ -42,6 +45,7 @@ namespace Hue_travel.Shell
         private void InitializeComponent()
         {
             this.titleBar = new TitleBar();
+            this.searchPill = new SearchPill();
             this.filterBar = new FilterBar();
             this.navRail = new NavRail();
             this.statusBar = new AppStatusBar();
@@ -51,7 +55,8 @@ namespace Hue_travel.Shell
             this.explorePanel = new ExplorePanel();
             this.layerPanel = new LayerPanel();
             this.searchDropdown = new SearchDropdown();
-            this.travelGuidePanel = new TravelGuidePanel();
+            // The assistant needs the server; offline (no api) the panel shows the short static guide instead.
+            this.chatPanel = new ChatPanel(this.api == null ? null : new ApiChatService(this.api));
             this.poiIdentifyCard = new PoiIdentifyCard();
             this.toast = new Toast();
             this.SuspendLayout();
@@ -64,25 +69,17 @@ namespace Hue_travel.Shell
             this.Text = "Hue Travel";
 
             this.titleBar.Dock = System.Windows.Forms.DockStyle.Top;
-            this.titleBar.Size = new System.Drawing.Size(1536, 56);
+            this.titleBar.Size = new System.Drawing.Size(1536, 40);
 
-            // Category chips under the header (the filter bar of a web map).
-            this.filterBar.Dock = System.Windows.Forms.DockStyle.Top;
-            this.filterBar.Size = new System.Drawing.Size(1536, 48);
-
-            // Navigation rail on the left: explore, route, guide.
-            this.navRail.Dock = System.Windows.Forms.DockStyle.Left;
-            this.navRail.Size = new System.Drawing.Size(80, 724);
-
-            this.statusBar.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.statusBar.Size = new System.Drawing.Size(1536, 28);
+            // The search box, the category chips, the navigation rail and the status bar are floating cards on the map: they are
+            // created here and handed to the map by MainForm (MapHost.HostOverlays), which places and rounds them.
+            this.filterBar.Size = new System.Drawing.Size(640, 40);
+            this.navRail.Size = new System.Drawing.Size(84, 400);
+            this.statusBar.Size = new System.Drawing.Size(1100, 32);
 
             this.mapHost.Dock = System.Windows.Forms.DockStyle.Fill;
 
             this.Controls.Add(this.mapHost);
-
-            this.Controls.Add(this.navRail);
-            this.Controls.Add(this.filterBar);
             this.Controls.Add(this.titleBar);
 
             // Floating panels are real Forms owned by this window (not child controls): top-level windows
@@ -95,11 +92,9 @@ namespace Hue_travel.Shell
             this.routeOptimizerPanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
             // The route result is a wide panel centred under the map (no left or right edge: it stays centred horizontally).
             this.tripResultPanel.AttachTo(this, new System.Drawing.Point((this.ClientSize.Width - TripResultPanel.DesignWidth) / 2, this.ClientSize.Height - TripResultPanel.DesignHeight - 56), System.Windows.Forms.AnchorStyles.Bottom);
-            this.travelGuidePanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
+            this.chatPanel.AttachToSide(this, SideLeft, SideTop, SideBottom);
             // The place card sits at the bottom right of the map, clear of the map's control column (400px wide card, 92px from the right).
             this.poiIdentifyCard.AttachTo(this, new System.Drawing.Point(1044, 198), System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right);
-
-            this.Controls.Add(this.statusBar);
 
             this.toast.TopOffset = 116;
             this.Controls.Add(this.toast);

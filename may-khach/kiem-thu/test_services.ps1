@@ -542,5 +542,53 @@ $none = New-Object 'System.Collections.Generic.List[long]'
 [void]$photoT.GetMethod('SetOrder').Invoke($null, @('ZZTEST', [System.Collections.Generic.IReadOnlyList[long]]$none))
 Check 'photos: an empty list removes the place folder' (Test-Path (Join-Path $photoT.GetProperty('Root').GetValue($null) 'ZZTEST')) 'False'
 
+# ---- ApiChatService.Parse (the assistant's answer)
+$jsonT = GetT 'Hue_travel.Services.Online.JsonHelper'
+$chatT = GetT 'Hue_travel.Services.Online.ApiChatService'
+function ParseJson($text) { $jsonT.GetMethod('Parse').Invoke($null, @($text)) }
+$answer = $chatT.GetMethod('Parse').Invoke($null, @(ParseJson '{"reply":"Nên đi Đại Nội.","places":[{"id":"DL021","name":"Đại Nội","group":"heritage"},{"name":"no id"}],"route":{"meters":5400,"seconds":1080,"stops":[{"id":"A","name":"A"},{"id":"B","name":"B"},{"id":"C","name":"C"}]},"remaining":17}'))
+Check 'chat: reply is read' $answer.Reply 'Nên đi Đại Nội.'
+Check 'chat: a place without id is dropped' @($answer.Places).Count '1'
+Check 'chat: route stops are read' @($answer.Route.Stops).Count '3'
+Check 'chat: route summary starts with the stop count' $answer.Route.Summary.StartsWith('3 điểm') 'True'
+Check 'chat: route summary has minutes' $answer.Route.Summary.EndsWith('18 phút') 'True'
+Check 'chat: remaining is read' $answer.Remaining '17'
+Check 'chat: empty reply gives no answer' ($chatT.GetMethod('Parse').Invoke($null, @(ParseJson '{"reply":"  "}'))) $null
+Check 'chat: a route of one stop is not a route' ($chatT.GetMethod('Parse').Invoke($null, @(ParseJson '{"reply":"x","route":{"stops":[{"id":"A"}]}}'))).Route $null
+
+# ---- ApiFeedService (posts of "Khoảnh khắc")
+$feedT = GetT 'Hue_travel.Services.Online.ApiFeedService'
+$postT = GetT 'Hue_travel.Services.Online.FeedPostInfo'
+$feedJson = ParseJson '{"items":[{"id":481,"createdAt":"2026-11-13T08:21:00+07:00","author":{"id":12,"name":"Minh Anh"},"body":"Sáng sớm","poi":{"id":"DL021","name":"Đại Nội"},"route":[{"poiId":"DL021","name":"Đại Nội"},{"poiId":"DL024","name":"Thiên Mụ"}],"media":[{"id":903,"width":1600,"height":1067}],"likeCount":14,"commentCount":3,"likedByMe":true,"mine":false,"status":"visible"}]}'
+$feedItems = $feedJson['items']
+$posts = @($feedT.GetMethod('ParsePosts').Invoke($null, [object[]]@(, $feedItems)))
+Check 'feed: one post parsed' $posts.Count '1'
+Check 'feed: author name' $posts[0].AuthorName 'Minh Anh'
+Check 'feed: place name' $posts[0].Poi.Name 'Đại Nội'
+Check 'feed: route has two stops' @($posts[0].Route).Count '2'
+Check 'feed: media id' @($posts[0].MediaIds)[0] '903'
+Check 'feed: like count and liked flag' "$($posts[0].LikeCount) $($posts[0].LikedByMe)" '14 True'
+$now = [DateTimeOffset]::Parse('2026-11-14T12:00:00+07:00')
+$ago = $postT.GetMethod('TimeAgo')
+Check 'time: seconds' $ago.Invoke($null, @($now.AddSeconds(-30), $now)) 'vừa xong'
+Check 'time: minutes' $ago.Invoke($null, @($now.AddMinutes(-5), $now)) '5 phút trước'
+Check 'time: hours' $ago.Invoke($null, @($now.AddHours(-3), $now)) '3 giờ trước'
+Check 'time: days' $ago.Invoke($null, @($now.AddDays(-2), $now)) '2 ngày trước'
+Check 'time: older than a week is a date' ($ago.Invoke($null, @($now.AddDays(-30), $now))) '15/10/2026'
+
+# ---- ComposerDialog.PrepareImage (a picture is shrunk to 1600 px and saved as JPEG before it is sent)
+Add-Type -AssemblyName System.Drawing
+$tmp = Join-Path ([IO.Path]::GetTempPath()) 'hue-feed-test.png'
+$big = New-Object System.Drawing.Bitmap 3000, 2000
+$big.Save($tmp, [System.Drawing.Imaging.ImageFormat]::Png); $big.Dispose()
+$prepare = (GetT 'Hue_travel.Panels.Feed.ComposerDialog').GetMethod('PrepareImage', [Reflection.BindingFlags]'NonPublic,Static')
+$bytes = $prepare.Invoke($null, @([string]$tmp))
+Check 'image: output is a JPEG' ("{0:X2}{1:X2}" -f $bytes[0], $bytes[1]) 'FFD8'
+$out = [System.Drawing.Image]::FromStream((New-Object IO.MemoryStream (, $bytes)))
+Check 'image: longer side is 1600' "$($out.Width)x$($out.Height)" '1600x1067'
+$out.Dispose()
+Check 'image: a file that is not a picture gives null' ($prepare.Invoke($null, @([string]$PSCommandPath))) $null
+Remove-Item $tmp -ErrorAction SilentlyContinue
+
 Write-Host "passed=$script:pass failed=$script:fail"
 if ($script:fail -gt 0) { exit 1 }

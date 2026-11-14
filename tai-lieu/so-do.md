@@ -17,7 +17,7 @@ Máy khách chỉ lo giao diện và vẽ bản đồ; mọi dữ liệu dùng c
 ```mermaid
 flowchart LR
     subgraph KH["Máy khách Windows (may-khach)"]
-        UI["Giao diện WinForms<br/>Khám phá · Lộ trình · Hướng dẫn · Hồ sơ"]
+        UI["Giao diện WinForms<br/>Khám phá · Lộ trình · Trợ lý · Khoảnh khắc · Hồ sơ"]
         MAP["Bản đồ MapWinGIS<br/>(bản đồ nền lưu trên máy)"]
         CACHE["Bộ nhớ tạm<br/>địa điểm · ảnh · phiên đăng nhập"]
         UI --- MAP
@@ -26,16 +26,18 @@ flowchart LR
 
     subgraph MC["Máy chủ VPS (may-chu, Docker Compose)"]
         CADDY["Caddy :80<br/>cổng vào, tệp bản đồ nền"]
-        API["API .NET 8<br/>xác thực · địa điểm · tìm đường · ảnh<br/>đánh giá · quản trị · ký phản hồi"]
+        API["API .NET 8<br/>xác thực · địa điểm · tìm đường · ảnh<br/>đánh giá · trợ lý · Khoảnh khắc<br/>quản trị · ký phản hồi"]
         DB[("PostgreSQL 17<br/>PostGIS + pgRouting")]
         CADDY --> API --> DB
     end
 
     METEO["Open-Meteo<br/>thời tiết"]
+    DEEPSEEK["DeepSeek<br/>mô hình ngôn ngữ (khóa chỉ ở máy chủ)"]
 
     UI -- "HTTP / JSON" --> CADDY
     MAP -- "tải bản đồ nền lần đầu" --> CADDY
     API -- "thời tiết (có nhớ tạm)" --> METEO
+    API -- "câu hỏi của trợ lý (chỉ đọc dữ liệu qua công cụ)" --> DEEPSEEK
 ```
 
 Hệ tọa độ thống nhất: **VN-2000 / UTM 48N (EPSG:3405)**, đơn vị mét.
@@ -52,7 +54,7 @@ flowchart LR
 
     ROOT --> A["A. Bản đồ và tìm kiếm"]
     ROOT --> B["B. Lộ trình"]
-    ROOT --> C["C. Hướng dẫn du lịch"]
+    ROOT --> C["C. Trợ lý và Khoảnh khắc"]
     ROOT --> D["D. Tài khoản và hồ sơ"]
     ROOT --> E["E. Chủ quản địa điểm"]
     ROOT --> F["F. Quản trị"]
@@ -71,8 +73,10 @@ flowchart LR
     B --> B4["Vẽ tuyến theo đường bộ thật<br/>xe chạy mô phỏng"]
     B --> B5["Lưu và mở lại lộ trình"]
 
-    C --> C1["Tour dựng sẵn: bấm là chạy"]
-    C --> C2["Nội dung hướng dẫn<br/>viết sẵn trong ứng dụng"]
+    C --> C1["Trợ lý AI: tìm địa điểm, giờ mở cửa,<br/>thời tiết, gợi ý và tính lộ trình"]
+    C --> C2["Cẩm nang dự phòng khi trợ lý tắt:<br/>số điện thoại khẩn cấp, lưu ý tham quan"]
+    C --> C3["Khoảnh khắc: đăng bài, ảnh, gắn địa điểm<br/>chia sẻ lộ trình, thích, bình luận, báo cáo"]
+    C --> C4["Kiểm duyệt: duyệt bài người mới,<br/>tự ẩn khi bị báo cáo nhiều"]
 
     D --> D1["Đăng ký, chọn loại tài khoản<br/>đăng nhập, đổi mật khẩu"]
     D --> D2["Địa điểm yêu thích"]
@@ -121,7 +125,8 @@ của tài khoản đang đăng nhập.
 | Chức năng | Người dùng | Chủ quản | Quản trị viên |
 |---|:-:|:-:|:-:|
 | Xem bản đồ, tìm địa điểm, thời tiết, đo đạc | ✔ | ✔ | ✔ |
-| Lập lộ trình, dùng Hướng dẫn | ✔ | ✔ | ✔ |
+| Lập lộ trình, hỏi Trợ lý, xem Khoảnh khắc | ✔ | ✔ | ✔ |
+| Thích, bình luận, đăng bài Khoảnh khắc | — | ✔ | ✔ |
 | Đọc đánh giá và ảnh đã duyệt | ✔ | ✔ | ✔ |
 | Yêu thích, lưu lộ trình | ✔ | ✔ | ✔ |
 | Viết, sửa, xóa đánh giá của mình | ✔ | ✔ (trừ địa điểm của mình) | ✔ |

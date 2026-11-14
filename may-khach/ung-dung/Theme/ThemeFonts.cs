@@ -14,6 +14,7 @@ namespace Hue_travel.Theme
         public const string FamilyName = "Plus Jakarta Sans";
         private const string FallbackFamily = "Segoe UI";
         private const string MonoFamily = "Consolas";
+        private const string SerifFamily = "Georgia";
 
         private static readonly Dictionary<string, Font> Cache = new Dictionary<string, Font>();
 
@@ -21,6 +22,8 @@ namespace Hue_travel.Theme
         public static Font Medium(float px) => Make(FamilyName + " Medium", px, FontStyle.Regular);
         public static Font SemiBold(float px) => Make(FamilyName + " SemiBold", px, FontStyle.Regular);
         public static Font Bold(float px) => Make(FamilyName, px, FontStyle.Bold);
+        /// <summary>The serif of place names and panel titles: Georgia (on every Windows, full Vietnamese), bold.</summary>
+        public static Font SerifBold(float px) => Make(SerifFamily, px, FontStyle.Bold);
         public static Font Mono(float px) => Make(MonoFamily, px, FontStyle.Regular);
         public static Font MonoBold(float px) => Make(MonoFamily, px, FontStyle.Bold);
 
@@ -43,13 +46,14 @@ namespace Hue_travel.Theme
                 if (Cache.TryGetValue(key, out cached)) return cached;
 
                 float points = px * 72f / 96f;
-                FontFamily embedded = family == MonoFamily ? null : FontLoader.Find(family);
+                bool system = family == MonoFamily || family == SerifFamily;   // installed fonts, not embedded ones
+                FontFamily embedded = system ? null : FontLoader.Find(family);
                 Font font;
                 try
                 {
                     font = embedded != null && embedded.IsStyleAvailable(style)
                         ? new Font(embedded, points, style, GraphicsUnit.Point)
-                        : new Font(family == MonoFamily ? MonoFamily : FallbackFamily, points, style, GraphicsUnit.Point);
+                        : new Font(system ? family : FallbackFamily, points, style, GraphicsUnit.Point);
                 }
                 catch (ArgumentException)
                 {

@@ -300,7 +300,9 @@ namespace Hue_travel.Panels.Shared
                 int sink = press.SinkFor(i);
                 int badge = Ui.S(BadgeSize);
                 var badgeRect = new Rectangle(Ui.S(14), top + (RowPx - badge) / 2 + sink, badge, badge);
-                DrawBadge(g, row.Poi.Category, badgeRect, dim);
+                Bitmap photo = dim ? null : ThumbFor(row.Poi.Id);
+                if (photo != null) DrawThumb(g, photo, badgeRect);
+                else DrawBadge(g, row.Poi.Category, badgeRect, dim);
 
                 int textLeft = badgeRect.Right + Ui.S(12);
                 int rightEdge = rightLimit - Ui.S(14);
@@ -365,6 +367,60 @@ namespace Hue_travel.Panels.Shared
             int px = (int)(r.Width * 0.58);
             Bitmap glyph = IconFont.Get(added ? "check" : "add", px, added ? Color.White : ThemeColors.Primary);
             g.DrawImage(glyph, r.X + (r.Width - px) / 2, r.Y + (r.Height - px) / 2, px, px);
+        }
+
+        // ---- photo thumbnails: read off the UI thread; a place without a photo keeps its round badge
+
+        private readonly Dictionary<string, Bitmap> thumbs = new Dictionary<string, Bitmap>();   // null value = no photo
+        private readonly HashSet<string> loading = new HashSet<string>();
+
+        private Bitmap ThumbFor(string placeId)
+        {
+            if (string.IsNullOrEmpty(placeId)) return null;
+            Bitmap ready;
+            if (thumbs.TryGetValue(placeId, out ready)) return ready;
+            if (loading.Add(placeId))
+            {
+                System.Threading.Tasks.Task.Run(() =>
+                {
+                    Bitmap bmp = null;
+                    try
+                    {
+                        var paths = Hue_travel.Services.Data.PoiPhotos.PathsFor(placeId);
+                        if (paths.Count > 0) bmp = Hue_travel.Services.Data.PoiPhotos.Load(paths[0], 160);
+                    }
+                    catch (Exception ex) { System.Diagnostics.Debug.WriteLine("PoiRowList thumb: " + ex.Message); }
+                    try
+                    {
+                        if (IsDisposed || !IsHandleCreated) return;
+                        BeginInvoke((Action)(() =>
+                        {
+                            if (IsDisposed) return;
+                            loading.Remove(placeId);
+                            thumbs[placeId] = bmp;
+                            if (bmp != null) Invalidate();
+                        }));
+                    }
+                    catch (InvalidOperationException) { }   // the window closed meanwhile
+                });
+            }
+            return null;
+        }
+
+        // The photo, cropped to a rounded square the size of the badge.
+        private static void DrawThumb(Graphics g, Bitmap photo, Rectangle target)
+        {
+            int side = Math.Min(photo.Width, photo.Height);
+            var src = new Rectangle((photo.Width - side) / 2, (photo.Height - side) / 2, side, side);
+            using (GraphicsPath path = Ui.RoundedRect(target, Ui.S(10)))
+            {
+                GraphicsState state = g.Save();
+                g.SetClip(path, CombineMode.Intersect);
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.DrawImage(photo, target, src.X, src.Y, src.Width, src.Height, GraphicsUnit.Pixel);
+                g.Restore(state);
+                using (var pen = new Pen(Color.FromArgb(40, 15, 23, 42))) g.DrawPath(pen, path);
+            }
         }
 
         // The round badge of the group; faded when the row is switched off.

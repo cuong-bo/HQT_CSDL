@@ -143,7 +143,10 @@ public static class PhotoEndpoints
     }
 
     /// <summary>Decodes an upload and saves it again as an upright JPEG without metadata; returns a message for the person when it is not usable.</summary>
-    public static (byte[]? Jpeg, int Width, int Height, string? Problem) Reencode(byte[] source)
+    public static (byte[]? Jpeg, int Width, int Height, string? Problem) Reencode(byte[] source) => Reencode(source, MaxSide, 82);
+
+    /// <summary>Same, for a chosen longest side and JPEG quality (the feed also keeps a small thumbnail).</summary>
+    public static (byte[]? Jpeg, int Width, int Height, string? Problem) Reencode(byte[] source, int maxSide, int quality)
     {
         try
         {
@@ -162,7 +165,7 @@ public static class PhotoEndpoints
             // Turn it upright (the camera's rotation lives in metadata that is not kept), shrink it, and put it on white (a PNG may be see-through).
             bool swap = origin is SKEncodedOrigin.LeftTop or SKEncodedOrigin.RightTop or SKEncodedOrigin.RightBottom or SKEncodedOrigin.LeftBottom;
             int w = swap ? decoded.Height : decoded.Width, h = swap ? decoded.Width : decoded.Height;
-            double scale = Math.Min(1.0, (double)MaxSide / Math.Max(w, h));
+            double scale = Math.Min(1.0, (double)maxSide / Math.Max(w, h));
             int outW = Math.Max(1, (int)Math.Round(w * scale)), outH = Math.Max(1, (int)Math.Round(h * scale));
 
             using var surface = SKSurface.Create(new SKImageInfo(outW, outH, SKColorType.Rgba8888, SKAlphaType.Opaque));
@@ -175,7 +178,7 @@ public static class PhotoEndpoints
             canvas.DrawBitmap(decoded, 0, 0, paint);
 
             using SKImage image = surface.Snapshot();
-            using SKData jpeg = image.Encode(SKEncodedImageFormat.Jpeg, 82);
+            using SKData jpeg = image.Encode(SKEncodedImageFormat.Jpeg, quality);
             if (jpeg == null) return (null, 0, 0, "Không nén được ảnh. Hãy chọn ảnh khác.");
             if (jpeg.Size > MaxEncodedBytes) return (null, 0, 0, "Ảnh vẫn quá nặng sau khi nén. Hãy chọn ảnh khác.");
             return (jpeg.ToArray(), outW, outH, null);

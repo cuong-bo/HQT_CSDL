@@ -47,7 +47,7 @@ namespace Hue_travel.Admin
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
             g.Clear(BackColor);
-            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), Ui.S(10)))
+            using (GraphicsPath path = Ui.RoundedRect(new RectangleF(0.5f, 0.5f, Width - 1f, Height - 1f), Ui.S(ThemeMetrics.RadiusSm)))
             {
                 GraphicsState state = g.Save();
                 g.SetClip(path, CombineMode.Intersect);

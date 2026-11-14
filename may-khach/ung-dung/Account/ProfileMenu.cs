@@ -131,7 +131,7 @@ namespace Hue_travel.Account
                 var tileRect = new Rectangle(Ui.S(16), row.Y + (row.Height - tile) / 2 + sink, tile, tile);
                 Color tileColor = item.IsDanger ? Color.FromArgb(254, 226, 226) : ThemeColors.Sky100;
                 Color iconColor = item.IsDanger ? ThemeColors.Red500 : ThemeColors.Primary;
-                using (GraphicsPath path = Ui.RoundedRect(tileRect, Ui.S(10)))
+                using (GraphicsPath path = Ui.RoundedRect(tileRect, Ui.S(ThemeMetrics.RadiusSm)))
                 using (var brush = new SolidBrush(tileColor))
                 {
                     g.FillPath(brush, path);

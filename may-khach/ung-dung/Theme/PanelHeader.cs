@@ -68,7 +68,7 @@ namespace Hue_travel.Theme
             button.AutoWidth = false;
             button.IconName = icon;
             button.IconSize = 12;
-            button.Radius = 4;
+            button.Radius = ThemeMetrics.RadiusFull;
             button.Size = new Size(20, 20);
             button.FillColor = Color.Transparent;
         }

@@ -21,6 +21,12 @@ namespace Hue_travel.Services.Online
         /// <summary>A line the sign-in screen shows once, e.g. "the session ended".</summary>
         public string Notice { get; set; }
 
+        /// <summary>
+        /// Set by the sign-in screen when the visitor chose "Khách": the server is there but nobody is signed in, so the app
+        /// offers what needs no account (map, search, routes) and must not treat the missing account as an ended session.
+        /// </summary>
+        public bool IsGuest { get; set; }
+
         /// <summary>Set by the main window when the user signed out (or the session ended): the app goes back to the sign-in screen.</summary>
         public bool ReturnToSignIn { get; set; }
 

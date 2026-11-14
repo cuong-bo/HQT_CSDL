@@ -219,6 +219,14 @@ namespace Hue_travel.Theme
                 DrawArrow(bmp, px, color);
                 return bmp;
             }
+            // Hand-drawn icons the font subset does not have (see IconsExtra).
+            if (name == "favorite" || name == "favorite_fill") { IconsExtra.DrawHeart(bmp, px, color, name == "favorite_fill"); return bmp; }
+            if (name == "bookmark" || name == "bookmark_fill") { IconsExtra.DrawBookmark(bmp, px, color, name == "bookmark_fill"); return bmp; }
+            if (name == "share") { IconsExtra.DrawShare(bmp, px, color); return bmp; }
+            if (name == "content_copy") { IconsExtra.DrawCopy(bmp, px, color); return bmp; }
+            if (name == "language") { IconsExtra.DrawGlobe(bmp, px, color); return bmp; }
+            if (name == "assistant") { IconsExtra.DrawAssistant(bmp, px, color); return bmp; }
+            if (name == "moments") { IconsExtra.DrawMoments(bmp, px, color); return bmp; }
             if (name == "play_arrow" || name == "pause")
             {
                 DrawPlayPause(bmp, px, color, name == "pause");
