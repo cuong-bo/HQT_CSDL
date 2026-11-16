@@ -171,7 +171,7 @@ namespace Hue_travel.Welcome
         private static string Megabytes(long bytes) => (bytes / 1048576.0).ToString("0.0", CultureInfo.CurrentCulture);
 
         /// <summary>A thin rounded bar, filled from the left.</summary>
-        private sealed class ProgressStrip : Control
+        internal sealed class ProgressStrip : Control
         {
             private double value;
 

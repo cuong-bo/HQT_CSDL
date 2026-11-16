@@ -51,8 +51,11 @@ services:
       Proxy__KnownNetworks__0: 172.30.0.0/24
       # Bản kê dữ liệu bản đồ nền do "pack-basemap" ghi; GET /v1/basemap/manifest trả nguyên văn.
       Basemap__Directory: /data/basemap
+      # Bản kê bộ cài máy khách do "publish-client" ghi; GET /v1/client/manifest trả nguyên văn.
+      ClientUpdate__Directory: /data/client
     volumes:
       - basemap_dist:/data/basemap:ro
+      - client_dist:/data/client:ro
     depends_on:
       db:
         condition: service_healthy
@@ -69,6 +72,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - basemap_dist:/srv/basemap:ro
+      - client_dist:/srv/client:ro
     depends_on:
       - api
     networks: [internal]
@@ -104,6 +108,17 @@ services:
       - ./du-lieu/nen-ban-do:/work/nen-ban-do:ro
       - basemap_dist:/dist
 
+  # One-off job: puts a client installer on the server so the apps update themselves.
+  # Run with: scripts/deploy.sh publish-client <HueTravel-Setup-x.y.z.exe> <x.y.z> ["notes"]
+  publish-client:
+    profiles: ["tools"]
+    image: python:3.12-slim
+    entrypoint: ["python", "/work/publish-client.py"]
+    network_mode: none
+    volumes:
+      - ./scripts/publish-client.py:/work/publish-client.py:ro
+      - client_dist:/dist
+
 networks:
   internal:
     ipam:
@@ -114,3 +129,4 @@ volumes:
   pgdata: {}
   caddy_data: {}
   basemap_dist: {}
+  client_dist: {}

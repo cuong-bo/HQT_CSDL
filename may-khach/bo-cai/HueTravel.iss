@@ -53,6 +53,8 @@ Name: "desktopicon"; Description: "Tạo biểu tượng trên màn hình"; Grou
 Filename: "{tmp}\vc_redist.x86.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "Đang cài Visual C++ Runtime..."; Flags: skipifdoesntexist
 Filename: "{sys}\regsvr32.exe"; Parameters: "/s ""{app}\MapWinGIS\MapWinGIS.ocx"""; StatusMsg: "Đang đăng ký MapWinGIS..."; Flags: runhidden
 Filename: "{app}\Hue_travel.exe"; Description: "Mở {#AppName}"; Flags: nowait postinstall skipifsilent
+; The app updates itself by running this installer quietly with /RELAUNCH=1 after it has closed: open it again for the person who was using it.
+Filename: "{app}\Hue_travel.exe"; Flags: nowait runasoriginaluser; Check: IsRelaunch
 
 [UninstallRun]
 Filename: "{sys}\regsvr32.exe"; Parameters: "/u /s ""{app}\MapWinGIS\MapWinGIS.ocx"""; RunOnceId: "UnregisterMapWinGIS"; Flags: runhidden
@@ -94,6 +96,11 @@ begin
     ServerPage.Values[1] := Trim(Legacy);
 end;
 
+function IsRelaunch: Boolean;
+begin
+  Result := ExpandConstant('{param:RELAUNCH|0}') = '1';
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   Dir: string;
@@ -102,7 +109,11 @@ begin
   begin
     Dir := ExpandConstant('{commonappdata}\HueTravel');
     ForceDirectories(Dir);
-    SaveStringToFile(Dir + '\server.txt', Trim(ServerPage.Values[0]), False);
-    SaveStringToFile(Dir + '\public.key', Trim(ServerPage.Values[1]), False);
+    // A quiet run is the app updating itself: the server address and key already on this computer stay, they are not replaced by the
+    // installer's defaults (which may be empty).
+    if not (WizardSilent and FileExists(Dir + '\server.txt')) then
+      SaveStringToFile(Dir + '\server.txt', Trim(ServerPage.Values[0]), False);
+    if not (WizardSilent and FileExists(Dir + '\public.key')) then
+      SaveStringToFile(Dir + '\public.key', Trim(ServerPage.Values[1]), False);
   end;
 end;
