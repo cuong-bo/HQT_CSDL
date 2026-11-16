@@ -59,14 +59,16 @@ rồi `scripts/deploy.sh up`. App đọc `GET /v1/config` lúc khởi động v�
 Địa chỉ phải là http(s) và chứa `{x}`, `{y}`, `{zoom}`; địa chỉ sai bị bỏ qua và app giữ địa chỉ có sẵn.
 Khóa của nhà cung cấp nằm trong địa chỉ này, nên ai chạy app đều thấy được; chọn loại khóa giới hạn theo tên miền hoặc theo mức dùng.
 
-### Trợ lý (DeepSeek)
+### Trợ lý (DeepSeek V4.1 Flash qua OpenCode API)
 
-Tab "Trợ lý" của app hỏi máy chủ, máy chủ mới hỏi DeepSeek. **Khóa chỉ nằm ở máy chủ**: đặt `DEEPSEEK_API_KEY` trong `.env` (tệp này không vào git),
-rồi `scripts/deploy.sh up`. Để trống thì trợ lý tắt và app hiện cẩm nang tĩnh (số điện thoại khẩn cấp, lưu ý tham quan). `DEEPSEEK_MODEL` đổi mô hình.
+Tab "Trợ lý" của app hỏi máy chủ, máy chủ mới hỏi mô hình DeepSeek V4.1 Flash qua OpenCode (`https://opencode.ai/inference/openai/v1/chat/completions`, định dạng OpenAI).
+**Khóa chỉ nằm ở máy chủ**: tạo khóa trong bảng điều khiển OpenCode, đặt `OPENCODE_API_KEY` trong `.env` (tệp này không vào git),
+rồi `scripts/deploy.sh up`. Để trống thì trợ lý tắt và app hiện cẩm nang tĩnh (số điện thoại khẩn cấp, lưu ý tham quan).
+`OPENCODE_MODEL` đổi mô hình (mặc định `deepseek-v4.1-flash`; bản "V4 Flash" cũ đã bị OpenCode ngừng; bản miễn phí là `deepseek-v4.1-flash-free`); danh sách mô hình: `GET https://opencode.ai/inference/v1/models`.
 - Hạn mức mỗi ngày: khách 20 câu, người dùng 100 câu (`Chat:GuestPerDay`, `Chat:UserPerDay`); mỗi IP tối đa 6 câu/phút (`RateLimit:ChatPerMinute`).
-- Xoay khóa: sửa `.env`, chạy lại `up`; thu hồi khóa cũ trên trang DeepSeek. Tắt khẩn cấp: xóa dòng khóa rồi `up`.
-- Nội dung câu hỏi không được ghi vào nhật ký. Tên mô hình và giá cần đối chiếu với tài liệu chính thức của DeepSeek trước khi mở rộng.
-- Máy chủ chưa từng được thử với DeepSeek thật trong lần phát triển này: sau khi đặt khóa, hãy hỏi thử vài câu ("Đại Nội mở cửa mấy giờ?", "gợi ý lịch trình 1 ngày") và xem `scripts/deploy.sh logs`.
+- Xoay khóa: sửa `.env`, chạy lại `up`; thu hồi khóa cũ trong bảng điều khiển OpenCode (nên đặt hạn mức chi tiêu thấp ở đó). Tắt khẩn cấp: xóa dòng khóa rồi `up`.
+- Nội dung câu hỏi không được ghi vào nhật ký. Tên mô hình và giá cần đối chiếu với tài liệu chính thức của OpenCode (opencode.ai/docs/zen) trước khi mở rộng.
+- Máy chủ chưa từng được thử với OpenCode thật trong lần phát triển này (chỉ thử với máy chủ giả cùng định dạng): sau khi đặt khóa, hãy hỏi thử vài câu ("Đại Nội mở cửa mấy giờ?", "gợi ý lịch trình 1 ngày") và xem `scripts/deploy.sh logs`.
 
 ### Khoảnh khắc (bản tin cộng đồng)
 

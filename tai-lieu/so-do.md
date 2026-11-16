@@ -32,7 +32,7 @@ flowchart LR
     end
 
     METEO["Open-Meteo<br/>thời tiết"]
-    DEEPSEEK["DeepSeek<br/>mô hình ngôn ngữ (khóa chỉ ở máy chủ)"]
+    DEEPSEEK["OpenCode API<br/>DeepSeek V4.1 Flash (khóa chỉ ở máy chủ)"]
 
     UI -- "HTTP / JSON" --> CADDY
     MAP -- "tải bản đồ nền lần đầu" --> CADDY
