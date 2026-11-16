@@ -33,6 +33,9 @@ services:
       ConnectionStrings__Default: Host=db;Database=huegis;Username=huegis_app;Password=${APP_DB_PASSWORD}
       Jwt__Key: ${JWT_KEY:?set JWT_KEY in .env (at least 32 characters)}
       Client__MinimumVersion: ${MIN_CLIENT_VERSION:-1.0.0}
+      # Update prompts for the app: older than MIN = must update; older than LATEST = invited to. DOWNLOAD_URL is opened in the browser.
+      Client__LatestVersion: ${LATEST_CLIENT_VERSION:-}
+      Client__DownloadUrl: ${CLIENT_DOWNLOAD_URL:-}
       # Optional base map tile addresses announced to the app (GET /v1/config); empty keeps the app's built-in ones.
       Client__TileAttribution: ${TILE_ATTRIBUTION:-}
       Client__TileUrls__roadmap: ${TILE_URL_ROADMAP:-}

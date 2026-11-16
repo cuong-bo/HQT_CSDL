@@ -11,6 +11,15 @@ namespace Hue_travel.Services.Online
 
         public string TileAttribution { get; private set; } = string.Empty;
 
+        /// <summary>Apps older than this must update (empty when the server does not say).</summary>
+        public string MinimumVersion { get; private set; } = string.Empty;
+
+        /// <summary>The newest version; older apps are invited to update (empty when the server does not say).</summary>
+        public string LatestVersion { get; private set; } = string.Empty;
+
+        /// <summary>Where the installer can be downloaded (opened in the browser); see <see cref="UpdateCheck.IsSafeUrl"/>.</summary>
+        public string DownloadUrl { get; private set; } = string.Empty;
+
         /// <summary>Reads /v1/config; a missing or unreadable answer gives empty settings, never an error.</summary>
         public static async Task<ApiConfigSource> FetchAsync(ApiClient api, CancellationToken cancellationToken)
         {
@@ -19,6 +28,9 @@ namespace Hue_travel.Services.Online
             if (!r.IsSuccess || r.Object == null) return result;
 
             result.TileAttribution = JsonHelper.Str(r.Object, "tileAttribution") ?? string.Empty;
+            result.MinimumVersion = JsonHelper.Str(r.Object, "minimumClientVersion") ?? string.Empty;
+            result.LatestVersion = JsonHelper.Str(r.Object, "latestClientVersion") ?? string.Empty;
+            result.DownloadUrl = JsonHelper.Str(r.Object, "downloadUrl") ?? string.Empty;
             IDictionary<string, object> urls = JsonHelper.Obj(r.Object, "tileUrls");
             if (urls == null) return result;
             foreach (KeyValuePair<string, object> pair in urls)

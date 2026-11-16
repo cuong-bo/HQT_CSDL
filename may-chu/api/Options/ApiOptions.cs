@@ -33,7 +33,15 @@ public sealed class RateLimitSettings
 
 public sealed class ClientSettings
 {
+    /// <summary>Apps older than this must update (the app says so and closes).</summary>
     public string MinimumVersion { get; set; } = "1.0.0";
+
+    /// <summary>The newest app version; apps older than this are invited to update (they may carry on). Empty = no invitation.</summary>
+    public string LatestVersion { get; set; } = string.Empty;
+
+    /// <summary>Where the installer is downloaded (an http or https address that opens in the browser); empty = the app only tells people to ask.</summary>
+    public string DownloadUrl { get; set; } = string.Empty;
+
     public string TileUrl { get; set; } = string.Empty;
     public string TileAttribution { get; set; } = string.Empty;
 

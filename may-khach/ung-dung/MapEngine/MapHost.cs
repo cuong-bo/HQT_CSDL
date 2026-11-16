@@ -438,6 +438,19 @@ namespace Hue_travel.MapEngine
 
         public bool TripPlaying => routeDrawing != null && routeDrawing.IsPlaying;
 
+        private double tripSpeedFactor = 8;
+
+        /// <summary>How fast the car drives (x1 real time, x2, x4, x8); applies at once, also in the middle of a trip.</summary>
+        public double TripSpeedFactor
+        {
+            get { return tripSpeedFactor; }
+            set
+            {
+                tripSpeedFactor = value;
+                if (routeDrawing != null) routeDrawing.Speed = value;
+            }
+        }
+
         /// <summary>Waits for the next click on the map and raises <see cref="PointPicked"/> with it (a crosshair shows meanwhile).</summary>
         public void BeginPickPoint()
         {
@@ -478,7 +491,7 @@ namespace Hue_travel.MapEngine
         private RouteDrawing EnsureRouteDrawing()
         {
             if (routeDrawing != null) return routeDrawing;
-            routeDrawing = new RouteDrawing(axMap, LowestPlacePosition);
+            routeDrawing = new RouteDrawing(axMap, LowestPlacePosition) { Speed = tripSpeedFactor };
             routeDrawing.LegChanged += (s, leg) => TripLegChanged?.Invoke(this, leg);
             routeDrawing.PlayStateChanged += (s, e) => TripPlayStateChanged?.Invoke(this, EventArgs.Empty);
             routeDrawing.Finished += (s, e) => TripFinished?.Invoke(this, EventArgs.Empty);

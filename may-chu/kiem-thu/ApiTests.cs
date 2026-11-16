@@ -245,6 +245,19 @@ public class ApiTests(ApiFixture fixture)
         Assert.False(string.IsNullOrEmpty(config.GetProperty("tileUrl").GetString()));
         Assert.False(string.IsNullOrEmpty(config.GetProperty("minimumClientVersion").GetString()));
         Assert.Equal(JsonValueKind.Object, config.GetProperty("tileUrls").ValueKind);   // empty unless the operator set per-map addresses
+        Assert.Equal(JsonValueKind.String, config.GetProperty("latestClientVersion").ValueKind);   // the update invitation; empty unless the operator set it
+        Assert.Equal(JsonValueKind.String, config.GetProperty("downloadUrl").ValueKind);
+    }
+
+    [RequiresDbFact]
+    public async Task Config_AnnouncesTheUpdateWhenTheOperatorSetsIt()
+    {
+        using WebApplicationFactory<Program> announced = fixture.Factory.WithWebHostBuilder(b => b
+            .UseSetting("Client:MinimumVersion", "1.1.0").UseSetting("Client:LatestVersion", "1.2.0").UseSetting("Client:DownloadUrl", "https://example.com/HueTravel-Setup-1.2.0.exe"));
+        JsonElement config = await Json(await announced.CreateClient().GetAsync("/v1/config"));
+        Assert.Equal("1.1.0", config.GetProperty("minimumClientVersion").GetString());
+        Assert.Equal("1.2.0", config.GetProperty("latestClientVersion").GetString());
+        Assert.Equal("https://example.com/HueTravel-Setup-1.2.0.exe", config.GetProperty("downloadUrl").GetString());
     }
 
     [RequiresDbFact]

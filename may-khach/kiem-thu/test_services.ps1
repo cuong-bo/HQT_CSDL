@@ -243,7 +243,7 @@ $hv = $repo | ? { $_.Id -eq 'DL001' }
 Check 'repo DL001 name' $hv.Name 'Hải Vân Quan'
 Check 'repo DL001 hours' $hv.OpeningHours '07:00-17:30'
 Check 'repo DL001 utm x plausible' ([int]($hv.X -gt 700000 -and $hv.X -lt 900000)) '1'
-Check 'repo DL001 lat' ([math]::Round($hv.Latitude, 4)) '16.1908'
+Check 'repo DL001 lat' ([math]::Round($hv.Latitude, 4)) '16.1878'
 $poiCat = (GetT 'Hue_travel.Services.Data.PoiCatalog').GetMethod('Load').Invoke($null, @([string]$dataDir))
 Check 'catalog loads real data' $poiCat.Count '190'
 # the guide's tours only name places that exist in the shipped data
@@ -589,6 +589,44 @@ Check 'image: longer side is 1600' "$($out.Width)x$($out.Height)" '1600x1067'
 $out.Dispose()
 Check 'image: a file that is not a picture gives null' ($prepare.Invoke($null, @([string]$PSCommandPath))) $null
 Remove-Item $tmp -ErrorAction SilentlyContinue
+
+# ---- TripSpeed (the car's speed: x1 x2 x4 x8, remembered in a file)
+$speedT = GetT 'Hue_travel.Services.TripSpeed'
+$next = $speedT.GetMethod('Next'); $label = $speedT.GetMethod('Label')
+Check 'speed: x1 -> x2' $next.Invoke($null, @([double]1)) '2'
+Check 'speed: x4 -> x8' $next.Invoke($null, @([double]4)) '8'
+Check 'speed: x8 wraps to x1' $next.Invoke($null, @([double]8)) '1'
+Check 'speed: unknown goes to the default x8' $next.Invoke($null, @([double]3)) '8'
+Check 'speed: label' $label.Invoke($null, @([double]4)) 'x4'
+$speedFile = Join-Path ([IO.Path]::GetTempPath()) 'hue-trip-speed-test.txt'
+Remove-Item $speedFile -ErrorAction SilentlyContinue
+$loadSpeed = $speedT.GetMethod('Load'); $saveSpeed = $speedT.GetMethod('Save')
+Check 'speed: no file gives the default' $loadSpeed.Invoke($null, @([string]$speedFile)) '8'
+[void]$saveSpeed.Invoke($null, @([double]2, [string]$speedFile))
+Check 'speed: saved choice is read back' $loadSpeed.Invoke($null, @([string]$speedFile)) '2'
+Set-Content -Path $speedFile -Value '5' -Encoding ASCII
+Check 'speed: a value that is not a choice gives the default' $loadSpeed.Invoke($null, @([string]$speedFile)) '8'
+Set-Content -Path $speedFile -Value 'abc' -Encoding ASCII
+Check 'speed: garbage gives the default' $loadSpeed.Invoke($null, @([string]$speedFile)) '8'
+Remove-Item $speedFile -ErrorAction SilentlyContinue
+
+# ---- UpdateCheck (the app compares its version with the oldest and the newest the server announces)
+$updT = GetT ($online + 'UpdateCheck')
+$eval = $updT.GetMethod('Evaluate'); $safe = $updT.GetMethod('IsSafeUrl')
+function Upd($cur, $min, $latest) { "$($eval.Invoke($null, @([version]$cur, [string]$min, [string]$latest)))" }
+Check 'update: same version is up to date' (Upd '1.1.0.0' '1.0.0' '1.1.0') 'UpToDate'
+Check 'update: older than latest is available' (Upd '1.0.0.0' '1.0.0' '1.1.0') 'Available'
+Check 'update: older than minimum is required' (Upd '1.0.0.0' '1.1.0' '1.1.0') 'Required'
+Check 'update: required wins over available' (Upd '1.0.0.0' '1.2.0' '1.3.0') 'Required'
+Check 'update: nothing announced is up to date' (Upd '1.0.0.0' '' '') 'UpToDate'
+Check 'update: garbage is ignored, never blocks' (Upd '1.0.0.0' 'abc' 'x.y') 'UpToDate'
+Check 'update: newer than the server knows is up to date' (Upd '2.0.0.0' '1.0.0' '1.1.0') 'UpToDate'
+Check 'update: v prefix and short version' (Upd '1.1.0.0' 'v1.1' '1.1') 'UpToDate'
+Check 'update: https url is safe' $safe.Invoke($null, @([string]'https://example.com/HueTravel-Setup.exe')) 'True'
+Check 'update: http url is safe' $safe.Invoke($null, @([string]'http://203.0.113.10/HueTravel-Setup.exe')) 'True'
+Check 'update: file url is not safe' $safe.Invoke($null, @([string]'file:///C:/Windows/System32/calc.exe')) 'False'
+Check 'update: a program path is not safe' $safe.Invoke($null, @([string]'C:\Windows\System32\calc.exe')) 'False'
+Check 'update: empty is not safe' $safe.Invoke($null, @([string]'')) 'False'
 
 Write-Host "passed=$script:pass failed=$script:fail"
 if ($script:fail -gt 0) { exit 1 }

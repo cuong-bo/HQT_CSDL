@@ -94,7 +94,20 @@ namespace Hue_travel.Panels.Assistant
         {
             txtQuestion.Font = ThemeFonts.Regular(13);
             lblHint.Font = ThemeFonts.Regular(13);
-            txtQuestion.TextChanged += (s, e) => lblHint.Visible = txtQuestion.TextLength == 0;
+            // The hint label sits on top of the text box and would hide its blinking caret, so it shows only while the box is empty AND
+            // not focused; a focused box gets a thick blue ring and a white fill, so it is plain that you can type.
+            Action refreshInput = () =>
+            {
+                bool focused = txtQuestion.Focused;
+                lblHint.Visible = txtQuestion.TextLength == 0 && !focused;
+                inputBox.FillColor = focused ? Color.White : ThemeColors.Slate50;
+                inputBox.RingColor = focused ? ThemeColors.Primary : Color.Empty;
+                txtQuestion.BackColor = inputBox.FillColor;
+                inputBox.Invalidate();
+            };
+            txtQuestion.TextChanged += (s, e) => refreshInput();
+            txtQuestion.GotFocus += (s, e) => refreshInput();
+            txtQuestion.LostFocus += (s, e) => refreshInput();
             txtQuestion.KeyDown += (s, e) =>
             {
                 if (e.KeyCode == Keys.Enter && !e.Shift) { e.SuppressKeyPress = true; Send(); }
@@ -191,6 +204,7 @@ namespace Hue_travel.Panels.Assistant
             guide.Visible = false;
             view.Visible = true;
             inputBar.Visible = true;
+            if (IsHandleCreated && Visible) txtQuestion.Focus();   // the caret blinks at once: nothing to click first
         }
 
         // ------------------------------------------------------------------ the conversation

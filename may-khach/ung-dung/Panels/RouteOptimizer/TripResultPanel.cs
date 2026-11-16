@@ -230,6 +230,8 @@ namespace Hue_travel.Panels.RouteOptimizer
         private readonly LegStrip legStrip = new LegStrip();
         private readonly IconButton btnPlay = new IconButton();
         private readonly IconButton btnReplay = new IconButton();
+        private readonly IconButton btnSpeed = new IconButton();
+        private double speed = Hue_travel.Services.TripSpeed.Default;
         private readonly IconButton btnFit = new IconButton();
         private readonly IconButton btnSave = new IconButton();
         private readonly IconButton btnPrint = new IconButton();
@@ -246,8 +248,22 @@ namespace Hue_travel.Panels.RouteOptimizer
         public event EventHandler ReplayRequested;
         public event EventHandler FitRequested;
 
+        /// <summary>Raised when the speed button is pressed: the new speed (1, 2, 4 or 8) is in <see cref="Speed"/>.</summary>
+        public event EventHandler SpeedChanged;
+
+        /// <summary>How many times faster than real time the car drives (x1, x2, x4, x8). Setting it only updates the button.</summary>
+        public double Speed
+        {
+            get { return speed; }
+            set
+            {
+                speed = value;
+                btnSpeed.Text = "Tốc độ " + Hue_travel.Services.TripSpeed.Label(value);
+            }
+        }
+
         /// <summary>Design size (96-DPI pixels) of the panel: a low bar to sit under the map.</summary>
-        public const int DesignWidth = 760;
+        public const int DesignWidth = 800;
         public const int DesignHeight = 204;
         /// <summary>Raised when the panel is folded away: the host shows a button on the map that calls <see cref="Unfold"/>.</summary>
         public event EventHandler Folded;
@@ -261,6 +277,8 @@ namespace Hue_travel.Panels.RouteOptimizer
             Round(btnClose, "close");
             Style(btnPlay, "Tạm dừng", "pause");
             Style(btnReplay, "Chạy lại", "refresh");
+            Style(btnSpeed, "Tốc độ " + Hue_travel.Services.TripSpeed.Label(speed), "route");
+            new ToolTip().SetToolTip(btnSpeed, "Đổi tốc độ xe: x1 là thời gian thật, x2, x4, x8 nhanh hơn");
             Style(btnFit, "Toàn tuyến", "route");
             Style(btnSave, "Lưu", "save_alt");
             Style(btnPrint, "In", "print");
@@ -278,13 +296,18 @@ namespace Hue_travel.Panels.RouteOptimizer
             new ToolTip().SetToolTip(btnFold, "Thu nhỏ thành biểu tượng");
             new ToolTip().SetToolTip(btnClose, "Dừng lại và xoá kết quả");
 
-            foreach (Control c in new Control[] { titleRow, btnFold, btnClose, legStrip, btnPlay, btnReplay, btnFit, btnSave, btnPrint, btnStop }) Controls.Add(c);
+            foreach (Control c in new Control[] { titleRow, btnFold, btnClose, legStrip, btnPlay, btnReplay, btnSpeed, btnFit, btnSave, btnPrint, btnStop }) Controls.Add(c);
 
             btnFold.Click += (s, e) => Fold();
             btnClose.Click += (s, e) => StopRequested?.Invoke(this, EventArgs.Empty);
             legStrip.LegClicked += (s, i) => { LegSelected?.Invoke(this, i); legStrip.SetActive(i); };
             btnPlay.Click += (s, e) => { if (carPlaying) PauseRequested?.Invoke(this, EventArgs.Empty); else PlayRequested?.Invoke(this, EventArgs.Empty); };
             btnReplay.Click += (s, e) => ReplayRequested?.Invoke(this, EventArgs.Empty);
+            btnSpeed.Click += (s, e) =>
+            {
+                Speed = Hue_travel.Services.TripSpeed.Next(speed);
+                SpeedChanged?.Invoke(this, EventArgs.Empty);
+            };
             btnFit.Click += (s, e) => FitRequested?.Invoke(this, EventArgs.Empty);
             btnSave.Click += (s, e) => SaveItinerary();
             btnPrint.Click += (s, e) => PrintItinerary();
@@ -399,9 +422,10 @@ namespace Hue_travel.Panels.RouteOptimizer
             legStrip.SetBounds(pad, stripY, width - pad * 2, controlsY - Ui.S(10) - stripY);
 
             int x = pad;
-            int w1 = Ui.S(112), w2 = Ui.S(100), w3 = Ui.S(116), w4 = Ui.S(72), w5 = Ui.S(62);
+            int w1 = Ui.S(112), w2 = Ui.S(100), w3 = Ui.S(116), w4 = Ui.S(72), w5 = Ui.S(62), w6 = Ui.S(104);
             btnPlay.SetBounds(x, controlsY, w1, rowH); x += w1 + gap;
             btnReplay.SetBounds(x, controlsY, w2, rowH); x += w2 + gap;
+            btnSpeed.SetBounds(x, controlsY, w6, rowH); x += w6 + gap;
             btnFit.SetBounds(x, controlsY, w3, rowH); x += w3 + gap;
             btnSave.SetBounds(x, controlsY, w4, rowH); x += w4 + gap;
             btnPrint.SetBounds(x, controlsY, w5, rowH);
