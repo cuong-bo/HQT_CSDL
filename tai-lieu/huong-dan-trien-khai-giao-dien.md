@@ -1,5 +1,7 @@
 # Hướng dẫn triển khai giao diện: từng bước, từng tệp
 
+> **Đã thực hiện (cập nhật 11/2026):** giao diện đã được làm lại theo hướng dẫn này (màu và kiểu bản đồ giữ nguyên). Khác với hướng dẫn: chữ có chân dùng **Georgia** (`ThemeFonts.SerifBold`, có sẵn trên Windows, không nhúng tệp Lora); thanh điều hướng có thêm mục Trợ lý và Khoảnh khắc; danh sách địa điểm có ảnh thu nhỏ; `Toast` là thẻ bo góc có dấu trạng thái.
+
 Bổ sung cho `ke-hoach-giao-dien.md` (kế hoạch: *làm gì và vì sao*). Tài liệu này là *làm thế nào*: tệp nào, dòng nào, mã nào. Đường dẫn tính từ `may-khach/ung-dung/` trừ khi ghi khác; số dòng là của mã tại thời điểm viết (nhánh `Cuong-bo/Hue-update`), nên **tìm theo nội dung dòng chứ đừng tin tuyệt đối vào số**, nhất là sau khi bạn đã sửa các tệp đó.
 
 ---

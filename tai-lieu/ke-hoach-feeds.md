@@ -1,5 +1,7 @@
 # Kế hoạch Feeds: bản tin cộng đồng chia sẻ khoảnh khắc du lịch Huế
 
+> **Đã triển khai (cập nhật 11/2026):** máy chủ ở `may-chu/api/Feeds/` và migration `V012__feed.sql`; máy khách ở `may-khach/ung-dung/Panels/Feed/` và mục kiểm duyệt trong `Admin/ModerationSection.cs`. Mặc định tắt (`Feed:Enabled=false`, biến `FEED_ENABLED`). Mã trong tài liệu này là khung ban đầu; mã thật có thể khác ở chi tiết (ví dụ ảnh lưu dạng `bytea` trong CSDL, con trỏ phân trang mã hóa base64). Xem `may-chu/VAN-HANH.md` mục "Khoảnh khắc".
+
 Tài liệu để bạn tự code. Đường dẫn tính từ gốc repo. Phần nào tôi chưa đọc mã thì ghi "đọc trước khi sửa". Mã SQL và C# trong tài liệu là **khung minh họa, chưa chạy thử** (khác với `huong-dan-trien-khai-giao-dien.md`, nơi mã mẫu đã biên dịch).
 
 ---

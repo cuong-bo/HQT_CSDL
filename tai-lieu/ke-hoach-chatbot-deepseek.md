@@ -2,7 +2,9 @@
 
 Tài liệu này để bạn tự code. Mọi đường dẫn tính từ gốc repo. Phần nào tôi chưa đọc mã thì ghi rõ "đọc trước khi sửa".
 
-> **Chưa kiểm chứng:** tên model, giá và định dạng gọi hàm của DeepSeek dưới đây là theo hiểu biết của tôi, chưa đối chiếu tài liệu chính thức. Trước khi code hãy mở https://api-docs.deepseek.com và kiểm tra lại (Bước 0). Tên model được đặt trong cấu hình nên đổi không cần sửa mã.
+> **Đã triển khai (cập nhật 11/2026):** Trợ lý nằm ở `may-chu/api/Chat/` và `may-khach/ung-dung/Panels/Assistant/`. Nhà cung cấp đã đổi từ DeepSeek trực tiếp sang **DeepSeek V4.1 Flash qua OpenCode API** (`https://opencode.ai/inference/openai/v1`, mô hình `deepseek-v4.1-flash`, biến `OPENCODE_API_KEY`); định dạng gọi vẫn là OpenAI `chat/completions` nên mã không đổi. Phần dưới là kế hoạch ban đầu, còn nhắc tên DeepSeek và `DEEPSEEK_*`: theo `may-chu/VAN-HANH.md` và `.env.example` khi cấu hình.
+>
+> **Chưa kiểm chứng (kế hoạch ban đầu):** tên model, giá và định dạng gọi hàm của DeepSeek dưới đây là theo hiểu biết của tôi, chưa đối chiếu tài liệu chính thức. Trước khi code hãy mở https://api-docs.deepseek.com và kiểm tra lại (Bước 0). Tên model được đặt trong cấu hình nên đổi không cần sửa mã.
 
 ---
 

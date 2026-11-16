@@ -23,6 +23,8 @@ Windows nhẹ, hiển thị bản đồ và gọi máy chủ khi cần.
 | Danh sách địa điểm, tìm kiếm, nhóm | ✔ (nguồn chính) | hiển thị; dùng bản dữ liệu đã tải về để xem khi không có mạng |
 | Tài khoản, đăng nhập, yêu thích, lịch trình đã lưu, báo sai, chủ quản | ✔ | giao diện |
 | Thời tiết, khu vực đang xem | ✔ (trung chuyển) | hiển thị |
+| **Trợ lý** (chat): gọi mô hình DeepSeek V4.1 Flash qua OpenCode API, chạy công cụ tìm địa điểm / lộ trình / thời tiết, hạn mức theo ngày | ✔ (giữ khóa API, không bao giờ gửi khóa xuống máy khách) | khung chat; cẩm nang tĩnh khi ngoại tuyến hoặc máy chủ chưa bật |
+| **Khoảnh khắc** (bản tin cộng đồng): bài, ảnh, thích, bình luận, báo cáo, hàng chờ duyệt, tự ẩn khi bị báo cáo | ✔ (mặc định tắt; ảnh nén lại và lưu trong CSDL) | đăng bài (chọn và thu nhỏ ảnh trước khi tải), xem, bình luận; bảng kiểm duyệt cho quản trị |
 | Cung cấp dữ liệu bản đồ nền (gói shapefile + bản kê phiên bản) | ✔ (`deploy.sh pack`, phục vụ qua Caddy) | tự tải ở lần chạy đầu và khi có bản mới |
 | Vẽ bản đồ nền (xã, tỉnh, sông, đường) | – | ✔ (từ dữ liệu đã tải về máy) |
 | Xe giả lập chạy trên tuyến | – | ✔ |

@@ -130,7 +130,8 @@ Các bài kiểm thử cơ sở dữ liệu cần biến môi trường `HUE_TES
 | **OpenStreetMap** (hình học đường, sông) | © OpenStreetMap contributors, ODbL 1.0 (phải ghi nguồn) | Gốc của mạng đường dùng để tìm đường và vẽ bản đồ nền |
 | Dữ liệu địa điểm, ranh giới tỉnh/xã | Dữ liệu của dự án (`may-chu/du-lieu/shp`, `nen-ban-do`) | Nội dung các bảng `poi`, `ranh_tinh`, `ranh_xa`… |
 | **Open-Meteo** | CC BY 4.0, miễn phí phi thương mại (phải ghi nguồn) | Thời tiết hiện tại, máy chủ gọi rồi nhớ tạm để máy khách không gọi trực tiếp |
-| **Plus Jakarta Sans** (4 độ đậm) | SIL Open Font License 1.1 | Phông chữ của toàn bộ giao diện, nhúng sẵn trong ứng dụng |
+| **OpenCode API** (mô hình **DeepSeek V4.1 Flash**, định dạng OpenAI `chat/completions`) | Dịch vụ trả phí theo mức dùng, cần khóa API; khóa chỉ nằm ở máy chủ | Trợ lý chat: máy chủ gửi câu hỏi kèm các công cụ (tìm địa điểm, lộ trình, thời tiết) và trả lời cho máy khách. Tắt khi không có khóa |
+| **Plus Jakarta Sans** (4 độ đậm) | SIL Open Font License 1.1 | Phông chữ của toàn bộ giao diện, nhúng sẵn trong ứng dụng; tên địa điểm và tiêu đề panel dùng **Georgia** (phông có chân, có sẵn trên Windows, không nhúng) |
 | **Material Symbols Outlined** (bản con ~60 biểu tượng) | Apache License 2.0 | Phông biểu tượng (kính lúp, sao, khóa, chuông…) |
 | Địa chỉ tile bản đồ Google | Còn trong `MapEngine/BaseMapCatalog.cs` nhưng **đã tắt** (`UseLocalData = true`) | Không dùng; bản đồ nền vẽ từ dữ liệu của dự án |
 

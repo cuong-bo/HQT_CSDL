@@ -75,6 +75,13 @@ nano .env
 
 Lưu trong `nano`: `Ctrl+O`, Enter, rồi `Ctrl+X`. Các dòng còn lại để mặc định (xem chú thích trong tệp). **Không đưa `.env` lên Git, không gửi cho ai.**
 
+Hai tính năng tùy chọn, **mặc định tắt**:
+
+| Dòng | Ý nghĩa |
+|---|---|
+| `OPENCODE_API_KEY` | Khóa OpenCode API để bật **Trợ lý** (DeepSeek V4.1 Flash, `OPENCODE_MODEL=deepseek-v4.1-flash`). Để trống thì tab Trợ lý chỉ hiện cẩm nang tĩnh. Nên đặt hạn mức chi tiêu thấp trong bảng điều khiển OpenCode |
+| `FEED_ENABLED` | `true` để bật **Khoảnh khắc** (bản tin cộng đồng). Chỉ bật khi đã có người xử lý hàng chờ duyệt và báo cáo; xem [VAN-HANH.md](VAN-HANH.md) |
+
 Các dòng `TILE_URL_*`: bản đồ nền hiện vẽ ngay trong ứng dụng từ dữ liệu của dự án nên **để trống**.
 
 ## 5. Chạy lần đầu
