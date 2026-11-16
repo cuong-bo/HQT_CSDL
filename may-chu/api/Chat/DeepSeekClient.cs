@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -31,6 +32,9 @@ public sealed class DeepSeekClient(IHttpClientFactory clients, IOptions<ChatOpti
             Content = new StringContent(body.ToJsonString(), Encoding.UTF8, "application/json"),
         };
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", o.ApiKey);
+        // OpenCode Go wants clients to name themselves and to send one stable id per conversation (routing and prompt caching).
+        request.Headers.UserAgent.ParseAdd("hue-travel-api/1.0");
+        request.Headers.TryAddWithoutValidation("x-opencode-session", SessionId(messages));
 
         using CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeout.CancelAfter(TimeSpan.FromSeconds(Math.Max(5, o.TimeoutSeconds)));
@@ -50,6 +54,16 @@ public sealed class DeepSeekClient(IHttpClientFactory clients, IOptions<ChatOpti
         {
             throw new ChatUpstreamException("DeepSeek took too long", ex);   // the timeout, not the person leaving
         }
+    }
+
+    /// <summary>
+    /// One id for the whole conversation: the app sends the full history every time, so the first thing the person said stays the same
+    /// from turn to turn. Only a hash of it leaves the server, never the words.
+    /// </summary>
+    public static string SessionId(IReadOnlyList<ModelMessage> messages)
+    {
+        string first = messages.FirstOrDefault(m => m.Role == "user")?.Content ?? string.Empty;
+        return "hue-" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(first)))[..24].ToLowerInvariant();
     }
 
     /// <summary>The messages in the wire format (assistant turns that ask for tools carry their tool_calls; tool results carry the call id).</summary>
