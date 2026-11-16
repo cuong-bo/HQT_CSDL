@@ -44,5 +44,5 @@ msbuild may-khach\ung-dung\Hue_travel.csproj /restore /p:Configuration=Debug
 powershell -ExecutionPolicy Bypass -File may-khach\dong-goi.ps1 -Version 1.0.0 -Server http://IP_VPS
 ```
 
-Bộ kiểm thử `test_services.ps1` hiện có **247** kiểm thử (đọc dữ liệu, lập lộ trình, thời tiết, phân tích câu trả lời của Trợ lý, bài Khoảnh khắc, xử lý ảnh trước khi tải lên).
+Bộ kiểm thử `test_services.ps1` hiện có **269** kiểm thử (đọc dữ liệu, lập lộ trình, thời tiết, phân tích câu trả lời của Trợ lý, bài Khoảnh khắc, xử lý ảnh trước khi tải lên).
 Chạy thử ứng dụng với máy chủ cục bộ: `set HUE_API_URL=http://127.0.0.1:5080` rồi mở `ung-dung\bin\Debug\Hue_travel.exe`; chọn "Khách" để xem Trợ lý, đăng nhập để đăng bài Khoảnh khắc.

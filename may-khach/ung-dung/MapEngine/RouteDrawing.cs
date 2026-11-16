@@ -19,8 +19,6 @@ namespace Hue_travel.MapEngine
     /// </summary>
     internal sealed class RouteDrawing : IDisposable
     {
-        private const double MinSpeedMetresPerSecond = 120;     // a short trip is not a blink
-        private const double TripSeconds = 26;                  // a long trip is shown in about this time
         private const double FallbackMetresPerSecond = 8.3;     // about 30 km/h, when a leg comes without road times
         private const int FrameMs = 33;
         private const double DwellSeconds = 0.9;                // the car waits a moment at every stop
@@ -43,7 +41,7 @@ namespace Hue_travel.MapEngine
         private double[] elapsed = new double[0];    // real travel seconds on arrival at every point of the line
         private double totalElapsed;
         private double tripClock;                    // real travel seconds the car has driven so far
-        private double clockScale;                   // real seconds that pass per second of the show
+        private double speed = 8;                    // real travel seconds that pass per second of the show (x1, x2, x4, x8)
         private double dwellLeft;
         private int legIndex;
         private bool playing;
@@ -71,6 +69,13 @@ namespace Hue_travel.MapEngine
         public bool IsPlaying => playing;
 
         public bool Follow { get; set; } = true;
+
+        /// <summary>How many seconds of real travel pass per second on screen: x1 drives the whole trip in its real time, x8 eight times faster. Changing it mid-trip keeps the car where it is.</summary>
+        public double Speed
+        {
+            get { return speed; }
+            set { speed = Math.Max(0.25, Math.Min(64, value)); }
+        }
 
         public int CurrentLeg => legIndex;
 
@@ -152,9 +157,6 @@ namespace Hue_travel.MapEngine
                 for (int i = 0; i < elapsed.Length; i++) elapsed[i] = cumulative[i] / FallbackMetresPerSecond;
                 totalElapsed = total / FallbackMetresPerSecond;
             }
-            // The whole trip is shown in a fixed time (a short one is not a blink); real seconds are compressed to fit.
-            double shown = Math.Max(1, Math.Min(TripSeconds, total / MinSpeedMetresPerSecond));
-            clockScale = totalElapsed / shown;
         }
 
         // Without road times, a leg's own total time is spread over its points by distance.
@@ -362,7 +364,7 @@ namespace Hue_travel.MapEngine
                 else
                 {
                     double before = travelled;
-                    tripClock = Math.Min(totalElapsed, tripClock + clockScale * dt);
+                    tripClock = Math.Min(totalElapsed, tripClock + speed * dt);
                     travelled = tripClock >= totalElapsed ? total : DistanceAt(tripClock);
                     moved = travelled != before;
                     int arrived = Array.FindIndex(legEnds, end => before < end - 0.001 && travelled >= end - 0.001);
@@ -373,7 +375,7 @@ namespace Hue_travel.MapEngine
                     }
                     else if (arrived >= 0)
                     {
-                        dwellLeft = DwellSeconds;
+                        dwellLeft = DwellSeconds / Math.Min(speed, 4);   // at x8 a stop is not a long wait
                     }
                     UpdateLeg();
                 }

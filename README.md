@@ -7,7 +7,7 @@ Toàn bộ giao diện bằng tiếng Việt.
 
 - **Bản đồ nền** vẽ từ dữ liệu của dự án (xã, tỉnh, sông, đường), 6 nhóm địa điểm: di tích, cảnh quan, ẩm thực, lưu trú, dịch vụ, giao thông.
 - **Khám phá và tìm kiếm** địa điểm theo nhóm, thẻ chi tiết (giờ mở cửa, giá vé, ảnh, đánh giá), danh sách gần khu vực đang xem.
-- **Lộ trình**: xếp thứ tự điểm đến ngắn nhất theo đường bộ thật (pgRouting, tối đa 12 điểm), xe chạy mô phỏng trên tuyến theo thời gian từng đoạn đường.
+- **Lộ trình**: xếp thứ tự điểm đến ngắn nhất theo đường bộ thật (pgRouting, tối đa 12 điểm), xe chạy mô phỏng trên tuyến theo thời gian từng đoạn đường, chọn tốc độ x1 (thời gian thật), x2, x4, x8 và nhớ lựa chọn lần trước.
 - **Trợ lý** (chat): hỏi địa điểm, giờ mở cửa, thời tiết, gợi ý lộ trình. Máy chủ gọi **DeepSeek V4.1 Flash qua OpenCode API**; khóa chỉ nằm ở máy chủ. Khi ngoại tuyến hoặc chưa bật, hiện cẩm nang tĩnh (số khẩn cấp, lưu ý tham quan).
 - **Khoảnh khắc**: bản tin cộng đồng chia sẻ ảnh, địa điểm và lộ trình; thích, bình luận, báo cáo; kiểm duyệt bởi quản trị viên. **Mặc định tắt** (`FEED_ENABLED=false`).
 - **Tài khoản và ba vai trò**: người dùng (yêu thích, lịch trình, đánh giá, báo sai), chủ quản địa điểm (nhận quản lý, thông báo, ảnh), quản trị viên (duyệt ảnh, yêu cầu chỉnh sửa, bài Khoảnh khắc, báo cáo, nhật ký).
@@ -59,7 +59,7 @@ Hai phần chỉ giao tiếp qua HTTP/JSON; mỗi phần dựng, kiểm thử v�
 | `du-lieu/shp/` | shapefile máy chủ cần (địa điểm, mạng đường, **nút giao thông**, ranh giới) |
 | `docker-compose.yml`, `Caddyfile`, `.env.example`, `docker-csdl/` | dựng 3 dịch vụ: Caddy, API, PostgreSQL |
 | `scripts/` | `setup-vps.sh` (cài VPS), `deploy.sh` (up/import/update/rollback), `backup.sh`, `restore.sh`, `gen-signing-key.sh` |
-| `kiem-thu/` | test API: đơn vị và tích hợp với CSDL thật (153 test) |
+| `kiem-thu/` | test API: đơn vị và tích hợp với CSDL thật (154 test) |
 | `dong-goi.ps1` | (tùy chọn) đóng gói `.tar.gz` khi VPS không vào được GitHub |
 | `HUONG-DAN-CAI-DAT.md`, `VAN-HANH.md` | cài đặt từng bước; vận hành hằng ngày (gồm mục Trợ lý và Khoảnh khắc) |
 
@@ -70,7 +70,7 @@ Hai phần chỉ giao tiếp qua HTTP/JSON; mỗi phần dựng, kiểm thử v�
 | `ung-dung/` | ứng dụng WinForms (.NET Framework 4.7.2, x86) tự tải dữ liệu bản đồ (`Data/shp`) từ máy chủ ở lần chạy đầu và khi có bản mới |
 | `Hue_travel.sln` | solution Visual Studio |
 | `bo-cai/` | bộ cài Inno Setup (`HueTravel.iss`) |
-| `kiem-thu/` | test dịch vụ của ứng dụng (PowerShell 32-bit, 247 test) |
+| `kiem-thu/` | test dịch vụ của ứng dụng (PowerShell 32-bit, 269 test) |
 | `dong-goi.ps1` | dựng bộ cài `HueTravel-Setup-<phiên bản>.exe` |
 | `HUONG-DAN-CAI-DAT.md` | cài đặt cho người dùng và cho người làm bộ cài |
 
@@ -100,7 +100,8 @@ Sao chép từ `.env.example`; `.env` không vào git.
 | `OPENCODE_API_KEY` | khóa OpenCode API cho **Trợ lý**; để trống thì Trợ lý tắt (app hiện cẩm nang tĩnh) |
 | `OPENCODE_MODEL` | mô hình, mặc định `deepseek-v4.1-flash` (bản miễn phí: `deepseek-v4.1-flash-free`) |
 | `FEED_ENABLED` | `true` để bật **Khoảnh khắc**; mặc định `false` (nên bật khi đã có HTTPS và người xử lý báo cáo) |
-| `MIN_CLIENT_VERSION`, `TILE_*` | phiên bản app tối thiểu; địa chỉ ô bản đồ nền (tùy chọn) |
+| `LATEST_CLIENT_VERSION`, `CLIENT_DOWNLOAD_URL`, `MIN_CLIENT_VERSION` | **yêu cầu máy khách cập nhật**: bản mới nhất (mời cập nhật), địa chỉ tải bộ cài (mở trong trình duyệt), bản cũ nhất còn được dùng (bắt buộc cập nhật). Chỉ có tác dụng với máy khách từ 1.2.0 trở đi; xem [VAN-HANH.md](may-chu/VAN-HANH.md) |
+| `TILE_*` | địa chỉ ô bản đồ nền (tùy chọn) |
 
 ## Chạy thử trên máy phát triển
 

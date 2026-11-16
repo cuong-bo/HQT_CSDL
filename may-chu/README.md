@@ -23,7 +23,7 @@ Thư mục này **tự đủ**: `git clone` kho mã, `cd may-chu`, rồi làm th
 
 Bảng tin Khoảnh khắc: tài khoản dưới 24 giờ hoặc chưa có đủ 2 bài được duyệt thì bài vào hàng chờ duyệt; giới hạn mỗi ngày (bài, bình luận, ảnh); bài tự ẩn khi có 3 người khác nhau báo cáo. Chi tiết vận hành: [VAN-HANH.md](VAN-HANH.md).
 
-Kiểm thử: `dotnet test kiem-thu` (153 test, cần runtime .NET 8; biến `HUE_TEST_DB` trỏ vào một CSDL đã nạp để chạy các test tích hợp).
+Kiểm thử: `dotnet test kiem-thu` (154 test, cần runtime .NET 8; biến `HUE_TEST_DB` trỏ vào một CSDL đã nạp để chạy các test tích hợp).
 
 ## Bố cục
 

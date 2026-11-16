@@ -70,6 +70,20 @@ rồi `scripts/deploy.sh up`. Để trống thì trợ lý tắt và app hiện 
 - Nội dung câu hỏi không được ghi vào nhật ký. Tên mô hình và giá cần đối chiếu với tài liệu chính thức của OpenCode (opencode.ai/docs/zen) trước khi mở rộng.
 - Máy chủ chưa từng được thử với OpenCode thật trong lần phát triển này (chỉ thử với máy chủ giả cùng định dạng): sau khi đặt khóa, hãy hỏi thử vài câu ("Đại Nội mở cửa mấy giờ?", "gợi ý lịch trình 1 ngày") và xem `scripts/deploy.sh logs`.
 
+### Yêu cầu máy khách cập nhật
+
+Máy chủ báo cho mọi máy khách qua `GET /v1/config`; máy khách (từ bản **1.2.0** trở đi) so phiên bản của mình khi mở ứng dụng:
+
+| Biến trong `.env` | Tác dụng |
+|---|---|
+| `LATEST_CLIENT_VERSION` | bản mới nhất, ví dụ `1.2.0`. Máy khách cũ hơn sẽ hỏi "Mở trang tải bản mới ngay?" và **vẫn dùng tiếp được** nếu chọn để sau |
+| `MIN_CLIENT_VERSION` | bản cũ nhất còn được dùng. Máy khách cũ hơn thấy thông báo "Cần cập nhật", ứng dụng mở trang tải rồi **đóng lại** |
+| `CLIENT_DOWNLOAD_URL` | địa chỉ `http`/`https` của bộ cài (ví dụ trang Releases trên GitHub); máy khách chỉ mở nó trong trình duyệt, **không tự tải hay tự chạy** tệp nào. Để trống thì máy khách chỉ nhắc liên hệ người quản trị |
+
+Quy trình ra bản mới: dựng bộ cài (`may-khach/dong-goi.ps1 -Version X.Y.Z`), đưa lên nơi tải, đặt `CLIENT_DOWNLOAD_URL` và `LATEST_CLIENT_VERSION=X.Y.Z` trong `.env`, rồi `scripts/deploy.sh update` (chỉ dựng lại API, không cần nạp lại dữ liệu). Chỉ nâng `MIN_CLIENT_VERSION` khi bản cũ thật sự không dùng được nữa (ví dụ đổi giao thức), vì nó chặn người dùng.
+
+**Giới hạn:** các máy khách **cũ hơn 1.2.0 chưa có đoạn kiểm tra này** nên sẽ không thấy thông báo; lần đầu họ phải được phát bộ cài 1.2.0 bằng tay. Từ đó trở đi các lần sau tự được nhắc.
+
 ### Khoảnh khắc (bản tin cộng đồng)
 
 Mặc định **tắt** (`FEED_ENABLED=false`); khi tắt, mọi đường dẫn của tính năng trả 503 và app hiện "Tính năng này chưa được bật". Cơ sở dữ liệu cần migration `V012__feed.sql`

@@ -25,6 +25,8 @@ namespace Hue_travel.Theme
         [Category("Appearance")] public Color FillColor2 { get; set; }
         [Category("Appearance")] public Color BorderColor { get; set; }
         [Category("Appearance")] public int Radius { get; set; }
+        /// <summary>When set, a 2px ring in this colour is drawn over the border (the "focused" look of an input box).</summary>
+        [Category("Appearance")] public Color RingColor { get; set; }
 
         protected override void OnPaint(PaintEventArgs e)
         {
@@ -48,6 +50,14 @@ namespace Hue_travel.Theme
                 if (!BorderColor.IsEmpty && BorderColor.A > 0)
                 {
                     using (var pen = new Pen(BorderColor, 1f)) g.DrawPath(pen, path);
+                }
+                if (!RingColor.IsEmpty && RingColor.A > 0)
+                {
+                    using (var pen = new Pen(RingColor, System.Math.Max(2f, Ui.S(2))))
+                    using (GraphicsPath ring = Ui.RoundedRect(new RectangleF(1f, 1f, Width - 2f, Height - 2f), Ui.S(Radius)))
+                    {
+                        g.DrawPath(pen, ring);
+                    }
                 }
             }
         }

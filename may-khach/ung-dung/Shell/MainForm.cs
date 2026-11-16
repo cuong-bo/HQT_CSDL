@@ -222,6 +222,10 @@ namespace Hue_travel.Shell
             tripResultPanel.PauseRequested += (s, e) => mapHost.PauseTrip();
             tripResultPanel.ReplayRequested += (s, e) => mapHost.ReplayTrip();
             tripResultPanel.FitRequested += (s, e) => mapHost.ZoomToTrip();
+            double rememberedSpeed = TripSpeed.Load();   // the last choice of the car's speed (x1, x2, x4, x8)
+            tripResultPanel.Speed = rememberedSpeed;
+            mapHost.TripSpeedFactor = rememberedSpeed;
+            tripResultPanel.SpeedChanged += (s, e) => { mapHost.TripSpeedFactor = tripResultPanel.Speed; TripSpeed.Save(tripResultPanel.Speed); };
             mapHost.TripPlayStateChanged += (s, e) => tripResultPanel.SetCarPlaying(mapHost.TripPlaying);
             mapHost.TripLegChanged += (s, leg) => tripResultPanel.SetActiveLeg(leg);
             mapHost.PointPicked += (s, point) =>
@@ -527,6 +531,56 @@ namespace Hue_travel.Shell
             else if (poi.HasLocation) mapHost.ZoomTo(poi.Longitude, poi.Latitude);
         }
 
+        private bool updateNoticeShown;
+
+        // The server announces the oldest version it accepts and the newest one. Older than the oldest: the app says so and closes (after
+        // opening the download page). Older than the newest: the person is invited to update and may carry on. The app never runs a
+        // download by itself; it only opens the announced http(s) address in the browser.
+        private void ShowUpdateNotice(ApiConfigSource config)
+        {
+            if (updateNoticeShown) return;
+            Version current = typeof(MainForm).Assembly.GetName().Version;
+            UpdateState state = UpdateCheck.Evaluate(current, config.MinimumVersion, config.LatestVersion);
+            if (state == UpdateState.UpToDate) return;
+            updateNoticeShown = true;
+
+            bool canOpen = UpdateCheck.IsSafeUrl(config.DownloadUrl);
+            string have = current.Major + "." + current.Minor + "." + Math.Max(0, current.Build);
+            if (state == UpdateState.Required)
+            {
+                MessageBox.Show(this,
+                    "Phiên bản bạn đang dùng (" + have + ") đã cũ, cần cập nhật lên " + config.MinimumVersion + " trở lên để tiếp tục dùng." +
+                    (canOpen ? "\n\nBấm OK để mở trang tải bản mới; ứng dụng sẽ đóng lại." : "\n\nHãy liên hệ người quản trị để lấy bản cài mới."),
+                    "Cần cập nhật", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (canOpen) OpenInBrowser(config.DownloadUrl);
+                Close();
+                return;
+            }
+
+            if (!canOpen)
+            {
+                toast.ShowMessage("Đã có phiên bản mới " + config.LatestVersion + ". Hãy liên hệ người quản trị để cập nhật.", ToastKind.Info);
+                return;
+            }
+            DialogResult answer = MessageBox.Show(this,
+                "Đã có phiên bản mới " + config.LatestVersion + " (bạn đang dùng " + have + ").\n\nMở trang tải bản mới ngay?",
+                "Có bản cập nhật", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+            if (answer == DialogResult.Yes) OpenInBrowser(config.DownloadUrl);
+        }
+
+        private void OpenInBrowser(string url)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+            catch (System.ComponentModel.Win32Exception ex)
+            {
+                Debug.WriteLine("OpenInBrowser: " + ex.Message);
+                toast.ShowMessage("Không mở được trình duyệt. Địa chỉ tải: " + url, ToastKind.Error);
+            }
+        }
+
         // Cached places first (instant, works without a network), then the session and the fresh list from the server.
         private async void StartOnline()
         {
@@ -538,6 +592,7 @@ namespace Hue_travel.Shell
 
                 ApiConfigSource config = await ApiConfigSource.FetchAsync(api, lifetime.Token);
                 if (BaseMapCatalog.ApplyOverrides(config.TileUrls, config.TileAttribution)) mapHost.ReloadBaseMap();
+                ShowUpdateNotice(config);
 
                 IReadOnlyList<Poi> fresh = await ApiPoiSource.FetchAllAsync(api, lifetime.Token);
                 if (fresh.Count == 0) return;
