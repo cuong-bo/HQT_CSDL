@@ -6,6 +6,7 @@
 #   pack      only pack the base map (du-lieu/shp + du-lieu/nen-ban-do) into the package the app downloads
 #   update    git pull, rebuild the API, restart it; goes back to the previous image if /healthz does not answer
 #   rollback  put the previous API image back
+#   publish-client <setup.exe> <x.y.z> [notes]   put a client installer on the server: every app older than x.y.z must update
 #   status    containers and health
 #   logs      follow the logs
 set -euo pipefail
@@ -37,6 +38,11 @@ case "${1:-}" in
     pack)
         "${compose[@]}" --profile tools run --rm pack-basemap
         ;;
+    publish-client)
+        [ $# -ge 3 ] || { echo "usage: deploy.sh publish-client <HueTravel-Setup-x.y.z.exe> <x.y.z> [notes]" >&2; exit 1; }
+        [ -f "$2" ] || { echo "no such file: $2" >&2; exit 1; }
+        "${compose[@]}" --profile tools run --rm -v "$(realpath "$2"):/in/setup.exe:ro" publish-client /in/setup.exe "$3" /dist "${4:-}"
+        ;;
     update)
         git pull --ff-only
         docker tag hue-travel-api:latest hue-travel-api:previous 2>/dev/null || true
@@ -62,7 +68,7 @@ case "${1:-}" in
         "${compose[@]}" logs -f --tail=100
         ;;
     *)
-        sed -n '2,11p' "$0"
+        sed -n '2,12p' "$0"
         exit 1
         ;;
 esac
