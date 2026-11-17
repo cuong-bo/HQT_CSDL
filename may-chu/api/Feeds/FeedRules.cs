@@ -83,11 +83,6 @@ public static class FeedRules
         return approved >= options.ApprovedPostsToTrust;
     }
 
-    public static Task<bool> HasAcceptedTermsAsync(NpgsqlDataSource db, long userId, CancellationToken ct) =>
-        db.ExistsAsync("select feed_terms_at is not null from app_user where id = @u", ct, ("u", userId));
-
-    public const string TermsRequired = "Hãy đồng ý quy tắc cộng đồng trước khi dùng Khoảnh khắc.";
-
     public static string CursorOf(DateTimeOffset createdAt, long id) =>
         Convert.ToBase64String(Encoding.ASCII.GetBytes(createdAt.UtcTicks + ":" + id));
 

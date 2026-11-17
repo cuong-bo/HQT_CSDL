@@ -80,18 +80,17 @@ public class FeedDbTests : IDisposable
         await Json(await http.GetAsync($"/v1/feed?poi={poi}&limit={limit}" + (cursor == null ? "" : "&cursor=" + Uri.EscapeDataString(cursor))));
 
     [RequiresDbFact]
-    public async Task PostingNeedsTheRules_ANewAccountWaitsForReview_ThenTheAdminApproves()
+    public async Task PostingNeedsNoConfirmation_ANewAccountWaitsForReview_ThenTheAdminApproves()
     {
         (HttpClient admin, _, _) = await UserAsync("admin");
         string place = await PlaceAsync(admin);
         (HttpClient user, _, _) = await UserAsync();
 
-        Assert.Equal(HttpStatusCode.Forbidden, (await user.PostAsJsonAsync("/v1/posts", new { body = "chưa đồng ý quy tắc", poiId = place })).StatusCode);
+        // There is no community-rules confirmation any more: the status says "accepted" (so that apps of 1.2.0 do not ask) and nothing blocks the first post.
         JsonElement me = await Json(await user.GetAsync("/v1/me/feed"));
-        Assert.False(me.GetProperty("termsAccepted").GetBoolean());
+        Assert.True(me.GetProperty("termsAccepted").GetBoolean());
         Assert.False(me.GetProperty("trusted").GetBoolean());
 
-        Assert.Equal(HttpStatusCode.NoContent, (await user.PostAsync("/v1/me/feed-terms", null)).StatusCode);
         long id = await PostAsync(user, new { body = "  Sáng sớm ở Đại Nội \u0007 ", poiId = place });
 
         JsonElement mine = (await Json(await user.GetAsync("/v1/me/posts")))[0];

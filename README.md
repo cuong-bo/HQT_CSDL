@@ -70,7 +70,7 @@ Hai phần chỉ giao tiếp qua HTTP/JSON; mỗi phần dựng, kiểm thử v�
 | `ung-dung/` | ứng dụng WinForms (.NET Framework 4.7.2, x86) tự tải dữ liệu bản đồ (`Data/shp`) từ máy chủ ở lần chạy đầu và khi có bản mới |
 | `Hue_travel.sln` | solution Visual Studio |
 | `bo-cai/` | bộ cài Inno Setup (`HueTravel.iss`) |
-| `kiem-thu/` | test dịch vụ của ứng dụng (PowerShell 32-bit, 269 test) |
+| `kiem-thu/` | test dịch vụ của ứng dụng (PowerShell 32-bit, 272 test) |
 | `dong-goi.ps1` | dựng bộ cài `HueTravel-Setup-<phiên bản>.exe` |
 | `HUONG-DAN-CAI-DAT.md` | cài đặt cho người dùng và cho người làm bộ cài |
 

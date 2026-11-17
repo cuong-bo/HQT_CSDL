@@ -141,7 +141,7 @@ public static class FeedEndpoints
     private static async Task<IResult> MyStatusAsync(ClaimsPrincipal user, NpgsqlDataSource db, IOptions<FeedOptions> options, CancellationToken ct) =>
         Results.Ok(new
         {
-            termsAccepted = await FeedRules.HasAcceptedTermsAsync(db, user.UserId(), ct),
+            termsAccepted = true,   // there is no confirmation to give any more; kept so that apps of 1.2.0 do not ask for one
             trusted = await FeedRules.IsTrustedAsync(db, user, options.Value, ct),
             maxMediaPerPost = options.Value.MaxMediaPerPost,
         });
@@ -159,7 +159,6 @@ public static class FeedEndpoints
     {
         FeedOptions feed = options.Value;
         long me = user.UserId();
-        if (!await FeedRules.HasAcceptedTermsAsync(db, me, ct)) return FeedRules.Forbidden(FeedRules.TermsRequired);
 
         string body = FeedRules.CleanText(request.Body);
         if (body.Length > FeedRules.MaxBody) return FeedRules.Bad($"Bài viết tối đa {FeedRules.MaxBody} ký tự.");
@@ -265,7 +264,6 @@ public static class FeedEndpoints
     private static async Task<IResult> CommentAsync(long id, CommentRequest request, ClaimsPrincipal user, NpgsqlDataSource db, IOptions<FeedOptions> options, CancellationToken ct)
     {
         long me = user.UserId();
-        if (!await FeedRules.HasAcceptedTermsAsync(db, me, ct)) return FeedRules.Forbidden(FeedRules.TermsRequired);
         string body = FeedRules.CleanText(request.Body);
         if (body.Length == 0) return FeedRules.Bad("Bình luận không được để trống.");
         if (body.Length > FeedRules.MaxComment) return FeedRules.Bad($"Bình luận tối đa {FeedRules.MaxComment} ký tự.");

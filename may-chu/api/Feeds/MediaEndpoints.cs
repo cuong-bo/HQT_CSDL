@@ -51,7 +51,6 @@ public static class MediaEndpoints
     {
         FeedOptions feed = options.Value;
         long userId = user.UserId();
-        if (!await FeedRules.HasAcceptedTermsAsync(db, userId, ct)) return FeedRules.Forbidden(FeedRules.TermsRequired);
         if (string.IsNullOrEmpty(upload.Data)) return FeedRules.Bad("Thiếu dữ liệu ảnh (data, base64).");
         if (upload.Data.Length > PhotoEndpoints.MaxBodyBytes) return FeedRules.Bad("Ảnh quá lớn (tối đa khoảng 6 MB).");
 

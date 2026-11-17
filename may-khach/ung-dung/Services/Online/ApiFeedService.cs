@@ -62,7 +62,6 @@ namespace Hue_travel.Services.Online
 
     public sealed class FeedMe
     {
-        public bool TermsAccepted { get; set; }
         public bool Trusted { get; set; }
         public int MaxMediaPerPost { get; set; }
     }
@@ -103,11 +102,9 @@ namespace Hue_travel.Services.Online
             if (!r.IsSuccess) return new ApiResult<FeedMe> { Error = r.Error };
             return new ApiResult<FeedMe>
             {
-                Value = new FeedMe { TermsAccepted = JsonHelper.Bool(r.Object, "termsAccepted"), Trusted = JsonHelper.Bool(r.Object, "trusted"), MaxMediaPerPost = Math.Max(1, (int)JsonHelper.Long(r.Object, "maxMediaPerPost")) },
+                Value = new FeedMe { Trusted =JsonHelper.Bool(r.Object, "trusted"), MaxMediaPerPost = Math.Max(1, (int)JsonHelper.Long(r.Object, "maxMediaPerPost")) },
             };
         }
-
-        public Task<string> AcceptTermsAsync(CancellationToken ct) => ErrorOf(api.PostAsync("/v1/me/feed-terms", null, ct));
 
         public Task<string> LikeAsync(long postId, bool like, CancellationToken ct) =>
             ErrorOf(like ? api.PutAsync("/v1/posts/" + postId + "/like", null, ct) : api.DeleteAsync("/v1/posts/" + postId + "/like", ct));
