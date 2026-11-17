@@ -42,6 +42,12 @@ Source: "{#SourceDir}\*"; DestDir: "{app}"; Excludes: "*.pdb,*.vshost.*,mwtiles.
 Source: "{#MapWinGisDir}\*"; DestDir: "{app}\MapWinGIS"; Excludes: "unins000.*,*.zip,*.pas,*.XML,regMapWinGIS.cmd,unregMapWinGIS.cmd"; Flags: recursesubdirs ignoreversion
 Source: "redist\vc_redist.x86.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall skipifsourcedoesntexist
 
+[InstallDelete]
+; Updating replaces the old version in place: drop the old libraries first so no file of a previous version is left behind
+; (the new ones are installed right after; server.txt, public.key, the maps and MapWinGIS are not touched).
+Type: files; Name: "{app}\*.dll"
+Type: files; Name: "{app}\*.pdb"
+
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\Hue_travel.exe"
 Name: "{commondesktop}\{#AppName}"; Filename: "{app}\Hue_travel.exe"; Tasks: desktopicon
