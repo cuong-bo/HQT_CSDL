@@ -28,3 +28,17 @@ notes="$(gh release view "$tag" -R "$REPO" --json name -q .name)"
 
 echo "Phát hành $ver (hiện tại: ${current:-chưa có})"
 scripts/deploy.sh publish-client "$tmp/$name" "$ver" "$notes"
+
+# Bắt buộc cài bản mới: máy khách dùng /v1/config (UpdateCheck) bị chặn nếu thấp hơn bản này.
+# Chỉ chạy sau khi bộ cài đã nằm trên server, nên không ai bị khóa mà không có gì để cài.
+env=".env"
+if [[ -f "$env" ]]; then
+  setkey() { grep -q "^$1=" "$env" && sed -i "s#^$1=.*#$1=$2#" "$env" || echo "$1=$2" >> "$env"; }
+  setkey MIN_CLIENT_VERSION "$ver"
+  setkey LATEST_CLIENT_VERSION "$ver"
+  if grep -q '^CLIENT_DOWNLOAD_URL=http' "$env"; then
+    sed -i -E "s#/client/[0-9.]+/HueTravel-Setup-[0-9.]+\.exe#/client/$ver/$name#" "$env"
+  fi
+  scripts/deploy.sh up
+  echo "Đã yêu cầu máy khách cài bản $ver"
+fi
