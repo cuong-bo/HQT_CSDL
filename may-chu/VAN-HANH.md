@@ -164,3 +164,13 @@ scripts/restore.sh /var/backups/hue-travel/daily/huegis-YYYY-MM-DD.dump
 | Lộ khóa JWT hoặc mật khẩu CSDL | Chỉ ở `.env` (không vào Git), API dùng role CSDL giới hạn (`huegis_app`, không sửa được nhật ký kiểm toán) |
 | Mất dữ liệu | Sao lưu hằng đêm + bản ngoài VPS + diễn tập khôi phục |
 | Dịch vụ ngừng | `/healthz` được giám sát; `deploy.sh rollback`; app có chế độ ngoại tuyến đọc dữ liệu bản đồ đã tải về máy |
+
+### Tự động lấy bản mới từ GitHub Releases
+
+Chỉ cần đăng Release (tag `vX.Y.Z`, đính kèm `HueTravel-Setup-X.Y.Z.exe`) trên GitHub.
+`scripts/sync-release.sh` chạy định kỳ (cron, 10 phút/lần) sẽ tải bộ cài và gọi `publish-client`;
+máy khách mở app sẽ tự tải và cài. Đăng cron trên VPS:
+
+    */10 * * * * cd /root/hue-travel/may-chu && scripts/sync-release.sh >> /var/log/hue-sync-release.log 2>&1
+
+Chạy tay: `scripts/sync-release.sh`. Script bỏ qua khi bản trên server đã trùng bản mới nhất.
