@@ -588,6 +588,13 @@ $out = [System.Drawing.Image]::FromStream((New-Object IO.MemoryStream (, $bytes)
 Check 'image: longer side is 1600' "$($out.Width)x$($out.Height)" '1600x1067'
 $out.Dispose()
 Check 'image: a file that is not a picture gives null' ($prepare.Invoke($null, @([string]$PSCommandPath))) $null
+# the preview shown for every picture chosen: a square of the middle of the picture
+$thumbM = (GetT 'Hue_travel.Panels.Feed.ComposerDialog').GetMethod('Thumbnail', [Reflection.BindingFlags]'NonPublic,Static')
+$thumb = $thumbM.Invoke($null, @([string]$tmp, [int]240))
+Check 'preview: square of the asked side' "$($thumb.Width)x$($thumb.Height)" '240x240'
+$thumb.Dispose()
+Check 'preview: a file that is not a picture gives null' ($thumbM.Invoke($null, @([string]$PSCommandPath, [int]240))) $null
+Check 'preview: a missing file gives null' ($thumbM.Invoke($null, @([string]'C:\no\such\picture.jpg', [int]240))) $null
 Remove-Item $tmp -ErrorAction SilentlyContinue
 
 # ---- TripSpeed (the car's speed: x1 x2 x4 x8, remembered in a file)
